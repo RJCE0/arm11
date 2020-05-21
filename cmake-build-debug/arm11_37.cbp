@@ -101,6 +101,9 @@
 		<Unit filename="/Users/tyrellduku/arm11_37/src/assemble.c">
 			<Option target="arm11_37"/>
 		</Unit>
+		<Unit filename="/Users/tyrellduku/arm11_37/src/binaryfile.bin">
+			<Option target="arm11_37"/>
+		</Unit>
 		<Unit filename="/Users/tyrellduku/arm11_37/src/constants.h">
 			<Option target="arm11_37"/>
 		</Unit>

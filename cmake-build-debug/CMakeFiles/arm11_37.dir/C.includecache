@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/tyrellduku/arm11_37/src/constants.h
+
+/Users/tyrellduku/arm11_37/src/emulate.c
+stdlib.h
+-
+stdio.h
+/Users/tyrellduku/arm11_37/src/stdio.h
+stdbool.h
+/Users/tyrellduku/arm11_37/src/stdbool.h
+constants.h
+/Users/tyrellduku/arm11_37/src/constants.h
+

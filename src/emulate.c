@@ -1,15 +1,37 @@
 #include <stdlib.h>
 #include "stdio.h"
 #include "stdbool.h"
-#define WORD_SIZE = 32
+#include "constants.h"
+
+bool read_file(char **dst, char *filename) {
+    FILE *bin_file;
+    bin_file = fopen(filename, "rb");
+    if (bin_file == NULL) {
+        printf("File does not exist. Exiting...\n");
+        return EXIT_FAILURE; /* non-zero val -- couldn't read file */
+    }
+    fread(dst, 1, NUM_ADDRESSES, bin_file);
+    return 0;
+}
+
+void printBinaryArray(char **array) {
+    for (int i = 0; i < 20; i++) {
+        printf("%02x", array[i]);
+        if (i % 8 == 7) {
+            printf("\n");
+        }
+    }
+}
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
-      printf("You have not started the program with the correct number of inputs.");
-      return EXIT_FAILURE;
-  }
+    char *array[20];
+    printf("%s\n", argv[1]);
+    if (argc != 2) {
+        printf("You have not started the program with the correct number of inputs.");
+        return EXIT_FAILURE;
+    }
 
-  FILE
-
-
+    read_file(array, argv[1]);
+    printBinaryArray(array);
+    return 0;
 }

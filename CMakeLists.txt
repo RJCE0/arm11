@@ -10,4 +10,5 @@ add_executable(arm11_37
         programs/gpio.s
         src/assemble.c
         src/emulate.c
+        src/binaryfile.bin
         src/Makefile src/armstate.h src/constants.h)

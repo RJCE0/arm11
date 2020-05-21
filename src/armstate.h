@@ -7,7 +7,7 @@
 #define ARM11_37_ARMSTATE_H
 
 struct ARMState {
-    char memory_locations[NUM_ADDRESSES];
+    char memory[NUM_ADDRESSES];
     uint32_t registers[NUM_OF_REGISTERS];
 };
 
