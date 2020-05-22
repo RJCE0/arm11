@@ -16,7 +16,7 @@ bool read_file(char **dst, char *filename) {
 
 void printBinaryArray(char **array) {
     for (int i = 0; i < 20; i++) {
-        printf("%02x", array[i]);
+        printf("%x", array[i]);
         if (i % 8 == 7) {
             printf("\n");
         }
@@ -25,7 +25,6 @@ void printBinaryArray(char **array) {
 
 int main(int argc, char **argv) {
     char *array[20];
-    printf("%s\n", argv[1]);
     if (argc != 2) {
         printf("You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
