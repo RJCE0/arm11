@@ -33,3 +33,9 @@ assemble
 *.nav
 *.toc
 
+#ignore .idea files
+/.idea
+
+#ignore CMakes file (generated from CLion I think?)
+/cmake-build-debug
+CMakeLists.txt
