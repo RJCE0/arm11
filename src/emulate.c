@@ -22,7 +22,7 @@ bool read_file(char dst[], char *filename) {
         fprintf(stderr, "File does not exist. Exiting...\n");
         return EXIT_FAILURE; /* non-zero val -- couldn't read file */
     }
-    fread(dst, 1, NUM_ADDRESSES, bin_file);
+    fread(dst, sizeof(char), NUM_ADDRESSES, bin_file);
     return 0;
 }
 
