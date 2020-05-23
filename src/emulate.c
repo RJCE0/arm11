@@ -22,7 +22,7 @@ bool read_file(char dst[], char *filename) {
         fprintf(stderr, "File does not exist. Exiting...\n");
         return EXIT_FAILURE; /* non-zero val -- couldn't read file */
     }
-    fread(dst, sizeof(char), NUM_ADDRESSES, bin_file);
+    fread(dst, WORD_SIZE, NO_ADDRESSES, bin_file);
     return 0;
 }
 
@@ -35,13 +35,15 @@ bool check_instruction(struct state_of_machine machine, uint32_t instruction) {
         case NE:
             return !(cpsr_flags & zero_flag);
         case GE:
+
     }
 }
 
-void printBinaryArray(char **array) {
-    for (int i = 0; i < 20; i++) {
+void printBinaryArray(char **array, size_t size) {
+    uint32_t mask = 1 << 31;
+    for (int i = 0; i < size; i++) {
         printf("%x", array[i]);
-        if (i % 8 == 7) {
+        if (i % 32 == 31) {
             printf("\n");
         }
     }

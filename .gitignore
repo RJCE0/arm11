@@ -33,4 +33,3 @@ assemble
 *.nav
 *.toc
 
-/src/emulate.dSYM/

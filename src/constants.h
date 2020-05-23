@@ -3,10 +3,10 @@
 //
 
 #define WORD_SIZE 32
-#define NUM_ADDRESSES 65536
+#define NO_ADDRESSES 65536
 #define NUM_OF_REGISTERS 32
 #define CPSR_REG 16
-#define PC_REG 16
+#define PC_REG 15
 #define SHIFT_COND 28
 
 enum condition {
@@ -24,6 +24,18 @@ enum cspr_flags {
     carry_flag = 2, /* 0010 */
     zero_flag = 4,/* 0100 */
     negative_flag = 8 /* 1000 */
+};
+
+enum instruction_opcodes {
+    AND = 0, /* 0000 */
+    EOR = 1, /*0001 */
+    SUB = 2, /*0010 */
+    RSB = 3, /* 0011 */
+    ADD = 4, /* 0100 */
+    TEQ = 8, /* 1000 */
+    CMP = 10, /* 1010 */
+    ORR = 12, /* 1100 */
+    MOV = 13 /* 1101 */
 };
 
 
