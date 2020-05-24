@@ -2,6 +2,10 @@
 // Created by Tyrell Duku on 21/05/2020.
 //
 
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+
 #define WORD_SIZE 32
 #define NO_ADDRESSES 65536
 #define NUM_OF_REGISTERS 32
@@ -37,5 +41,7 @@ enum instruction_opcodes {
     ORR = 12, /* 1100 */
     MOV = 13 /* 1101 */
 };
+
+#endif
 
 

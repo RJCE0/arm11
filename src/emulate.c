@@ -1,8 +1,8 @@
 #include <stdlib.h>
-#include "stdio.h"
-#include "stdbool.h"
-#include "constants.h"
-#include "state_of_machine.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include "emulate.h"
+#include <assert.h>
 
 
 /*The plan for emulator:
@@ -30,17 +30,39 @@ bool check_instruction(struct state_of_machine machine, uint32_t instruction) {
     instruction >>= SHIFT_COND;
     char cpsr_flags = machine.registers[CPSR_REG] >> SHIFT_COND;
     switch (instruction) {
+        // CSPR FLAGS : VCZN in C
         case EQ:
             return cpsr_flags & zero_flag;
         case NE:
             return !(cpsr_flags & zero_flag);
         case GE:
-
+            return (cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3);
+        case LT:
+            return (cpsr_flags & negative_flag) != ((cpsr_flags & negative_flag) >> 3);
+        case GT:
+            return !(cpsr_flags & zero_flag) && ((cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3));
+        case LE:
+            return !(!(cpsr_flags & zero_flag) && ((cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3)));
+        case AL:
+            return true;
+        default:
+            fprintf(stderr, "An unsupported instruction has been found at PC: %x", machine.registers[PC_REG]);
+            exit(EXIT_FAILURE);
     }
 }
 
-void printBinaryArray(char **array, size_t size) {
-    uint32_t mask = 1 << 31;
+void decode(struct state_of_machine machine, uint32_t instruction) {
+    assert(check_instruction(machine, instruction));
+    uint32_t mask = 0xFFFFFFF;
+    instruction &= mask;
+    if (instruction >> 26 == 1) {
+        sdt(machine, instruction);
+    } else if (instruction >> 24 == 10) {
+        branch(machine, instruction);
+    } else if ()
+}
+
+static void printBinaryArray(char **array, size_t size) {
     for (int i = 0; i < size; i++) {
         printf("%x", array[i]);
         if (i % 32 == 31) {
@@ -51,7 +73,7 @@ void printBinaryArray(char **array, size_t size) {
 
 int main(int argc, char **argv) {
     char *array[20];
-    struct state_of_machine machine = {{0}, {0}};
+    struct state_of_machine machine = {{0}, {0}, false};
     if (argc != 2) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
