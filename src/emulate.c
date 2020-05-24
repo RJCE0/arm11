@@ -15,7 +15,7 @@
  */
 
 
-bool read_file(char dst[], char *filename) {
+ bool read_file(uint8_t dst[], char *filename) {
     FILE *bin_file;
     bin_file = fopen(filename, "rb");
     if (bin_file == NULL) {
@@ -23,7 +23,8 @@ bool read_file(char dst[], char *filename) {
         return EXIT_FAILURE; /* non-zero val -- couldn't read file */
     }
 
-    fread(dst, WORD_SIZE, NO_ADDRESSES, bin_file);
+    fread(dst,NO_ADDRESSES,1, bin_file);
+    fclose(bin_file);
     return true;
 }
 
@@ -33,18 +34,25 @@ bool check_instruction(struct state_of_machine machine, uint32_t instruction) {
     switch (instruction) {
         // CSPR FLAGS : VCZN in C
         case AL:
+            machine.has_instruction = true;
             return true;
         case EQ:
+            machine.has_instruction = true;
             return cpsr_flags & zero_flag;
         case NE:
+            machine.has_instruction = true;
             return !(cpsr_flags & zero_flag);
         case GE:
+            machine.has_instruction = true;
             return (cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3);
         case LT:
+            machine.has_instruction = true;
             return (cpsr_flags & negative_flag) != ((cpsr_flags & negative_flag) >> 3);
         case GT:
+            machine.has_instruction = true;
             return !(cpsr_flags & zero_flag) && ((cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3));
         case LE:
+            machine.has_instruction = true;
             return !(!(cpsr_flags & zero_flag) && ((cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3)));
         default:
             fprintf(stderr, "An unsupported instruction has been found at PC: %x", machine.registers[PC_REG]);
@@ -53,18 +61,26 @@ bool check_instruction(struct state_of_machine machine, uint32_t instruction) {
 }
 
 void decode(struct state_of_machine machine, uint32_t instruction) {
-    assert(check_instruction(machine, instruction));
     uint32_t mask = 0xFFFFFFF;
     instruction &= mask;
+    // Removed condition bits from instruction.
     if (instruction >> 26 == 1) {
         sdt(machine, instruction);
     } else if (instruction >> 24 == 10) {
         branch(machine, instruction);
-    } else if ()
+    } else if (((instruction >> 22) | (instruction >> 4)) == 9) {
+        multiply_instruction(machine, instruction);
+    } else if ((instruction >> 26) == 0) {
+        data_processing(machine, instruction);
+    } else {
+         fprintf(stderr, "An unsupported instruction has been found at PC: %x", machine.registers[PC_REG]);
+         exit(EXIT_FAILURE);
+    }
 }
 
 
-bool is_negative(uint32_t instruction) {
+
+static bool is_negative(uint32_t instruction) {
     return (instruction & 1) != 0;
 }
 
@@ -80,9 +96,9 @@ void branch(struct state_of_machine machine, uint32_t instruction) {
     machine.registers[PC_REG] += offset;
 }
 
-static void printBinaryArray(char **array, size_t size) {
+static void printBinaryArray(uint8_t array[], size_t size) {
     for (int i = 0; i < size; i++) {
-        printf("%x", array[i]);
+        printf("%c", array[i]);
         if (i % 32 == 31) {
             printf("\n");
         }
@@ -94,9 +110,10 @@ int main(int argc, char **argv) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
-    char *array[20];
-    struct state_of_machine machine = {{0}, {0}, false};
 
-    read_file(machine.memory, argv[1]);
+    uint8_t *memory = (uint8_t *)calloc(8, 1);
+
+    read_file(memory, argv[1]);
+    printBinaryArray(memory, 100);
     return 0;
 }
