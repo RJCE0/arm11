@@ -22,8 +22,9 @@ bool read_file(char dst[], char *filename) {
         fprintf(stderr, "File does not exist. Exiting...\n");
         return EXIT_FAILURE; /* non-zero val -- couldn't read file */
     }
+
     fread(dst, WORD_SIZE, NO_ADDRESSES, bin_file);
-    return 0;
+    return true;
 }
 
 bool check_instruction(struct state_of_machine machine, uint32_t instruction) {
@@ -31,6 +32,8 @@ bool check_instruction(struct state_of_machine machine, uint32_t instruction) {
     char cpsr_flags = machine.registers[CPSR_REG] >> SHIFT_COND;
     switch (instruction) {
         // CSPR FLAGS : VCZN in C
+        case AL:
+            return true;
         case EQ:
             return cpsr_flags & zero_flag;
         case NE:
@@ -43,8 +46,6 @@ bool check_instruction(struct state_of_machine machine, uint32_t instruction) {
             return !(cpsr_flags & zero_flag) && ((cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3));
         case LE:
             return !(!(cpsr_flags & zero_flag) && ((cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3)));
-        case AL:
-            return true;
         default:
             fprintf(stderr, "An unsupported instruction has been found at PC: %x", machine.registers[PC_REG]);
             exit(EXIT_FAILURE);
@@ -62,6 +63,23 @@ void decode(struct state_of_machine machine, uint32_t instruction) {
     } else if ()
 }
 
+
+bool is_negative(uint32_t instruction) {
+    return (instruction & 1) != 0;
+}
+
+
+void branch(struct state_of_machine machine, uint32_t instruction) {
+    int32_t offset = instruction & 0xFFFFFF;
+    offset <<= 2;
+
+    if (is_negative(instruction >> 23)) {
+        offset |= SIGN_EXTENSION__TO_32;
+    }
+
+    machine.registers[PC_REG] += offset;
+}
+
 static void printBinaryArray(char **array, size_t size) {
     for (int i = 0; i < size; i++) {
         printf("%x", array[i]);
@@ -72,12 +90,12 @@ static void printBinaryArray(char **array, size_t size) {
 }
 
 int main(int argc, char **argv) {
-    char *array[20];
-    struct state_of_machine machine = {{0}, {0}, false};
     if (argc != 2) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
+    char *array[20];
+    struct state_of_machine machine = {{0}, {0}, false};
 
     read_file(machine.memory, argv[1]);
     return 0;

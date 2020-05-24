@@ -12,6 +12,7 @@
 #define CPSR_REG 16
 #define PC_REG 15
 #define SHIFT_COND 28
+#define SIGN_EXTENSION__TO_32 0xFE000000
 
 enum condition {
     EQ = 0,

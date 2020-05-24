@@ -37,5 +37,3 @@ assemble
 /.idea
 
 #ignore CMakes file (generated from CLion I think?)
-/cmake-build-debug
-CMakeLists.txt
