@@ -14,21 +14,62 @@
  * 3: Fetch -> Decode -> Execute cycle until we get all zero instruction.
  */
 
+uint32_t getRegister(int regNumber, state_of_machine state) {
+    if (regNumber == 13 || regNumber == 14 || regNumber < 0 || regNumber > 16) {
+        fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
+        return NULL;
+    }
+    return state.registers[reg_number];
+}
 
- bool read_file(uint8_t dst[], char *filename) {
+bool setRegister(int regNumber, state_of_machine state, uint32_t value) {
+    if (regNumber == 13 || regNumber == 14 || regNumber < 1 || regNumber > ) {
+        fprintf(stderr, "Invalid register number specified, not supported or out of range.");
+        return false;
+    }
+    state.registers[regNumber] = value;
+}
+
+uint32_t getMemory(uint32_t address, state_of_machine state) {
+    return state.memory[address];
+}
+
+bool setMemory(uint32_t address, state_of_machine state, uint32_t value)
+    // future improvement: allow writing of only part of a value (using some sort of truncation)
+    if (address > 65532) {
+        fprintf("Address specified is too high. Segmentation fault detected.");
+        return false;
+    }
+    state.memory[address] = value;
+    return true;
+}
+
+bool readFile(state_of_machine state, char *filename) {
     FILE *bin_file;
     bin_file = fopen(filename, "rb");
     if (bin_file == NULL) {
         fprintf(stderr, "File does not exist. Exiting...\n");
         return EXIT_FAILURE; /* non-zero val -- couldn't read file */
     }
+    /* Elements to be read are each 4 bytes. Binary files can be any size and
+    fread will only read till the end of the file or until the size is met.
+    Fread also returns the number of elements read.
+    */
+    int elements = fread(state.memory, MEMORY_SIZE / 4, 4, bin_file);
 
-    fread(dst,NO_ADDRESSES,1, bin_file);
     fclose(bin_file);
     return true;
 }
 
-bool check_instruction(struct state_of_machine machine, uint32_t instruction) {
+void executeInstructions(state_of_machine state) {
+    uint32_t programCounter = getRegister(PC_REG, state);
+    while (programCounter != 0) {
+        decode(state, programCounter);
+        programCounter += 4;
+    }
+}
+
+bool checkInstruction(struct state_of_machine machine, uint32_t instructionPtr) {
     instruction >>= SHIFT_COND;
     char cpsr_flags = machine.registers[CPSR_REG] >> SHIFT_COND;
     switch (instruction) {
@@ -65,27 +106,24 @@ void decode(struct state_of_machine machine, uint32_t instruction) {
     instruction &= mask;
     // Removed condition bits from instruction.
     if (instruction >> 26 == 1) {
-        sdt(machine, instruction);
+        sdtInstruction(machine, instruction);
     } else if (instruction >> 24 == 10) {
-        branch(machine, instruction);
+        branchInstruction(machine, instruction);
     } else if (((instruction >> 22) | (instruction >> 4)) == 9) {
-        multiply_instruction(machine, instruction);
+        multiplyInstruction(machine, instruction);
     } else if ((instruction >> 26) == 0) {
-        data_processing(machine, instruction);
+        dataProcessingInstruction(machine, instruction);
     } else {
          fprintf(stderr, "An unsupported instruction has been found at PC: %x", machine.registers[PC_REG]);
          exit(EXIT_FAILURE);
     }
 }
 
-
-
-static bool is_negative(uint32_t instruction) {
+static bool isNegative(uint32_t instruction) {
     return (instruction & 1) != 0;
 }
 
-
-void branch(struct state_of_machine machine, uint32_t instruction) {
+void branchInstruction(struct state_of_machine machine, uint32_t instruction) {
     uint32_t offset = instruction & 0xFFFFFF;
     offset <<= 2;
 
@@ -95,7 +133,7 @@ void branch(struct state_of_machine machine, uint32_t instruction) {
     machine.registers[PC_REG] += offset;
 }
 
-void multiply_instruction(struct state_of_machine machine, uint32_t instruction) {
+void multiplyInstruction(struct state_of_machine machine, uint32_t instruction) {
     uint32_t res;
     uint32_t acc;
     uint32_t current_cpsr;
@@ -124,12 +162,7 @@ void multiply_instruction(struct state_of_machine machine, uint32_t instruction)
     }
 
     machine.registers[CPSR_REG] = current_cpsr;
-
-
-
-
 }
-
 
 static void printBinaryArray(uint8_t array[], size_t size) {
     for (int i = 0; i < size; i++) {
@@ -142,13 +175,19 @@ static void printBinaryArray(uint8_t array[], size_t size) {
 
 int main(int argc, char **argv) {
     if (argc != 2) {
-        fprintf(stderr, "You have not started the program with the correct number of inputs.");
+        fprintf(stderr, "You have not started the program with the correct
+                                                        number of inputs.");
         return EXIT_FAILURE;
     }
 
-    uint8_t *memory = (uint8_t *) calloc(NO_ADDRESSES, 1);
+    struct state_of_machine state;
 
-    read_file(memory, argv[1]);
-    printBinaryArray(memory, 100);
+    // size of 1 allows memory to be byte addressable
+    state.memory = (uint8_t *) calloc (MEMORY_SIZE, 1);
+    state.registers = (uint32_t *) calloc (NUM_OF_REGISTERS, sizeof(uint32_t));
+
+    readFile(state, argv[1]);
+    executeInstructions(state);
+    // printBinaryArray(memory, 100);
     return 0;
 }
