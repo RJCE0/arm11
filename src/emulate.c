@@ -86,15 +86,50 @@ static bool is_negative(uint32_t instruction) {
 
 
 void branch(struct state_of_machine machine, uint32_t instruction) {
-    int32_t offset = instruction & 0xFFFFFF;
+    uint32_t offset = instruction & 0xFFFFFF;
     offset <<= 2;
 
     if (is_negative(instruction >> 23)) {
-        offset |= SIGN_EXTENSION__TO_32;
+        offset |= SIGNEXTENSION__TO_32;
     }
-
     machine.registers[PC_REG] += offset;
 }
+
+void multiply_instruction(struct state_of_machine machine, uint32_t instruction) {
+    uint32_t res;
+    uint32_t acc;
+    uint32_t current_cpsr;
+    uint32_t last_bit;
+
+    uint32_t a_flag = (instruction >> 21) & 0x1;
+    uint32_t s_flag = (instruction >> 20) & 0x1;
+    uint32_t rm = (instruction >> 4) & 0xF;
+    uint32_t rs = (instruction >> 12) & 0xF;
+    uint32_t rn = (instruction >> 16) & 0xF;
+    uint32_t rd = (instruction >> 20) & 0xF;
+
+    acc = (a_flag) ? machine.registers[rn] : 0;
+    res = (machine.registers[rm] * machine.registers[rs]) + acc;
+    machine.registers[rd] = res;
+    current_cpsr = machine.registers[CPSR_REG] & 0xFFFFFFF;
+    last_bit = res &= (0x1 >> 31);
+    if (s_flag) {
+        if (res == 0) {
+            /* VCZN */
+            current_cpsr |= (zero_flag << SHIFT_COND);
+        }
+        if (is_negative(res)) {
+        current_cpsr |= (negative_flag << SHIFT_COND);
+        }
+    }
+
+    machine.registers[CPSR_REG] = current_cpsr;
+
+
+
+
+}
+
 
 static void printBinaryArray(uint8_t array[], size_t size) {
     for (int i = 0; i < size; i++) {
@@ -111,7 +146,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    uint8_t *memory = (uint8_t *)calloc(8, 1);
+    uint8_t *memory = (uint8_t *) calloc(NO_ADDRESSES, 1);
 
     read_file(memory, argv[1]);
     printBinaryArray(memory, 100);

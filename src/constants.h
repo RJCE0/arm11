@@ -12,7 +12,7 @@
 #define CPSR_REG 16
 #define PC_REG 15
 #define SHIFT_COND 28
-#define SIGN_EXTENSION__TO_32 0xFE000000
+#define SIGNEXTENSION__TO_32 0xFE000000
 
 enum condition {
     EQ = 0, /* 0000 */
@@ -21,7 +21,7 @@ enum condition {
     LT = 11,/* 1011 */
     GT = 12, /* 1100 */
     LE = 13,/* 1101*/
-    AL = 15/* 0111 */
+    AL = 15 /* 0111 */
 };
 
 enum cspr_flags {
