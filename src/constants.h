@@ -2,21 +2,26 @@
 // Created by Tyrell Duku on 21/05/2020.
 //
 
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+
 #define WORD_SIZE 32
 #define NO_ADDRESSES 65536
 #define NUM_OF_REGISTERS 32
 #define CPSR_REG 16
 #define PC_REG 15
 #define SHIFT_COND 28
+#define SIGNEXTENSION__TO_32 0xFE000000
 
 enum condition {
-    EQ = 0,
-    NE = 1,
-    GE = 10,
-    LT = 11,
-    GT = 12,
-    LE = 13,
-    AL = 15
+    EQ = 0, /* 0000 */
+    NE = 1, /* 0001 */
+    GE = 10,/* 1010 */
+    LT = 11,/* 1011 */
+    GT = 12, /* 1100 */
+    LE = 13,/* 1101*/
+    AL = 15 /* 0111 */
 };
 
 enum cspr_flags {
@@ -37,5 +42,14 @@ enum instruction_opcodes {
     ORR = 12, /* 1100 */
     MOV = 13 /* 1101 */
 };
+
+enum shift_codes {
+    logical_left = 0,
+    logical_right = 1,
+    arith_right = 2,
+    rotate_right = 3
+};
+
+#endif
 
 
