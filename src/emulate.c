@@ -130,6 +130,43 @@ static bool isNegative(uint32_t instruction) {
     return (instruction & 1) != 0;
 }
 
+void sdtInstruction(state_of_machine state, uint32_t instruction) {
+  bool offsetBit = ((instruction >> 25) & 1 == 1);
+  bool preindexingBit = ((instruction >> 24) & 1 == 1);
+  bool upBit = ((instruction >> 23) & 1 == 1);
+  bool loadBit = ((instruction >> 20) & 1 == 1);
+  bool baseRegNum = ((insturction >> 16) & 15 == 1);
+  bool srcDestRegNum = ((instruction >> 12) & 15 == 1);
+  uint32_t offset;
+
+  // 4095 represents a mask of the least significant 12 bits
+  if (!offsetBit) {
+      offset = ((instruction)&4095);
+  } else {
+      // Implement
+      // offset obtained using functionality from data processing instr.
+      offset = 0;
+  }
+
+  bool offset = ((instruction)&4095);
+  uint32_t baseRegVal = getRegister(baseRegNum, state);
+  uint32_t srcDestRegVal = getRegister(srcDestRegNum, state);
+
+  if (loadBit) {
+      setRegister(srcDestRegNum, state, baseRegVal);
+  } else {
+      setMemory(baseRegVal, state, srcDestRegVal);
+  }
+
+  if (!preindexingBit) {
+      if (upBit) {
+          setRegister(baseRegNum, state, baseRegVal + offset);
+      } else {
+          setRegister(baseRegNum, state, baseRegVal - offset);
+      }
+  }
+}
+
 void branchInstruction(struct  state_of_machine machine, uint32_t instruction) {
     uint32_t offset = instruction & 0xFFFFFF;
     offset <<= 2;
@@ -171,7 +208,7 @@ void multiplyInstruction(struct state_of_machine machine, uint32_t instruction) 
         machine.registers[CPSR_REG] = current_cpsr;
     }
 
-    
+
 }
 
 static void printBinaryArray(uint8_t array[], size_t size) {
