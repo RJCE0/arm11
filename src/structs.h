@@ -9,4 +9,8 @@ typedef struct machineState {
     bool has_instruction;
 } machineState;
 
+typedef struct shiftedRegister {
+  uint32_t opcode2, carryBit;
+} shiftedRegister;
+
 #endif
