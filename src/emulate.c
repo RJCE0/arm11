@@ -39,7 +39,7 @@ uint32_t get_register(int regNumber, machineState state) {
     return state.registers[regNumber];
 }
 
-bool set_register(int regNumber, machineState state, uint32_t value) {
+bool set_register(uint32_t regNumber, machineState state, uint32_t value) {
     if (regNumber == 13 || regNumber == 14 || regNumber < 1 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range.");
         return false;
@@ -145,8 +145,76 @@ shiftedRegister operand_shift_register(machineState state, uint32_t instruction)
     }
 }
 
-void data_processing_instruction( machineState state, uint32_t instruction){
-
+void data_processing_instruction(machineState state, uint32_t instruction) {
+    bool immediate = ((instruction >> 25) & 0x1) == 1;
+    uint32_t opcode = (instruction >> 21) & 0xF;
+    uint32_t condition = ((instruction >> 20) & 0x1) == 1;
+    uint32_t operand1 = get_register((instruction >> 16) & 0xF, state);
+    uint32_t dest = (instruction >> 12) & 0xF;
+    uint32_t operand2;
+    uint32_t carryBit;
+    if (immediate) {
+        uint32_t imm = instruction & 0xFF;
+        uint32_t rotate = (instruction >> 8) & 0xF;
+        operand2 = imm >> (rotate * 2);
+    } else {
+        shiftedRegister value = operand_shift_register(state, instruction);
+        operand2 = value.operand2;
+        carryBit = value.carryBit;
+    }
+    uint32_t result;
+    switch (opcode) {
+        case AND:
+            result = operand1 & operand2;
+            set_register(dest, state, result);
+            break;
+        case EOR:
+            result = operand1 ^ operand2;
+            set_register(dest, state, result);
+            break;
+        case SUB:
+            result = operand1 - operand2;
+            set_register(dest, state, result);
+            break;
+        case RSB:
+            result = operand2 - operand1;
+            set_register(dest, state, result);
+            break;
+        case ADD:
+            result = operand1 + operand2;
+            set_register(dest, state, result);
+            break;
+        case TST:
+            result = operand1 & operand2;
+            break;
+        case TEQ:
+            result = operand1 ^ operand2;
+            break;
+        case CMP:
+            result = operand1 - operand2;
+            break;
+        case ORR:
+            result = operand1 | operand2;
+            set_register(dest, state, result);
+            break;
+        case MOV:
+            result = operand2;
+            break;
+        default:
+        //Overflow thing Jaimi was talking about
+    }
+    if (condition){
+        uint32_t zBit = 0;
+        if (result == 0) {
+            zBit = (1 << 30);
+        }
+        uint32_t nBit = result & 0x80000000;
+        uint32_t cBit = carryBit << 29;
+        uint32_t flags = nBit + zBit + cBit;
+        uint32_t value = get_register(CPSR_REG, state);
+        uint32_t mask = 0xFFFFFFF;
+        set_register(CPSR_REG, state, (value & mask) + flags);
+    }
 }
 
 static bool is_negative(uint32_t instruction) {
