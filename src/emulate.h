@@ -15,7 +15,7 @@ uint32_t get_word(machineState state, uint32_t address);
 void print_register_values(machineState state);
 void print_system_state(machineState state);
 void decode(machineState state, uint32_t instruction);
-shiftedRegister opcode_shift_register(machineState state, uint32_t instruction);
+shiftedRegister operand_shift_register(machineState state, uint32_t instruction);
 void data_processing_instruction( machineState state, uint32_t instruction);
 void multiply_instruction( machineState state, uint32_t instruction);
 void sdt_instruction( machineState state, uint32_t instruction);

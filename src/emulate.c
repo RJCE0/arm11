@@ -112,42 +112,42 @@ void decode(machineState state, uint32_t instruction) {
     }
 }
 
-shiftedRegister opcode_shift_register(machineState state, uint32_t instruction){
+shiftedRegister operand_shift_register(machineState state, uint32_t instruction){
     uint32_t rm = instruction & 0xF;
     uint32_t rm_contents = get_register(rm, state);
     uint32_t shift_num = (instruction >> 7) & 0x1F;
     uint32_t shift_type = (instruction >> 5) & 0x3;
     shiftedRegister result;
     switch (shift_type) {
-      case logicalLeft:
-          result.operand2 = rm_contents << shift_num;
-          result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
-          return result;
-          break;
-      case logicalRight:
-          result.operand2 = rm_contents >> shift_num;
-          result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
-          return result;
-          break;
-      case arithRight:
-          uint32_t preservedSign;
-          uint32_t signBit = rm_contents & 0x80000000;
-          for (int i = 0; i < shift_num; i++) {
-              preservedSign += signBit;
-              signBit >>= 1;
-          }
-          result.operand2 = (rm_contents >> shift_num) + preservedSign;
-          result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
-          return result;
-          break;
-      case rotateRight:
-          result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
-          result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
-          return result;
-          break;
-      default:
-          return result;
-  }
+        case logicalLeft:
+            result.operand2 = rm_contents << shift_num;
+            result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
+            return result;
+            break;
+        case logicalRight:
+            result.operand2 = rm_contents >> shift_num;
+            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            return result;
+            break;
+        case arithRight:
+            uint32_t preservedSign;
+            uint32_t signBit = rm_contents & 0x80000000;
+            for (int i = 0; i < shift_num; i++) {
+                preservedSign += signBit;
+                signBit >>= 1;
+            }
+            result.operand2 = (rm_contents >> shift_num) + preservedSign;
+            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            return result;
+            break;
+        case rotateRight:
+            result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
+            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            return result;
+            break;
+        default:
+            return result;
+    }
 }
 
 void data_processing_instruction( machineState state, uint32_t instruction){
