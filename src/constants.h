@@ -4,7 +4,6 @@
 
 #define WORD_SIZE 32
 #define MEMORY_SIZE 65536
-#define NO_ADDRESSES 65536
 #define NUM_OF_REGISTERS 32
 #define CPSR_REG 16
 #define PC_REG 15

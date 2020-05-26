@@ -34,7 +34,7 @@
 uint32_t get_register(int regNumber, machineState state) {
     if (regNumber == 13 || regNumber == 14 || regNumber < 0 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
-        return NULL;
+        exit(EXIT_FAILURE);
     }
     return state.registers[regNumber];
 }
@@ -116,20 +116,18 @@ shiftedRegister operand_shift_register(machineState state, uint32_t instruction)
     uint32_t rm_contents = get_register(rm, state);
     uint32_t shift_num = (instruction >> 7) & 0x1F;
     uint32_t shift_type = (instruction >> 5) & 0x3;
-    shiftedRegister result;
+    shiftedRegister result = {0,0};
     switch (shift_type) {
         case logicalLeft:
             result.operand2 = rm_contents << shift_num;
             result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
             return result;
-            break;
         case logicalRight:
             result.operand2 = rm_contents >> shift_num;
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
-            break;
-        case arithRight:
-            uint32_t preservedSign;
+        case arithRight: {
+            uint32_t preservedSign = 0;
             uint32_t signBit = rm_contents & 0x80000000;
             for (int i = 0; i < shift_num; i++) {
                 preservedSign += signBit;
@@ -138,12 +136,10 @@ shiftedRegister operand_shift_register(machineState state, uint32_t instruction)
             result.operand2 = (rm_contents >> shift_num) + preservedSign;
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
-            break;
+        }    
         case rotateRight:
             result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
-            return result;
-            break;
         default:
             return result;
     }
@@ -274,7 +270,7 @@ void execute_instructions(machineState state) {
     uint32_t current_instruction = get_word(state, get_register(PC_REG, state));
     while (current_instruction != 0) {
         decode(state, current_instruction);
-        state.registers[PC_REG] += 4;
+        state.registers[PC_REG] += WORD_SIZE_IN_BYTES;
     }
 }
 
@@ -283,9 +279,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
-
-     machineState state = {(uint8_t *) calloc (MEMORY_SIZE, 1),
-      (uint32_t *) calloc (NUM_OF_REGISTERS,sizeof(uint32_t)), false};
+        uint8_t *memory = (uint8_t *) calloc(MEMORY_SIZE, 1);
+        uint32_t *registers = (uint32_t *) calloc(NUM_OF_REGISTERS, sizeof(uint32_t));
+     machineState state = {memory,registers, false};
 
     // size of 1 allows memory to be byte addressable
     read_file(state, argv[1]);
@@ -294,5 +290,4 @@ int main(int argc, char **argv) {
     free(state.memory);
     free(state.registers);
     exit(EXIT_SUCCESS);
-    return 0;
 }
