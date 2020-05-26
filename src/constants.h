@@ -9,7 +9,7 @@
 #define CPSR_REG 16
 #define PC_REG 15
 #define SHIFT_COND 28
-#define SIGNEXTENSION__TO_32 0xFE000000
+#define SE_32 0xFE000000
 #define WORD_SIZE_IN_BYTES 4
 
 enum condition {
