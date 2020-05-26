@@ -80,8 +80,8 @@ static void print_binary_array(uint8_t array[], size_t size) {
 
 void print_register_values(machineState state) {
     for (int i = 0; i < NUM_OF_REGISTERS; i++) {
-        if (i != 13 || i != 14) {
-        printf("Register %i : 0x%x", (i+1), getRegister(i, state));
+        if (i != 13 && i != 14) {
+        printf("Register %i : 0x%x", i, get_register(i, state));
         }
     }
 }
@@ -94,7 +94,6 @@ void print_system_state(machineState state) {
 void decode(machineState state, uint32_t instruction) {
     uint32_t mask = 0xFFFFFFF;
     instruction &= mask;
-    // Removed condition bits from instruction.
     if (instruction >> 26 == 1) {
         sdt_instruction(state, instruction);
     } else if (instruction >> 24 == 10) {
@@ -110,6 +109,48 @@ void decode(machineState state, uint32_t instruction) {
          free(state.memory);
          exit(EXIT_FAILURE);
     }
+}
+
+shiftedRegister operand_shift_register(machineState state, uint32_t instruction){
+    uint32_t rm = instruction & 0xF;
+    uint32_t rm_contents = get_register(rm, state);
+    uint32_t shift_num = (instruction >> 7) & 0x1F;
+    uint32_t shift_type = (instruction >> 5) & 0x3;
+    shiftedRegister result;
+    switch (shift_type) {
+        case logicalLeft:
+            result.operand2 = rm_contents << shift_num;
+            result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
+            return result;
+            break;
+        case logicalRight:
+            result.operand2 = rm_contents >> shift_num;
+            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            return result;
+            break;
+        case arithRight:
+            uint32_t preservedSign;
+            uint32_t signBit = rm_contents & 0x80000000;
+            for (int i = 0; i < shift_num; i++) {
+                preservedSign += signBit;
+                signBit >>= 1;
+            }
+            result.operand2 = (rm_contents >> shift_num) + preservedSign;
+            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            return result;
+            break;
+        case rotateRight:
+            result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
+            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            return result;
+            break;
+        default:
+            return result;
+    }
+}
+
+void data_processing_instruction( machineState state, uint32_t instruction){
+
 }
 
 static bool is_negative(uint32_t instruction) {
@@ -160,14 +201,14 @@ void sdt_instruction(machineState state, uint32_t instruction) {
 
   // 4095 represents a mask of the least significant 12 bits
   if (!offsetBit) {
-      offset = ((instruction)&4095);
+      offset = instruction & 0xFFF;
   } else {
       // Implement
       // offset obtained using functionality from data processing instr.
       offset = 0;
   }
 
-  offset = instruction & 4095;
+  offset = instruction & 0xFFF;
   uint32_t baseRegVal = get_register(baseRegNum, state);
   uint32_t srcDestRegVal = get_register(srcDestRegNum, state);
 
@@ -190,8 +231,8 @@ void branch_instruction(machineState state, uint32_t instruction) {
     uint32_t offset = instruction & 0xFFFFFF;
     offset <<= 2;
 
-    if (isNegative(instruction >> 23)) {
-        offset |= SIGNEXTENSION__TO_32;
+    if (is_negative(instruction >> 23)) {
+        offset |= SE_32;
     }
     state.registers[PC_REG] += offset;
 }
@@ -230,10 +271,10 @@ bool check_instruction(machineState state, uint32_t instruction) {
 }
 
 void execute_instructions(machineState state) {
-    uint32_t programCounter = getWord(state, getRegister(PC_REG, state));
-    while (programCounter != 0) {
-        decode(state, programCounter);
-        programCounter += 4;
+    uint32_t current_instruction = get_word(state, get_register(PC_REG, state));
+    while (current_instruction != 0) {
+        decode(state, current_instruction);
+        state.registers[PC_REG] += 4;
     }
 }
 
@@ -249,6 +290,9 @@ int main(int argc, char **argv) {
     // size of 1 allows memory to be byte addressable
     read_file(state, argv[1]);
     execute_instructions(state);
-    // printBinaryArray(memory, 100);
+    print_system_state(state);
+    free(state.memory);
+    free(state.registers);
+    exit(EXIT_SUCCESS);
     return 0;
 }
