@@ -150,12 +150,12 @@ void multiply_instruction(machineState state, uint32_t instruction) {
 
 
 void sdt_instruction(machineState state, uint32_t instruction) {
-  bool offsetBit = ((instruction >> 25) & 1 == 1);
-  bool preindexingBit = ((instruction >> 24) & 1 == 1);
-  bool upBit = ((instruction >> 23) & 1 == 1);
-  bool loadBit = ((instruction >> 20) & 1 == 1);
-  bool baseRegNum = ((insturction >> 16) & 15 == 1);
-  bool srcDestRegNum = ((instruction >> 12) & 15 == 1);
+  bool offsetBit = (((instruction >> 25) & 1) == 1);
+  bool preindexingBit = (((instruction >> 24) & 1) == 1);
+  bool upBit = (((instruction >> 23) & 1) == 1);
+  bool loadBit = (((instruction >> 20) & 1) == 1);
+  bool baseRegNum = (((instruction >> 16) & 15) == 1);
+  bool srcDestRegNum = (((instruction >> 12) & 15) == 1);
   uint32_t offset;
 
   // 4095 represents a mask of the least significant 12 bits
@@ -167,7 +167,7 @@ void sdt_instruction(machineState state, uint32_t instruction) {
       offset = 0;
   }
 
-  bool offset = ((instruction)&4095);
+  offset = instruction & 4095;
   uint32_t baseRegVal = get_register(baseRegNum, state);
   uint32_t srcDestRegVal = get_register(srcDestRegNum, state);
 

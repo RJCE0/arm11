@@ -15,13 +15,13 @@ uint32_t get_word(machineState state, uint32_t address);
 void print_register_values(machineState state);
 void print_system_state(machineState state);
 void decode(machineState state, uint32_t instruction);
-void data_processing_instruction(struct machineState state, uint32_t instruction);
-void multiply_instruction(struct machineState state, uint32_t instruction);
-void sdt_instruction(struct machineState state, uint32_t instruction);
-void branch_instruction(struct machineState state, uint32_t instruction);
+void data_processing_instruction( machineState state, uint32_t instruction);
+void multiply_instruction( machineState state, uint32_t instruction);
+void sdt_instruction( machineState state, uint32_t instruction);
+void branch_instruction( machineState state, uint32_t instruction);
 
 /*Checks the first four bits (assuming big endian) of a given instruction align with the CPSR flags of the machine. */
-bool check_instruction(struct machineState state, uint32_t instruction);
+bool check_instruction( machineState state, uint32_t instruction);
 void execute_instructions(machineState state);
 
 
