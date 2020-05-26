@@ -10,7 +10,7 @@ typedef struct machineState {
 } machineState;
 
 typedef struct shiftedRegister {
-  uint32_t opcode2, carryBit;
+    uint32_t operand2, carryBit;
 } shiftedRegister;
 
 #endif

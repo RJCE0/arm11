@@ -120,12 +120,12 @@ shiftedRegister opcode_shift_register(machineState state, uint32_t instruction){
     shiftedRegister result;
     switch (shift_type) {
       case logicalLeft:
-          result.opcode2 = rm_contents << shift_num;
+          result.operand2 = rm_contents << shift_num;
           result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
           return result;
           break;
       case logicalRight:
-          result.opcode2 = rm_contents >> shift_num;
+          result.operand2 = rm_contents >> shift_num;
           result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
           return result;
           break;
@@ -136,12 +136,12 @@ shiftedRegister opcode_shift_register(machineState state, uint32_t instruction){
               preservedSign += signBit;
               signBit >>= 1;
           }
-          result.opcode2 = (rm_contents >> shift_num) + preservedSign;
+          result.operand2 = (rm_contents >> shift_num) + preservedSign;
           result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
           return result;
           break;
       case rotateRight:
-          result.opcode2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
+          result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
           result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
           return result;
           break;
