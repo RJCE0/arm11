@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include "emulate.h"
 #include <assert.h>
-
+#include <string.h>
 
 /*The plan for emulator:
  * 1: Load in the binary file, gives 32-bit words. Check the first four bits and compare with
@@ -14,37 +14,41 @@
  * 3: Fetch -> Decode -> Execute cycle until we get all zero instruction.
  */
 
-uint32_t getRegister(int regNumber, state_of_machine state) {
+uint32_t getRegister(int regNumber, struct state_of_machine
+ state) {
     if (regNumber == 13 || regNumber == 14 || regNumber < 0 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
         return NULL;
     }
-    return state.registers[reg_number];
+    return state.registers[regNumber];
 }
 
-bool setRegister(int regNumber, state_of_machine state, uint32_t value) {
-    if (regNumber == 13 || regNumber == 14 || regNumber < 1 || regNumber > ) {
+bool setRegister(int regNumber, struct state_of_machine state, uint32_t value) {
+    if (regNumber == 13 || regNumber == 14 || regNumber < 1 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range.");
         return false;
     }
     state.registers[regNumber] = value;
+    return true;
 }
 
-uint32_t getMemory(uint32_t address, state_of_machine state) {
+uint32_t getMemory(uint32_t address, struct state_of_machine
+ state) {
     return state.memory[address];
 }
 
-bool setMemory(uint32_t address, state_of_machine state, uint32_t value)
+bool setMemory(uint32_t address, struct state_of_machine
+ state, uint8_t value) {
     // future improvement: allow writing of only part of a value (using some sort of truncation)
     if (address > 65532) {
-        fprintf("Address specified is too high. Segmentation fault detected.");
+        fprintf(stderr,"Address specified is too high. Segmentation fault detected.");
         return false;
     }
     state.memory[address] = value;
     return true;
 }
 
-bool readFile(state_of_machine state, char *filename) {
+bool readFile(struct state_of_machine state, char *filename) {
     FILE *bin_file;
     bin_file = fopen(filename, "rb");
     if (bin_file == NULL) {
@@ -55,21 +59,20 @@ bool readFile(state_of_machine state, char *filename) {
     fread will only read till the end of the file or until the size is met.
     Fread also returns the number of elements read.
     */
-    int elements = fread(state.memory, MEMORY_SIZE / 4, 4, bin_file);
-
+    fread(state.memory, MEMORY_SIZE, 1, bin_file);
     fclose(bin_file);
     return true;
 }
 
-void executeInstructions(state_of_machine state) {
-    uint32_t programCounter = getRegister(PC_REG, state);
+void executeInstructions(struct state_of_machine state) {
+    uint32_t programCounter = getWord(state, getRegister(PC_REG, state));
     while (programCounter != 0) {
         decode(state, programCounter);
         programCounter += 4;
     }
 }
 
-bool checkInstruction(struct state_of_machine machine, uint32_t instructionPtr) {
+bool checkInstruction(struct state_of_machine machine, uint32_t instruction) {
     instruction >>= SHIFT_COND;
     char cpsr_flags = machine.registers[CPSR_REG] >> SHIFT_COND;
     switch (instruction) {
@@ -97,6 +100,7 @@ bool checkInstruction(struct state_of_machine machine, uint32_t instructionPtr) 
             return !(!(cpsr_flags & zero_flag) && ((cpsr_flags & negative_flag) == ((cpsr_flags & negative_flag) >> 3)));
         default:
             fprintf(stderr, "An unsupported instruction has been found at PC: %x", machine.registers[PC_REG]);
+            printSystemState(machine);
             exit(EXIT_FAILURE);
     }
 }
@@ -114,7 +118,10 @@ void decode(struct state_of_machine machine, uint32_t instruction) {
     } else if ((instruction >> 26) == 0) {
         dataProcessingInstruction(machine, instruction);
     } else {
-         fprintf(stderr, "An unsupported instruction has been found at PC: %x", machine.registers[PC_REG]);
+         fprintf(stderr, "An unsupported instruction has been found at [PC: %x] and the program can no longer continue. Exiting...\n", machine.registers[PC_REG]);
+         printSystemState(machine);
+         free(machine.registers);
+         free(machine.memory);
          exit(EXIT_FAILURE);
     }
 }
@@ -123,11 +130,11 @@ static bool isNegative(uint32_t instruction) {
     return (instruction & 1) != 0;
 }
 
-void branchInstruction(struct state_of_machine machine, uint32_t instruction) {
+void branchInstruction(struct  state_of_machine machine, uint32_t instruction) {
     uint32_t offset = instruction & 0xFFFFFF;
     offset <<= 2;
 
-    if (is_negative(instruction >> 23)) {
+    if (isNegative(instruction >> 23)) {
         offset |= SIGNEXTENSION__TO_32;
     }
     machine.registers[PC_REG] += offset;
@@ -145,47 +152,67 @@ void multiplyInstruction(struct state_of_machine machine, uint32_t instruction) 
     uint32_t rs = (instruction >> 12) & 0xF;
     uint32_t rn = (instruction >> 16) & 0xF;
     uint32_t rd = (instruction >> 20) & 0xF;
-
+    /*Performing the operation */
     acc = (a_flag) ? machine.registers[rn] : 0;
     res = (machine.registers[rm] * machine.registers[rs]) + acc;
     machine.registers[rd] = res;
-    current_cpsr = machine.registers[CPSR_REG] & 0xFFFFFFF;
-    last_bit = res &= (0x1 >> 31);
+
+    /*Changing flag status if necessary */
     if (s_flag) {
+         current_cpsr = machine.registers[CPSR_REG] & 0xFFFFFFF;
+         last_bit = res &= (0x1 >> 31);
         if (res == 0) {
             /* VCZN */
             current_cpsr |= (zero_flag << SHIFT_COND);
         }
-        if (is_negative(res)) {
+        if (isNegative(res)) {
         current_cpsr |= (negative_flag << SHIFT_COND);
         }
+        machine.registers[CPSR_REG] = current_cpsr;
     }
 
-    machine.registers[CPSR_REG] = current_cpsr;
+    
 }
 
 static void printBinaryArray(uint8_t array[], size_t size) {
     for (int i = 0; i < size; i++) {
         printf("%c", array[i]);
-        if (i % 32 == 31) {
+        if (i % 4 == 3) {
             printf("\n");
         }
     }
 }
 
+void printRegisterValues(struct state_of_machine machine) {
+    for (int i = 0; i < NUM_OF_REGISTERS; i++) {
+        if (i != 13 || i != 14) {
+        printf("Register %i : 0x%x", (i+1), getRegister(i, machine));
+        }
+    }
+}
+
+uint32_t getWord(struct state_of_machine machine, uint32_t address) {
+    uint32_t fullWord = 0;
+    memcpy(&fullWord,&machine.memory[address], WORD_SIZE_IN_BYTES);
+    return fullWord;
+    // Might be an issue here...
+}
+
+void printSystemState(struct state_of_machine state) {
+    printBinaryArray(state.memory, WORD_SIZE_IN_BYTES);
+    printRegisterValues(state);
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) {
-        fprintf(stderr, "You have not started the program with the correct
-                                                        number of inputs.");
+        fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
 
-    struct state_of_machine state;
+     struct state_of_machine state = {(uint8_t *) calloc (MEMORY_SIZE, 1),
+      (uint32_t *) calloc (NUM_OF_REGISTERS,sizeof(uint32_t)), false};
 
     // size of 1 allows memory to be byte addressable
-    state.memory = (uint8_t *) calloc (MEMORY_SIZE, 1);
-    state.registers = (uint32_t *) calloc (NUM_OF_REGISTERS, sizeof(uint32_t));
-
     readFile(state, argv[1]);
     executeInstructions(state);
     // printBinaryArray(memory, 100);
