@@ -256,40 +256,37 @@ void multiply_instruction(machineState state, uint32_t instruction) {
 
 
 void sdt_instruction(machineState state, uint32_t instruction) {
-  bool offsetBit = (((instruction >> 25) & 1) == 1);
-  bool preindexingBit = (((instruction >> 24) & 1) == 1);
-  bool upBit = (((instruction >> 23) & 1) == 1);
-  bool loadBit = (((instruction >> 20) & 1) == 1);
-  bool baseRegNum = (((instruction >> 16) & 15) == 1);
-  bool srcDestRegNum = (((instruction >> 12) & 15) == 1);
-  uint32_t offset;
+    bool offsetBit = (((instruction >> 25) & 1) == 1);
+    bool preindexingBit = (((instruction >> 24) & 1) == 1);
+    bool upBit = (((instruction >> 23) & 1) == 1);
+    bool loadBit = (((instruction >> 20) & 1) == 1);
+    bool baseRegNum = (((instruction >> 16) & 15) == 1);
+    bool srcDestRegNum = (((instruction >> 12) & 15) == 1);
+    uint32_t offset;
 
-  // 4095 represents a mask of the least significant 12 bits
-  if (!offsetBit) {
-      offset = instruction & 0xFFF;
-  } else {
-      // Implement
-      // offset obtained using functionality from data processing instr.
-      offset = 0;
-  }
+    if (!offsetBit) {
+        // 0xFFF represents a mask of the least significant 12 bits
+        offset = instruction & 0xFFF;
+    } else {
+        offset = operand_shift_register(state, instruction);
+    }
 
-  offset = instruction & 0xFFF;
-  uint32_t baseRegVal = get_register(baseRegNum, state);
-  uint32_t srcDestRegVal = get_register(srcDestRegNum, state);
+    uint32_t baseRegVal = get_register(baseRegNum, state);
+    uint32_t srcDestRegVal = get_register(srcDestRegNum, state);
 
-  if (loadBit) {
-      set_register(srcDestRegNum, state, baseRegVal);
-  } else {
-      set_memory(baseRegVal, state, srcDestRegVal);
-  }
+    if (loadBit) {
+        set_register(srcDestRegNum, state, baseRegVal);
+    } else {
+        set_memory(baseRegVal, state, srcDestRegVal);
+    }
 
-  if (!preindexingBit) {
-      if (upBit) {
-          set_register(baseRegNum, state, baseRegVal + offset);
-      } else {
-          set_register(baseRegNum, state, baseRegVal - offset);
-      }
-  }
+    if (!preindexingBit) {
+        if (upBit) {
+            set_register(baseRegNum, state, baseRegVal + offset);
+        } else {
+            set_register(baseRegNum, state, baseRegVal - offset);
+        }
+    }
 }
 
 void branch_instruction(machineState state, uint32_t instruction) {
@@ -303,33 +300,28 @@ void branch_instruction(machineState state, uint32_t instruction) {
 }
 
 bool check_instruction(machineState state, uint32_t instruction) {
-    instruction >>= SHIFT_COND;
-    char cpsrFlags = state.registers[CPSR_REG] >> SHIFT_COND;
+    // takes highest 4 bits of instruction
+    uint32_t instrCond = instruction >> SHIFT_COND;
+    // takes the highest 4 bits of the CPSR register (i.e. the cond flags)
+    uint32_t cpsrFlags = get_register() >> SHIFT_COND;
     switch (instruction) {
         // CSPR FLAGS : VCZN in C
         case AL:
-            state.has_instruction = true;
             return true;
         case EQ:
-            state.has_instruction = true;
             return cpsrFlags & zeroFlag;
         case NE:
-            state.has_instruction = true;
             return !(cpsrFlags & zeroFlag);
         case GE:
-            state.has_instruction = true;
             return (cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3);
         case LT:
-            state.has_instruction = true;
             return (cpsrFlags & negativeFlag) != ((cpsrFlags & negativeFlag) >> 3);
         case GT:
-            state.has_instruction = true;
             return !(cpsrFlags & zeroFlag) && ((cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3));
         case LE:
-            state.has_instruction = true;
             return !(!(cpsrFlags & zeroFlag) && ((cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3)));
         default:
-            fprintf(stderr, "An unsupported instruction has been found at PC: %x", state.registers[PC_REG]);
+            fprintf(stderr, "An unsupported instruction has been found at PC: %x", get_register(PC_REG, state));
             print_system_state(state);
             exit(EXIT_FAILURE);
     }
