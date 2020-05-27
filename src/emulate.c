@@ -158,7 +158,11 @@ void data_processing_instruction(machineState state, uint32_t instruction) {
         uint32_t rotate = (instruction >> 8) & 0xF;
         operand2 = imm >> (rotate * 2);
     } else {
+<<<<<<< HEAD
         shiftedRegister value = operand_shift_register(state, instruction);
+=======
+        shiftedRegister value = opcode_shift_register(state, instruction);
+>>>>>>> 9d96c9bf79557f4e264ed21699ec00670e93123c
         operand2 = value.operand2;
         carryBit = value.carryBit;
     }
@@ -201,7 +205,10 @@ void data_processing_instruction(machineState state, uint32_t instruction) {
             result = operand2;
             break;
         default:
+<<<<<<< HEAD
         //Overflow thing Jaimi was talking about
+=======
+>>>>>>> 9d96c9bf79557f4e264ed21699ec00670e93123c
     }
     if (condition){
         uint32_t zBit = 0;
