@@ -4,7 +4,6 @@
 
 #define WORD_SIZE 32
 #define MEMORY_SIZE 65536
-#define NO_ADDRESSES 65536
 #define NUM_OF_REGISTERS 32
 #define CPSR_REG 16
 #define PC_REG 15
@@ -35,7 +34,7 @@ enum instructionOpcodes {
     SUB = 2,    /* 0010 */
     RSB = 3,    /* 0011 */
     ADD = 4,    /* 0100 */
-    TST = 8;    /* 1000 */
+    TST = 8,    /* 1000 */
     TEQ = 9,    /* 1001 */
     CMP = 10,   /* 1010 */
     ORR = 12,   /* 1100 */
