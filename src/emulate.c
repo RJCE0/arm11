@@ -4,6 +4,7 @@
 #include "emulate.h"
 #include <assert.h>
 #include <string.h>
+#include <stdint.h>
 
 /*The plan for emulator:
  * 1: Load in the binary file, gives 32-bit words. Check the first four bits and compare with
@@ -32,7 +33,7 @@
 }
 
 uint32_t get_register(uint32_t regNumber, machineState *state) {
-    if (regNumber == 13 || regNumber == 14 || regNumber < 0 || regNumber > 16) {
+    if (regNumber == 13 || regNumber == 14 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
         exit(EXIT_FAILURE);
     }
@@ -112,7 +113,7 @@ void decode(machineState *state, uint32_t instruction) {
             sdt_instruction(state, instruction);
         } else if (instruction >> 24 == 10) {
             branch_instruction(state, instruction);
-        } else if (((instruction >> 22) | (instruction >> 4)) == 9) {
+        } else if (((instruction >> 22) | ((instruction >> 4) & 0xF)) == 9) {
             multiply_instruction(state, instruction);
         } else if ((instruction >> 26) == 0) {
             data_processing_instruction(state, instruction);
@@ -133,15 +134,15 @@ shiftedRegister operand_shift_register(machineState *state, uint32_t instruction
     uint32_t shift_type = (instruction >> 5) & 0x3;
     shiftedRegister result = {0,0};
     switch (shift_type) {
-        case logicalLeft:
+        case LOGICAL_LEFT:
             result.operand2 = rm_contents << shift_num;
             result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
             return result;
-        case logicalRight:
+        case LOGICAL_RIGHT:
             result.operand2 = rm_contents >> shift_num;
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
-        case arithRight: {
+        case ARITH_RIGHT: {
             uint32_t preservedSign = 0;
             uint32_t signBit = rm_contents & 0x80000000;
             for (uint32_t i = 0; i < shift_num; i++) {
@@ -152,7 +153,7 @@ shiftedRegister operand_shift_register(machineState *state, uint32_t instruction
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
         }    
-        case rotateRight:
+        case ROTATE_RIGHT:
             result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
@@ -262,10 +263,10 @@ void multiply_instruction(machineState *state, uint32_t instruction) {
          lastBit = res &= (0x1 >> 31);
         if (res == 0) {
             /* VCZN */
-            currentCpsr |= (zeroFlag << SHIFT_COND);
+            currentCpsr |= (ZERO_FLAG << SHIFT_COND);
         }
         if (is_negative(res)) {
-        currentCpsr |= (negativeFlag << SHIFT_COND);
+        currentCpsr |= (NEGATIVE_FLAG << SHIFT_COND);
         }
         state->registers[CPSR_REG] = currentCpsr;
     }
@@ -326,17 +327,18 @@ bool check_instruction(machineState *state, uint32_t instruction) {
         case AL:
             return true;
         case EQ:
-            return cpsrFlags & zeroFlag;
+            return cpsrFlags & ZERO_FLAG;
         case NE:
-            return !(cpsrFlags & zeroFlag);
+            return !(cpsrFlags & ZERO_FLAG);
         case GE:
-            return (cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3);
+            return (cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3);
         case LT:
-            return (cpsrFlags & negativeFlag) != ((cpsrFlags & negativeFlag) >> 3);
+            return (cpsrFlags & NEGATIVE_FLAG) != ((cpsrFlags & NEGATIVE_FLAG) >> 3);
         case GT:
-            return !(cpsrFlags & zeroFlag) && ((cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3));
+            return !(cpsrFlags & ZERO_FLAG) && ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3));
         case LE:
-            return !(!(cpsrFlags & zeroFlag) && ((cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3)));
+            return !(!(cpsrFlags & ZERO_FLAG) && ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3)));
+            // = !GT
         default:
             fprintf(stderr, "An unsupported instruction has been found at PC: %x", get_register(PC_REG, state));
             print_system_state(state);
