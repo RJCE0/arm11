@@ -22,10 +22,10 @@ enum condition {
 };
 
 enum csprFlags {
-    overflowFlag = 1,  /* 0001 */
-    carryFlag = 2,     /* 0010 */
-    zeroFlag = 4,      /* 0100 */
-    negativeFlag = 8   /* 1000 */
+    OVERFLOW_FLAG = 1,  /* 0001 */
+    CARRY_FLAG = 2,     /* 0010 */
+    ZERO_FLAG = 4,      /* 0100 */
+    NEGATIVE_FLAG = 8   /* 1000 */
 };
 
 enum instructionOpcodes {
@@ -42,10 +42,10 @@ enum instructionOpcodes {
 };
 
 enum shiftCodes {
-    logicalLeft = 0,
-    logicalRight = 1,
-    arithRight = 2,
-    rotateRight = 3
+    LOGICAL_LEFT = 0,
+    LOGICAL_RIGHT = 1,
+    ARITH_RIGHT = 2,
+    ROTATE_RIGHT = 3
 };
 
 #endif

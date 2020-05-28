@@ -4,6 +4,7 @@
 #include "emulate.h"
 #include <assert.h>
 #include <string.h>
+#include <stdint.h>
 
 /*The plan for emulator:
  * 1: Load in the binary file, gives 32-bit words. Check the first four bits and compare with
@@ -15,10 +16,10 @@
  */
 
 
- bool read_file(machineState state, char *filename) {
+ bool read_file(machineState *state, char *filename) {
      FILE *binFile;
      binFile = fopen(filename, "rb");
-     if (binFile == NULL) {
+     if (!binFile) {
          fprintf(stderr, "File does not exist. Exiting...\n");
          return EXIT_FAILURE; /* non-zero val -- couldn't read file */
      }
@@ -26,25 +27,25 @@
      fread will only read till the end of the file or until the size is met.
      Fread also returns the number of elements read.
      */
-     fread(state.memory, MEMORY_SIZE, 1, binFile);
+     fread(state->memory, MEMORY_SIZE, 1, binFile);
      fclose(binFile);
      return true;
 }
 
-uint32_t get_register(int regNumber, machineState state) {
-    if (regNumber == 13 || regNumber == 14 || regNumber < 0 || regNumber > 16) {
+uint32_t get_register(uint32_t regNumber, machineState *state) {
+    if (regNumber == 13 || regNumber == 14 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
         exit(EXIT_FAILURE);
     }
-    return state.registers[regNumber];
+    return state->registers[regNumber];
 }
 
-bool set_register(uint32_t regNumber, machineState state, uint32_t value) {
+bool set_register(uint32_t regNumber, machineState *state, uint32_t value) {
     if (regNumber == 13 || regNumber == 14 || regNumber < 1 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range.");
         return false;
     }
-    state.registers[regNumber] = value;
+    state->registers[regNumber] = value;
     return true;
 }
 
@@ -52,24 +53,24 @@ uint32_t get_memory(uint32_t address, machineState state) {
     return state.memory[address];
 }
 
-bool set_memory(uint32_t address, machineState state, uint8_t value) {
+bool set_memory(uint32_t address, machineState *state, uint8_t value) {
     // future improvement: allow writing of only part of a value (using some sort of truncation)
     if (address > 65532) {
         fprintf(stderr,"Address specified is too high. Segmentation fault detected.");
         return false;
     }
-    state.memory[address] = value;
+    state->memory[address] = value;
     return true;
 }
 
-uint32_t get_word(machineState state, uint32_t address) {
-    uint32_t fullWord = 0;
-    memcpy(&fullWord,&state.memory[address], WORD_SIZE_IN_BYTES);
+uint32_t get_word(machineState *state, uint32_t address) {
+    uint32_t fullWord;
+    memcpy(&fullWord,&(state->memory[address]), WORD_SIZE_IN_BYTES);
     return fullWord;
     // Might be an issue here...
 }
 
-static void print_binary_array(uint8_t array[], size_t size) {
+/*static void print_binary_array(uint8_t array[], size_t size) {
     for (int i = 0; i < size; i++) {
         printf("%c", array[i]);
         if (i % 4 == 3) {
@@ -77,59 +78,74 @@ static void print_binary_array(uint8_t array[], size_t size) {
         }
     }
 }
+*/
 
-void print_register_values(machineState state) {
+void print_register_values(machineState *state) {
     for (int i = 0; i < NUM_OF_REGISTERS; i++) {
         if (i != 13 && i != 14) {
         printf("Register %i : 0x%x", i, get_register(i, state));
         }
+        if (i == PC_REG) {
+            printf("Program counter: 0x%x", get_register(PC_REG, state));
+        }
+
+        if (i == CPSR_REG) {
+            printf("CPSR: 0x%x", get_register(CPSR_REG, state));
+        }
     }
 }
 
-void print_system_state(machineState state) {
-    print_binary_array(state.memory, WORD_SIZE_IN_BYTES);
+void print_system_state(machineState *state) {
+   for (uint32_t i = 0; i < MEMORY_SIZE; i += 4) {
+       if (get_word(state, i) != 0) {
+           printf("Memory at 0x%x : 0x%x", i, get_word(state, i));
+       }
+   }
+
     print_register_values(state);
 }
 
-void decode(machineState state, uint32_t instruction) {
-    uint32_t mask = 0xFFFFFFF;
-    instruction &= mask;
-    if (instruction >> 26 == 1) {
-        sdt_instruction(state, instruction);
-    } else if (instruction >> 24 == 10) {
-        branch_instruction(state, instruction);
-    } else if (((instruction >> 22) | (instruction >> 4)) == 9) {
-        multiply_instruction(state, instruction);
-    } else if ((instruction >> 26) == 0) {
-        data_processing_instruction(state, instruction);
-    } else {
-         fprintf(stderr, "An unsupported instruction has been found at [PC: %x] and the program can no longer continue. Exiting...\n", state.registers[PC_REG]);
-         print_system_state(state);
-         free(state.registers);
-         free(state.memory);
-         exit(EXIT_FAILURE);
-    }
+void decode(machineState *state, uint32_t instruction) {
+    if(check_instruction(state, instruction)){
+        uint32_t mask = 0xFFFFFFF;
+        instruction &= mask;
+        if (instruction >> 26 == 1) {
+            sdt_instruction(state, instruction);
+        } else if (instruction >> 24 == 10) {
+            branch_instruction(state, instruction);
+        } else if (((instruction >> 22) | ((instruction >> 4) & 0xF)) == 9) {
+            multiply_instruction(state, instruction);
+        } else if ((instruction >> 26) == 0) {
+            data_processing_instruction(state, instruction);
+        } else {
+            fprintf(stderr, "An unsupported instruction has been found at [PC: %x] and the program can no longer continue. Exiting...\n", state->registers[PC_REG]);
+            print_system_state(state);
+            free(state->registers);
+            free(state->memory);
+            exit(EXIT_FAILURE);
+        }
+    }    
 }
 
-shiftedRegister operand_shift_register(machineState state, uint32_t instruction){
+shiftedRegister operand_shift_register(machineState *state, uint32_t instruction){
     uint32_t rm = instruction & 0xF;
     uint32_t rm_contents = get_register(rm, state);
     uint32_t shift_num = (instruction >> 7) & 0x1F;
     uint32_t shift_type = (instruction >> 5) & 0x3;
     shiftedRegister result = {0,0};
     switch (shift_type) {
-        case logicalLeft:
+        case LOGICAL_LEFT:
             result.operand2 = rm_contents << shift_num;
             result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
             return result;
-        case logicalRight:
+        case LOGICAL_RIGHT:
             result.operand2 = rm_contents >> shift_num;
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
-        case arithRight: {
+        case ARITH_RIGHT: {
             uint32_t preservedSign = 0;
             uint32_t signBit = rm_contents & 0x80000000;
-            for (int i = 0; i < shift_num; i++) {
+            for (uint32_t i = 0; i < shift_num; i++) {
                 preservedSign += signBit;
                 signBit >>= 1;
             }
@@ -137,15 +153,17 @@ shiftedRegister operand_shift_register(machineState state, uint32_t instruction)
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
         }    
-        case rotateRight:
+        case ROTATE_RIGHT:
             result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            return result;
+
         default:
             return result;
     }
 }
 
-void data_processing_instruction(machineState state, uint32_t instruction) {
+void data_processing_instruction(machineState *state, uint32_t instruction) {
     bool immediate = ((instruction >> 25) & 0x1) == 1;
     uint32_t opcode = (instruction >> 21) & 0xF;
     uint32_t condition = ((instruction >> 20) & 0x1) == 1;
@@ -162,7 +180,7 @@ void data_processing_instruction(machineState state, uint32_t instruction) {
         operand2 = value.operand2;
         carryBit = value.carryBit;
     }
-    uint32_t result;
+    uint32_t result = 0;
     switch (opcode) {
         case AND:
             result = operand1 & operand2;
@@ -201,7 +219,7 @@ void data_processing_instruction(machineState state, uint32_t instruction) {
             result = operand2;
             break;
         default:
-         0;
+         set_register(dest, state, result);
         //Overflow thing Jaimi was talking about
     }
     if (condition){
@@ -222,7 +240,7 @@ static bool is_negative(uint32_t instruction) {
     return (instruction & 1) != 0;
 }
 
-void multiply_instruction(machineState state, uint32_t instruction) {
+void multiply_instruction(machineState *state, uint32_t instruction) {
     uint32_t res;
     uint32_t acc;
     uint32_t currentCpsr;
@@ -235,27 +253,27 @@ void multiply_instruction(machineState state, uint32_t instruction) {
     uint32_t rn = (instruction >> 16) & 0xF;
     uint32_t rd = (instruction >> 20) & 0xF;
     /*Performing the operation */
-    acc = (aFlag) ? state.registers[rn] : 0;
-    res = (state.registers[rm] * state.registers[rs]) + acc;
-    state.registers[rd] = res;
+    acc = (aFlag) ? state->registers[rn] : 0;
+    res = (state->registers[rm] * state->registers[rs]) + acc;
+    state->registers[rd] = res;
 
     /*Changing flag status if necessary */
     if (sFlag) {
-         currentCpsr = state.registers[CPSR_REG] & 0xFFFFFFF;
+         currentCpsr = state->registers[CPSR_REG] & 0xFFFFFFF;
          lastBit = res &= (0x1 >> 31);
         if (res == 0) {
             /* VCZN */
-            currentCpsr |= (zeroFlag << SHIFT_COND);
+            currentCpsr |= (ZERO_FLAG << SHIFT_COND);
         }
         if (is_negative(res)) {
-        currentCpsr |= (negativeFlag << SHIFT_COND);
+        currentCpsr |= (NEGATIVE_FLAG << SHIFT_COND);
         }
-        state.registers[CPSR_REG] = currentCpsr;
+        state->registers[CPSR_REG] = currentCpsr;
     }
 }
 
 
-void sdt_instruction(machineState state, uint32_t instruction) {
+void sdt_instruction(machineState *state, uint32_t instruction) {
     bool offsetBit = (((instruction >> 25) & 1) == 1);
     bool preindexingBit = (((instruction >> 24) & 1) == 1);
     bool upBit = (((instruction >> 23) & 1) == 1);
@@ -268,11 +286,11 @@ void sdt_instruction(machineState state, uint32_t instruction) {
         // 0xFFF represents a mask of the least significant 12 bits
         offset = instruction & 0xFFF;
     } else {
-        offset = operand_shift_register(state, instruction);
+        offset = operand_shift_register(state, instruction).operand2;
     }
 
     uint32_t baseRegVal = get_register(baseRegNum, state);
-    uint32_t srcDestRegVal = get_register(srcDestRegNum, state);
+    uint32_t srcDestRegVal = get_register(srcDestRegNum,state);
 
     if (loadBit) {
         set_register(srcDestRegNum, state, baseRegVal);
@@ -289,37 +307,38 @@ void sdt_instruction(machineState state, uint32_t instruction) {
     }
 }
 
-void branch_instruction(machineState state, uint32_t instruction) {
+void branch_instruction(machineState *state, uint32_t instruction) {
     uint32_t offset = instruction & 0xFFFFFF;
     offset <<= 2;
 
     if (is_negative(instruction >> 23)) {
         offset |= SE_32;
     }
-    state.registers[PC_REG] += offset;
+    state->registers[PC_REG] += offset;
 }
 
-bool check_instruction(machineState state, uint32_t instruction) {
+bool check_instruction(machineState *state, uint32_t instruction) {
     // takes highest 4 bits of instruction
     uint32_t instrCond = instruction >> SHIFT_COND;
     // takes the highest 4 bits of the CPSR register (i.e. the cond flags)
-    uint32_t cpsrFlags = get_register() >> SHIFT_COND;
-    switch (instruction) {
+    uint32_t cpsrFlags = get_register(CPSR_REG,state) >> SHIFT_COND;
+    switch (instrCond) {
         // CSPR FLAGS : VCZN in C
         case AL:
             return true;
         case EQ:
-            return cpsrFlags & zeroFlag;
+            return cpsrFlags & ZERO_FLAG;
         case NE:
-            return !(cpsrFlags & zeroFlag);
+            return !(cpsrFlags & ZERO_FLAG);
         case GE:
-            return (cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3);
+            return (cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3);
         case LT:
-            return (cpsrFlags & negativeFlag) != ((cpsrFlags & negativeFlag) >> 3);
+            return (cpsrFlags & NEGATIVE_FLAG) != ((cpsrFlags & NEGATIVE_FLAG) >> 3);
         case GT:
-            return !(cpsrFlags & zeroFlag) && ((cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3));
+            return !(cpsrFlags & ZERO_FLAG) && ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3));
         case LE:
-            return !(!(cpsrFlags & zeroFlag) && ((cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3)));
+            return !(!(cpsrFlags & ZERO_FLAG) && ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3)));
+            // = !GT
         default:
             fprintf(stderr, "An unsupported instruction has been found at PC: %x", get_register(PC_REG, state));
             print_system_state(state);
@@ -327,11 +346,11 @@ bool check_instruction(machineState state, uint32_t instruction) {
     }
 }
 
-void execute_instructions(machineState state) {
+void execute_instructions(machineState *state) {
     uint32_t current_instruction = get_word(state, get_register(PC_REG, state));
     while (current_instruction != 0) {
         decode(state, current_instruction);
-        state.registers[PC_REG] += WORD_SIZE_IN_BYTES;
+        state->registers[PC_REG] += WORD_SIZE_IN_BYTES;
     }
 }
 
@@ -340,15 +359,11 @@ int main(int argc, char **argv) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
-        uint8_t *memory = (uint8_t *) calloc(MEMORY_SIZE, 1);
-        uint32_t *registers = (uint32_t *) calloc(NUM_OF_REGISTERS, sizeof(uint32_t));
-     machineState state = {memory,registers, false};
-
-    // size of 1 allows memory to be byte addressable
+    machineState *state = (machineState *) calloc(1, sizeof(machineState));
     read_file(state, argv[1]);
     execute_instructions(state);
     print_system_state(state);
-    free(state.memory);
-    free(state.registers);
+    free(state->memory);
+    free(state->registers);
     exit(EXIT_SUCCESS);
 }
