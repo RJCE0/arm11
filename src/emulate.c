@@ -13,6 +13,8 @@
  * 2: If they match, prepare to start decoding, if not move to next instruction.
  *
  * 3: Fetch -> Decode -> Execute cycle until we get all zero instruction.
+ *
+ * Haev
  */
 
 
@@ -113,7 +115,7 @@ void decode(machineState *state, uint32_t instruction) {
             sdt_instruction(state, instruction);
         } else if (instruction >> 24 == 10) {
             branch_instruction(state, instruction);
-        } else if (((instruction >> 22) | ((instruction >> 4) & 0xF)) == 9) {
+        } else if (((instruction >> 22) & ((instruction >> 4) & 0xF)) == 9) {
             multiply_instruction(state, instruction);
         } else if ((instruction >> 26) == 0) {
             data_processing_instruction(state, instruction);
@@ -352,6 +354,10 @@ void execute_instructions(machineState *state) {
         decode(state, current_instruction);
         state->registers[PC_REG] += WORD_SIZE_IN_BYTES;
     }
+}
+
+void pipeline(machineState *state) {
+
 }
 
 int main(int argc, char **argv) {
