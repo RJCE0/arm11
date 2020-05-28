@@ -34,12 +34,12 @@
 uint32_t get_register(int regNumber, machineState state) {
     if (regNumber == 13 || regNumber == 14 || regNumber < 0 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
-        return NULL;
+        exit(EXIT_FAILURE);
     }
     return state.registers[regNumber];
 }
 
-bool set_register(int regNumber, machineState state, uint32_t value) {
+bool set_register(uint32_t regNumber, machineState state, uint32_t value) {
     if (regNumber == 13 || regNumber == 14 || regNumber < 1 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range.");
         return false;
@@ -116,20 +116,18 @@ shiftedRegister operand_shift_register(machineState state, uint32_t instruction)
     uint32_t rm_contents = get_register(rm, state);
     uint32_t shift_num = (instruction >> 7) & 0x1F;
     uint32_t shift_type = (instruction >> 5) & 0x3;
-    shiftedRegister result;
+    shiftedRegister result = {0,0};
     switch (shift_type) {
         case logicalLeft:
             result.operand2 = rm_contents << shift_num;
             result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
             return result;
-            break;
         case logicalRight:
             result.operand2 = rm_contents >> shift_num;
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
-            break;
-        case arithRight:
-            uint32_t preservedSign;
+        case arithRight: {
+            uint32_t preservedSign = 0;
             uint32_t signBit = rm_contents & 0x80000000;
             for (int i = 0; i < shift_num; i++) {
                 preservedSign += signBit;
@@ -138,19 +136,86 @@ shiftedRegister operand_shift_register(machineState state, uint32_t instruction)
             result.operand2 = (rm_contents >> shift_num) + preservedSign;
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
             return result;
-            break;
+        }    
         case rotateRight:
             result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
             result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
-            return result;
-            break;
         default:
             return result;
     }
 }
 
-void data_processing_instruction( machineState state, uint32_t instruction){
-
+void data_processing_instruction(machineState state, uint32_t instruction) {
+    bool immediate = ((instruction >> 25) & 0x1) == 1;
+    uint32_t opcode = (instruction >> 21) & 0xF;
+    uint32_t condition = ((instruction >> 20) & 0x1) == 1;
+    uint32_t operand1 = get_register((instruction >> 16) & 0xF, state);
+    uint32_t dest = (instruction >> 12) & 0xF;
+    uint32_t operand2;
+    uint32_t carryBit;
+    if (immediate) {
+        uint32_t imm = instruction & 0xFF;
+        uint32_t rotate = (instruction >> 8) & 0xF;
+        operand2 = imm >> (rotate * 2);
+    } else {
+        shiftedRegister value = operand_shift_register(state, instruction);
+        operand2 = value.operand2;
+        carryBit = value.carryBit;
+    }
+    uint32_t result;
+    switch (opcode) {
+        case AND:
+            result = operand1 & operand2;
+            set_register(dest, state, result);
+            break;
+        case EOR:
+            result = operand1 ^ operand2;
+            set_register(dest, state, result);
+            break;
+        case SUB:
+            result = operand1 - operand2;
+            set_register(dest, state, result);
+            break;
+        case RSB:
+            result = operand2 - operand1;
+            set_register(dest, state, result);
+            break;
+        case ADD:
+            result = operand1 + operand2;
+            set_register(dest, state, result);
+            break;
+        case TST:
+            result = operand1 & operand2;
+            break;
+        case TEQ:
+            result = operand1 ^ operand2;
+            break;
+        case CMP:
+            result = operand1 - operand2;
+            break;
+        case ORR:
+            result = operand1 | operand2;
+            set_register(dest, state, result);
+            break;
+        case MOV:
+            result = operand2;
+            break;
+        default:
+         0;
+        //Overflow thing Jaimi was talking about
+    }
+    if (condition){
+        uint32_t zBit = 0;
+        if (result == 0) {
+            zBit = (1 << 30);
+        }
+        uint32_t nBit = result & 0x80000000;
+        uint32_t cBit = carryBit << 29;
+        uint32_t flags = nBit + zBit + cBit;
+        uint32_t value = get_register(CPSR_REG, state);
+        uint32_t mask = 0xFFFFFFF;
+        set_register(CPSR_REG, state, (value & mask) + flags);
+    }
 }
 
 static bool is_negative(uint32_t instruction) {
@@ -191,40 +256,37 @@ void multiply_instruction(machineState state, uint32_t instruction) {
 
 
 void sdt_instruction(machineState state, uint32_t instruction) {
-  bool offsetBit = (((instruction >> 25) & 1) == 1);
-  bool preindexingBit = (((instruction >> 24) & 1) == 1);
-  bool upBit = (((instruction >> 23) & 1) == 1);
-  bool loadBit = (((instruction >> 20) & 1) == 1);
-  bool baseRegNum = (((instruction >> 16) & 15) == 1);
-  bool srcDestRegNum = (((instruction >> 12) & 15) == 1);
-  uint32_t offset;
+    bool offsetBit = (((instruction >> 25) & 1) == 1);
+    bool preindexingBit = (((instruction >> 24) & 1) == 1);
+    bool upBit = (((instruction >> 23) & 1) == 1);
+    bool loadBit = (((instruction >> 20) & 1) == 1);
+    bool baseRegNum = (((instruction >> 16) & 15) == 1);
+    bool srcDestRegNum = (((instruction >> 12) & 15) == 1);
+    uint32_t offset;
 
-  // 4095 represents a mask of the least significant 12 bits
-  if (!offsetBit) {
-      offset = instruction & 0xFFF;
-  } else {
-      // Implement
-      // offset obtained using functionality from data processing instr.
-      offset = 0;
-  }
+    if (!offsetBit) {
+        // 0xFFF represents a mask of the least significant 12 bits
+        offset = instruction & 0xFFF;
+    } else {
+        offset = operand_shift_register(state, instruction);
+    }
 
-  offset = instruction & 0xFFF;
-  uint32_t baseRegVal = get_register(baseRegNum, state);
-  uint32_t srcDestRegVal = get_register(srcDestRegNum, state);
+    uint32_t baseRegVal = get_register(baseRegNum, state);
+    uint32_t srcDestRegVal = get_register(srcDestRegNum, state);
 
-  if (loadBit) {
-      set_register(srcDestRegNum, state, baseRegVal);
-  } else {
-      set_memory(baseRegVal, state, srcDestRegVal);
-  }
+    if (loadBit) {
+        set_register(srcDestRegNum, state, baseRegVal);
+    } else {
+        set_memory(baseRegVal, state, srcDestRegVal);
+    }
 
-  if (!preindexingBit) {
-      if (upBit) {
-          set_register(baseRegNum, state, baseRegVal + offset);
-      } else {
-          set_register(baseRegNum, state, baseRegVal - offset);
-      }
-  }
+    if (!preindexingBit) {
+        if (upBit) {
+            set_register(baseRegNum, state, baseRegVal + offset);
+        } else {
+            set_register(baseRegNum, state, baseRegVal - offset);
+        }
+    }
 }
 
 void branch_instruction(machineState state, uint32_t instruction) {
@@ -238,33 +300,28 @@ void branch_instruction(machineState state, uint32_t instruction) {
 }
 
 bool check_instruction(machineState state, uint32_t instruction) {
-    instruction >>= SHIFT_COND;
-    char cpsrFlags = state.registers[CPSR_REG] >> SHIFT_COND;
+    // takes highest 4 bits of instruction
+    uint32_t instrCond = instruction >> SHIFT_COND;
+    // takes the highest 4 bits of the CPSR register (i.e. the cond flags)
+    uint32_t cpsrFlags = get_register() >> SHIFT_COND;
     switch (instruction) {
         // CSPR FLAGS : VCZN in C
         case AL:
-            state.has_instruction = true;
             return true;
         case EQ:
-            state.has_instruction = true;
             return cpsrFlags & zeroFlag;
         case NE:
-            state.has_instruction = true;
             return !(cpsrFlags & zeroFlag);
         case GE:
-            state.has_instruction = true;
             return (cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3);
         case LT:
-            state.has_instruction = true;
             return (cpsrFlags & negativeFlag) != ((cpsrFlags & negativeFlag) >> 3);
         case GT:
-            state.has_instruction = true;
             return !(cpsrFlags & zeroFlag) && ((cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3));
         case LE:
-            state.has_instruction = true;
             return !(!(cpsrFlags & zeroFlag) && ((cpsrFlags & negativeFlag) == ((cpsrFlags & negativeFlag) >> 3)));
         default:
-            fprintf(stderr, "An unsupported instruction has been found at PC: %x", state.registers[PC_REG]);
+            fprintf(stderr, "An unsupported instruction has been found at PC: %x", get_register(PC_REG, state));
             print_system_state(state);
             exit(EXIT_FAILURE);
     }
@@ -274,7 +331,7 @@ void execute_instructions(machineState state) {
     uint32_t current_instruction = get_word(state, get_register(PC_REG, state));
     while (current_instruction != 0) {
         decode(state, current_instruction);
-        state.registers[PC_REG] += 4;
+        state.registers[PC_REG] += WORD_SIZE_IN_BYTES;
     }
 }
 
@@ -283,9 +340,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
-
-     machineState state = {(uint8_t *) calloc (MEMORY_SIZE, 1),
-      (uint32_t *) calloc (NUM_OF_REGISTERS,sizeof(uint32_t)), false};
+        uint8_t *memory = (uint8_t *) calloc(MEMORY_SIZE, 1);
+        uint32_t *registers = (uint32_t *) calloc(NUM_OF_REGISTERS, sizeof(uint32_t));
+     machineState state = {memory,registers, false};
 
     // size of 1 allows memory to be byte addressable
     read_file(state, argv[1]);
@@ -294,5 +351,4 @@ int main(int argc, char **argv) {
     free(state.memory);
     free(state.registers);
     exit(EXIT_SUCCESS);
-    return 0;
 }
