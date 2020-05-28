@@ -14,12 +14,14 @@ BRANCH -- clear pipeline
 
 */
 
+
+
 typedef enum instructionType {
-ZERO,
-DATA_PROCESSING,
-MULTIPLY,
-SINGLE_DATA_TRANSFER,
-BRANCH
+    ZERO,
+    DATA_PROCESSING,
+    MULTIPLY,
+    SINGLE_DATA_TRANSFER,
+    BRANCH
 }instructionType;
 
 typedef struct shiftedRegister {
@@ -27,60 +29,73 @@ typedef struct shiftedRegister {
     uint32_t carryBit;
 } shiftedRegister;
 
-typedef struct dataProcessingInstruction {
-    enum instructionOpcodes opcode;
+typedef struct  {
+    instructionOpcode opcode : 4;
     uint32_t operand2;
-    uint8_t rn;
-    uint8_t rd;
+    uint8_t rn : 4;
+    uint8_t rd : 4;
 
-    bool immediate_operand;
-    bool set_cond;
-} dpi;
+    bool carryCond;
+    bool setCond;
+} dataProcessingInstruction;
 
-typedef struct multiplyInstruction {
-
-    uint8_t rn;
-    uint8_t rd;
-    uint8_t rs;
-    uint8_t rm;
+typedef struct {
+    uint8_t rn : 4;
+    uint8_t rd : 4;
+    uint8_t rs : 4;
+    uint8_t rm : 4;
 
     bool accu_cond;
     bool set_cond;
-} mi;
+} multiplyInstruction;
 
-typedef struct sdtInstruction {
+typedef struct {
 
-    uint16_t rn;
-    uint16_t rd;
-    uint16_t offset;
+    uint16_t rn : 4;
+    uint16_t rd : 4;
+    uint32_t offset;
 
     bool up_cond;
     bool load_cond;
     bool indexing_cond;
     bool offset_cond;
-} sdti;
+} sdtInstruction;
+
+/*
+const dpi zeroInstruction = {
+    .opcode = 0,
+    .rn = 0,
+    .rd = 0,
+    .operand2 = 0,
+    .carryCond = false,
+    .setCond = false
+};
+*/
 
 typedef struct branchInstruction {
-    uint32_t offset;
-} bi;
+    uint32_t offset : 24;
+} branchInstruction;
 
-typedef union di {
-    dpi dpi_instruction;
-    mi m_instruction;
-    sdti sdt_instruction;
-    bi b_instruction;
-} di;
+typedef struct {
+    instructionType type : 3;
+    uint8_t cond_code: 4;
+    union {
+        dataProcessingInstruction dpi;
+        multiplyInstruction mi;
+        sdtInstruction sdti;
+        branchInstruction bi;
+    };
+} decodedInstruction;
+
 
 typedef struct machineState {
     uint8_t *memory;
     uint32_t *registers;
-    uint32_t fetched;
-    uint32_t toBeDecoded;
-    di decodedInstruction;
-    instructionType before;
-    di toBeExecuted;
-    instructionType after;
+    uint32_t instructionFetched;
+    decodedInstruction *instructionToDecode;
+    decodedInstruction *instructionToExecute;
 
 } machineState;
+
 
 #endif

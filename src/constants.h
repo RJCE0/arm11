@@ -28,7 +28,7 @@ enum csprFlags {
     NEGATIVE_FLAG = 8   /* 1000 */
 };
 
-enum instructionOpcodes {
+typedef enum instructionOpcode {
     AND = 0,    /* 0000 */
     EOR = 1,    /* 0001 */
     SUB = 2,    /* 0010 */
@@ -39,7 +39,7 @@ enum instructionOpcodes {
     CMP = 10,   /* 1010 */
     ORR = 12,   /* 1100 */
     MOV = 13    /* 1101 */
-};
+} instructionOpcode;
 
 enum shiftCodes {
     LOGICAL_LEFT = 0,
