@@ -98,6 +98,7 @@ void print_register_values(machineState *state) {
 }
 
 void print_system_state(machineState *state) {
+    assert(state);
    for (uint32_t i = 0; i < MEMORY_SIZE; i += 4) {
        if (get_word(state, i) != 0) {
            printf("Memory at 0x%x : 0x%x", i, get_word(state, i));
@@ -131,33 +132,33 @@ void decode(machineState *state, uint32_t instruction) {
 
 shiftedRegister operand_shift_register(machineState *state, uint32_t instruction){
     uint32_t rm = instruction & 0xF;
-    uint32_t rm_contents = get_register(rm, state);
-    uint32_t shift_num = (instruction >> 7) & 0x1F;
-    uint32_t shift_type = (instruction >> 5) & 0x3;
+    uint32_t rmContents = get_register(rm, state);
+    uint32_t shiftNum = (instruction >> 7) & 0x1F;
+    uint32_t shiftType = (instruction >> 5) & 0x3;
     shiftedRegister result = {0,0};
-    switch (shift_type) {
+    switch (shiftType) {
         case LOGICAL_LEFT:
-            result.operand2 = rm_contents << shift_num;
-            result.carryBit = (rm_contents >> (32 - shift_num)) & 0x1;
+            result.operand2 = rmContents << shiftNum;
+            result.carryBit = (rmContents >> (32 - shiftNum)) & 0x1;
             return result;
         case LOGICAL_RIGHT:
-            result.operand2 = rm_contents >> shift_num;
-            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            result.operand2 = rmContents >> shiftNum;
+            result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
         case ARITH_RIGHT: {
             uint32_t preservedSign = 0;
-            uint32_t signBit = rm_contents & 0x80000000;
-            for (uint32_t i = 0; i < shift_num; i++) {
+            uint32_t signBit = rmContents & 0x80000000;
+            for (uint32_t i = 0; i < shiftNum; i++) {
                 preservedSign += signBit;
                 signBit >>= 1;
             }
-            result.operand2 = (rm_contents >> shift_num) + preservedSign;
-            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            result.operand2 = (rmContents >> shiftNum) + preservedSign;
+            result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
         }    
         case ROTATE_RIGHT:
-            result.operand2 = (rm_contents >> shift_num) | (rm_contents << (32 - shift_num));
-            result.carryBit = (rm_contents >> (shift_num - 1)) & 0x1;
+            result.operand2 = (rmContents >> shiftNum) | (rmContents << (32 - shift_num));
+            result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
 
         default:
@@ -309,6 +310,14 @@ void sdt_instruction(machineState *state, uint32_t instruction) {
     }
 }
 
+void clear_pipeline(machineState *state) {
+    assert(state);
+    state->instructionFetched = -1;
+    state->instructionToDecode = NULL;
+    state->instructionToExecute = NULL;
+
+}
+
 void branch_instruction(machineState *state, uint32_t instruction) {
     uint32_t offset = instruction & 0xFFFFFF;
     offset <<= 2;
@@ -317,6 +326,7 @@ void branch_instruction(machineState *state, uint32_t instruction) {
         offset |= SE_32;
     }
     state->registers[PC_REG] += offset;
+    clear_pipeline(state);
 }
 
 bool check_instruction(machineState *state, uint32_t instruction) {
