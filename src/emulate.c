@@ -29,7 +29,12 @@ bool read_file(machineState *state, char *filename) {
     fread will only read till the end of the file or until the size is met.
     Fread also returns the number of elements read.
     */
-    fread(state->memory, MEMORY_SIZE, 1, binFile);
+     long int fileSize = fread(state->memory, MEMORY_SIZE, 1, binFile);
+    if (ferror(binFile)) {
+        fprintf(stderr, "Error while reading file. Exiting...\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("File successfully read. File size: %lu", fileSize);
     fclose(binFile);
     return true;
 }
