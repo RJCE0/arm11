@@ -20,6 +20,7 @@
 
 bool read_file(machineState *state, char *filename) {
     FILE *binFile;
+    char instr[32];
     binFile = fopen(filename, "rb");
     if (!binFile) {
         fprintf(stderr, "File does not exist. Exiting...\n");
@@ -29,12 +30,15 @@ bool read_file(machineState *state, char *filename) {
     fread will only read till the end of the file or until the size is met.
     Fread also returns the number of elements read.
     */
-     unsigned long fileSize = fread(state->memory, MEMORY_SIZE,1, binFile);
+    //Needs to be fixed, reads backwards for some reason smh
+    while (fgets(instr, sizeof(instr),binFile) != NULL) {
+        printf()
+    }
+    fread(state->memory, MEMORY_SIZE,1, binFile);
     if (ferror(binFile)) {
         fprintf(stderr, "Error while reading file. Exiting...\n");
         exit(EXIT_FAILURE);
     }
-    printf("File successfully read. File size: %lu", fileSize);
     fclose(binFile);
     return true;
 }
@@ -42,6 +46,7 @@ bool read_file(machineState *state, char *filename) {
 uint32_t get_register(uint32_t regNumber, machineState *state) {
     if (regNumber == 13 || regNumber == 14 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
+        print_system_state(state);
         exit(EXIT_FAILURE);
     }
     return state->registers[regNumber];
@@ -71,7 +76,7 @@ bool set_memory(uint32_t address, machineState *state, uint8_t value) {
 }
 
 uint32_t get_word(machineState *state, uint32_t address) {
-    uint32_t fullWord;
+    uint32_t fullWord = 0;
     memcpy(&fullWord, &(state->memory[address]), WORD_SIZE_IN_BYTES);
     return fullWord;
     // Might be an issue here...
@@ -90,14 +95,14 @@ uint32_t get_word(machineState *state, uint32_t address) {
 void print_register_values(machineState *state) {
     for (int i = 0; i < NUM_OF_REGISTERS; i++) {
         if (i != 13 && i != 14) {
-            printf("Register %i : 0x%x", i, get_register(i, state));
+            printf("Register %i : 0x%x\n", i, get_register(i, state));
         }
         if (i == PC_REG) {
-            printf("Program counter: 0x%x", get_register(PC_REG, state));
+            printf("Program counter: 0x%x\n", get_register(PC_REG, state));
         }
 
         if (i == CPSR_REG) {
-            printf("CPSR: 0x%x", get_register(CPSR_REG, state));
+            printf("CPSR: 0x%x\n", get_register(CPSR_REG, state));
         }
     }
 }
@@ -106,7 +111,7 @@ void print_system_state(machineState *state) {
     assert(state);
     for (uint32_t i = 0; i < MEMORY_SIZE; i += 4) {
         if (get_word(state, i) != 0) {
-            printf("Memory at 0x%x : 0x%x", i, get_word(state, i));
+            printf("Memory at 0x%x : 0x%x\n", i, get_word(state, i));
         }
     }
 
@@ -233,14 +238,15 @@ void decode(machineState *state, uint32_t instruction) {
         }
         instr.dpi = decode_dpi(state, instruction);
     }
-    uint32_t instrNum = (get_register(PC_REG, state) - 4) / 4;
-    state->instructionAfterDecode[instrNum] = instr;
+    state->decodedInstr = true;
+    /*uint32_t instrNum = (get_register(PC_REG, state) - 4) / 4;*/
+    state->instructionAfterDecode = &instr;
 }
 
 void execute_dpi(machineState *state, dataProcessingInstruction dpi){
     uint32_t result;
+    uint32_t operand1 = get_register(dpi.rn, state);
     switch (dpi.opcode) {
-        uint32_t operand1 = get_register(dpi.rn, state);
         case AND:
             result = operand1 & dpi.operand2;
             set_register(dpi.rd, state, result);
@@ -282,6 +288,9 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
             result = dpi.operand2;
             break;
         default:
+            fprintf(stderr, "An unknown operand has been found at PC:%0x.", get_register(PC_REG, state));
+            print_system_state(state);
+            exit(EXIT_FAILURE);
     }
     if (dpi.setBit){
         uint32_t zBit = 0;
@@ -344,8 +353,8 @@ void execute_sdti(machineState *state, sdtInstruction sdti) {
 
 void clear_pipeline(machineState *state) { 
     assert(state);
-    state->instructionAfterDecode = NULL;
-    state->fetched_instr = false;
+    state->fetchedInstr = false;
+    state->decodedInstr = false;
 }
 
 void execute_bi(machineState *state) {
@@ -356,23 +365,23 @@ void execute_bi(machineState *state) {
 bool check_cond(machineState *state, uint8_t instrCond) {
     // takes the highest 4 bits of the CPSR register (i.e. the cond flags)
     uint32_t cpsrFlags = get_register(CPSR_REG, state) >> SHIFT_COND;
-    switch (instrCond) {
+    switch (cpsrFlags) {
         // CSPR FLAGS : VCZN in C
         case AL:
             return true;
         case EQ:
-            return cpsrFlags & ZERO_FLAG;
+            return instrCond & ZERO_FLAG;
         case NE:
-            return !(cpsrFlags & ZERO_FLAG);
+            return !(instrCond & ZERO_FLAG);
         case GE:
-            return (cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3);
+            return (instrCond & NEGATIVE_FLAG) == ((instrCond & NEGATIVE_FLAG) >> 3);
         case LT:
-            return (cpsrFlags & NEGATIVE_FLAG) != ((cpsrFlags & NEGATIVE_FLAG) >> 3);
+            return (instrCond & NEGATIVE_FLAG) != ((instrCond & NEGATIVE_FLAG) >> 3);
         case GT:
-            return !(cpsrFlags & ZERO_FLAG) && ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3));
+            return !(instrCond & ZERO_FLAG) && ((instrCond & NEGATIVE_FLAG) == ((instrCond & NEGATIVE_FLAG) >> 3));
         case LE:
-            return !(!(cpsrFlags & ZERO_FLAG) &&
-                     ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3)));
+            return !(!(instrCond & ZERO_FLAG) &&
+                     ((instrCond & NEGATIVE_FLAG) == ((instrCond & NEGATIVE_FLAG) >> 3)));
             // = !GT
         default:
             fprintf(stderr, "An unsupported instruction has been found at PC: %x", get_register(PC_REG, state));
@@ -382,8 +391,7 @@ bool check_cond(machineState *state, uint8_t instrCond) {
 }
 
 void execute_instructions(machineState *state) {
-    int execNum = (get_register(PC_REG, state) - 8) / 4;
-    decodedInstruction decoded = state->instructionAfterDecode[execNum];
+    decodedInstruction decoded = *(state->instructionAfterDecode);
     if (!check_cond(state, decoded.condCode)) {
         // need to check that will exit function at this point
         return;
@@ -417,10 +425,16 @@ void execute_instructions(machineState *state) {
 
 void fetch(machineState *state) {
     state->fetched = get_word(state, get_register(PC_REG, state));
-    state->fetched_instr = true;
+    state->fetchedInstr = true;
+    state->registers[PC_REG] += 4;
 }
 
+
+
 bool decoded_instruction_present(machineState *state) {
+    if (state->instructionAfterDecode == NULL) {
+        return false;
+    }
     return state->instructionAfterDecode->type == DATA_PROCESSING
            || state->instructionAfterDecode->type == SINGLE_DATA_TRANSFER
            || state->instructionAfterDecode->type == MULTIPLY
@@ -429,13 +443,14 @@ bool decoded_instruction_present(machineState *state) {
 }
 
 void pipeline(machineState *state) {
+    state->fetchedInstr = false;
     while (true) {
         // Execution of decoded instruction.
-        if (decoded_instruction_present(state)) {
+        if (state->decodedInstr) {
             execute_instructions(state);
         }
 
-        if (state->fetched_instr) {
+        if (state->fetchedInstr) {
             decode(state, state->fetched);
         }
 
@@ -443,25 +458,25 @@ void pipeline(machineState *state) {
     }
 }
 
+
+/*
 const machineState default_state = {
         .registers = {0},
         .memory = {0},
-        .fetched_instr = false,
+        .fetchedInstr = false,
         .fetched = 0,
-        .instructionAfterDecode = NULL,
+        .instructionAfterDecode
 };
+*/
+
 
 int main(int argc, char **argv) {
-   for (int i = 0; i < argc; i++) {
-        printf("%s\n", argv[i]);
-    }
-
     if (argc != 2) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
     machineState *state = (machineState *) calloc(1, sizeof(machineState));
-    *state = default_state;
+    //*state = default_state;
     read_file(state, argv[1]);
     pipeline(state);
 

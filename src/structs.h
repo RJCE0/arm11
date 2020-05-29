@@ -56,6 +56,16 @@ typedef struct {
 } branchInstruction;
 
 typedef struct {
+    uint8_t rn : 4;
+    uint8_t rd : 4;
+    uint8_t rs : 4;
+    uint8_t rm : 4;
+
+    bool accumBit;
+    bool setBit;
+}nullInstruction;
+
+typedef struct {
     instructionType type : 3;
     uint8_t condCode: 4;
     union {
@@ -63,16 +73,24 @@ typedef struct {
         multiplyInstruction mi;
         sdtInstruction sdti;
         branchInstruction bi;
+        nullInstruction ni;
     };
 } decodedInstruction;
 
-
+/*const decodedInstruction null_instruction = {
+    .type = NULL_I,
+    .condCode =
+};*/
 typedef struct {
-    uint8_t *memory;
-    uint32_t *registers;
+    uint8_t memory[MEMORY_SIZE];
+    uint32_t registers[NUM_OF_REGISTERS];
     uint32_t fetched;
     decodedInstruction *instructionAfterDecode;
-    bool fetched_instr;
+/*
+    decodedInstruction *instructionAfterExecute;
+*/
+    bool fetchedInstr;
+    bool decodedInstr;
 } machineState;
 
 

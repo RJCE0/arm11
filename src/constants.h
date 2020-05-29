@@ -4,7 +4,7 @@
 
 #define WORD_SIZE 32
 #define MEMORY_SIZE 65536
-#define NUM_OF_REGISTERS 32
+#define NUM_OF_REGISTERS 17
 #define CPSR_REG 16
 #define PC_REG 15
 #define SHIFT_COND 28
@@ -53,7 +53,8 @@ typedef enum {
     MULTIPLY,
     SINGLE_DATA_TRANSFER,
     BRANCH,
-    ZERO
+    ZERO,
+    NULL_I
 }instructionType;
 
 
