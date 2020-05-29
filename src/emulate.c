@@ -211,11 +211,11 @@ void decode(machineState *state, uint32_t instruction){
     instr.condCode = (instruction >> 28) & 0xF;
     if ((instruction >> 26) & 0x1) {
         instr.type = SINGLE_DATA_TRANSFER;
-        instr.sdt = decode_sdt(state, instruction);
-    } else if (instruction >> 27) & 0x1) {
+        instr.sdti = decode_sdt(state, instruction);
+    } else if ((instruction >> 27) & 0x1) {
         instr.type = BRANCH;
         instr.bi = decode_bi(state, instruction);
-    } else if (((instruction >> 22) & 3F) && (((instruction >> 4) & 0xF) == 9)) {
+    } else if (!((instruction >> 22) & 0x3F) && (((instruction >> 4) & 0xF) == 9)) {
         instr.type = MULTIPLY;
         instr.mi = decode_mi(state, instruction);
     } else {
@@ -231,39 +231,41 @@ void decode(machineState *state, uint32_t instruction){
 }
 
 void execute_dpi(machineState *state, dataProcessingInstruction dpi){
+    uint32_t result;
     switch (dpi.opcode) {
+        uint32_t operand1 = get_register(dpi.rn, state);
         case AND:
-            result = dpi.operand1 & dpi.operand2;
-            set_register(dpi.dest, state, result);
+            result = operand1 & dpi.operand2;
+            set_register(dpi.rd, state, result);
             break;
         case EOR:
-            result = dpi.operand1 ^ operand2;
-            set_register(dpi.dest, state, result);
+            result = operand1 ^ dpi.operand2;
+            set_register(dpi.rd, state, result);
             break;
         case SUB:
-            result = dpi.operand1 - dpi.operand2;
-            set_register(dpi.dest, state, result);
+            result = operand1 - dpi.operand2;
+            set_register(dpi.rd, state, result);
             break;
         case RSB:
-            result = dpi.operand2 - dpi.operand1;
-            set_register(dpi.dest, state, result);
+            result = dpi.operand2 - operand1;
+            set_register(dpi.rd, state, result);
             break;
         case ADD:
-            result = dpi.operand1 + dpi.operand2;
-            set_register(dpi.dest, state, result);
+            result = operand1 + dpi.operand2;
+            set_register(dpi.rd, state, result);
             break;
         case TST:
-            result = dpi.operand1 & dpi.operand2;
+            result = operand1 & dpi.operand2;
             break;
         case TEQ:
-            result = dpi.operand1 ^ dpi.operand2;
+            result = operand1 ^ dpi.operand2;
             break;
         case CMP:
-            result = dpi.operand1 - dpi.operand2;
+            result = operand1 - dpi.operand2;
             break;
         case ORR:
-            result = dpi.operand1 | dpi.operand2;
-            set_register(dpi.dest, state, result);
+            result = operand1 | dpi.operand2;
+            set_register(dpi.rd, state, result);
             break;
         case MOV:
             result = dpi.operand2;
@@ -335,7 +337,6 @@ void clear_pipeline(machineState *state) {
     state->instructionFetched = -1;
     state->instructionToDecode = NULL;
     state->instructionToExecute = NULL;
-
 }
 
 void execute_bi(machineState *state){
@@ -408,9 +409,11 @@ void fetch(machineState *state){
 
 // provisional pipeline function, need to implement actual cycle using below functions
 void pipeline(machineState *state) {
-    execute_instructions(state);
-    decode(state, state->fetched);
-    fetch(state);
+    while (true) {
+        execute_instructions(state);
+        decode(state, state->fetched);
+        fetch(state);
+    }
 }
 
 int main(int argc, char **argv) {
