@@ -234,13 +234,13 @@ void decode(machineState *state, uint32_t instruction) {
         instr.dpi = decode_dpi(state, instruction);
     }
     uint32_t instrNum = (get_register(PC_REG, state) - 4) / 4;
-    state->instructionToDecode[instrNum] = instr;
+    state->instructionAfterDecode[instrNum] = instr;
 }
 
-void execute_dpi(machineState *state, dataProcessingInstruction dpi) {
+void execute_dpi(machineState *state, dataProcessingInstruction dpi){
     uint32_t result;
-    uint32_t operand1 = get_register(dpi.rn, state);
     switch (dpi.opcode) {
+        uint32_t operand1 = get_register(dpi.rn, state);
         case AND:
             result = operand1 & dpi.operand2;
             set_register(dpi.rd, state, result);
@@ -250,14 +250,17 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi) {
             set_register(dpi.rd, state, result);
             break;
         case SUB:
+            dpi.carryBit = dpi.operand2 > operand1;
             result = operand1 - dpi.operand2;
             set_register(dpi.rd, state, result);
             break;
         case RSB:
+            dpi.carryBit = operand1 > dpi.operand2;
             result = dpi.operand2 - operand1;
             set_register(dpi.rd, state, result);
             break;
         case ADD:
+            dpi.carryBit = 0xFFFFFFFF - operand1 < dpi.operand2;
             result = operand1 + dpi.operand2;
             set_register(dpi.rd, state, result);
             break;
@@ -268,6 +271,7 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi) {
             result = operand1 ^ dpi.operand2;
             break;
         case CMP:
+            dpi.carryBit = dpi.operand2 > operand1;
             result = operand1 - dpi.operand2;
             break;
         case ORR:
@@ -277,15 +281,14 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi) {
         case MOV:
             result = dpi.operand2;
             break;
-        default:;
+        default:
     }
-    if (dpi.setBit) {
+    if (dpi.setBit){
         uint32_t zBit = 0;
         if (result == 0) {
             zBit = (1 << 30);
         }
         uint32_t nBit = result & 0x80000000;
-        // need to complete implemntation for carry for arithmetic ops
         uint32_t cBit = dpi.carryBit << 29;
         uint32_t flags = nBit + zBit + cBit;
         uint32_t value = get_register(CPSR_REG, state);
@@ -342,13 +345,12 @@ void execute_sdti(machineState *state, sdtInstruction sdti) {
 void clear_pipeline(machineState *state) { // to finish
     assert(state);
     state->fetched = -1;
-    state->instructionToDecode = NULL;
-    state->instructionToExecute = NULL;
+    state->instructionAfterDecode = NULL;
     state->fetched_instr = false;
 }
 
 void execute_bi(machineState *state) { //branch instr to finish
-    state->registers[PC_REG] += state->instructionToExecute->bi.offset;
+    state->registers[PC_REG] += state->instructionAfterDecode->bi.offset;
     clear_pipeline(state);
 }
 
@@ -382,7 +384,7 @@ bool check_cond(machineState *state, uint8_t instrCond) {
 
 void execute_instructions(machineState *state) {
     int execNum = (get_register(PC_REG, state) - 8) / 4;
-    decodedInstruction decoded = state->instructionToExecute[execNum];
+    decodedInstruction decoded = state->instructionAfterDecode[execNum];
     if (!check_cond(state, decoded.condCode)) {
         // need to check that will exit function at this point
         return;
@@ -420,15 +422,15 @@ void fetch(machineState *state) {
 }
 
 bool decoded_instruction_present(machineState *state) {
-    return state->instructionToDecode->type == DATA_PROCESSING
-           || state->instructionToDecode->type == SINGLE_DATA_TRANSFER
-           || state->instructionToDecode->type == MULTIPLY
-           || state->instructionToDecode->type == BRANCH
-           || state->instructionToDecode->type == ZERO;
+    return state->instructionAfterDecode->type == DATA_PROCESSING
+           || state->instructionAfterDecode->type == SINGLE_DATA_TRANSFER
+           || state->instructionAfterDecode->type == MULTIPLY
+           || state->instructionAfterDecode->type == BRANCH
+           || state->instructionAfterDecode->type == ZERO;
 }
 
 void pipeline(machineState *state) {
-    while (state->instructionToDecode->type != ZERO) {
+    while (true) {
         // Execution of decoded instruction.
         if (decoded_instruction_present(state)) {
             execute_instructions(state);
@@ -438,33 +440,16 @@ void pipeline(machineState *state) {
             decode(state, state->fetched);
         }
 
-        if (state->instructionToDecode->type != ZERO) {
-            fetch(state);
-        } else {
-            state->fetched_instr = false;
-        }
-
-        set_register(PC_REG, state, get_register(PC_REG, state) + 4);
+        fetch(state);
     }
-
-    printf("Congratulations -- the program completed! Printing final system state...\n");
-    print_system_state(state);
-    printf("\n Terminating emulator now...");
-
-    free(state->instructionToDecode);
-    free(state->instructionToExecute);
-    free(state->registers);
-    free(state->memory);
-    exit(EXIT_SUCCESS);
 }
 
 const machineState default_state = {
         .registers = {0},
         .memory = {0},
         .fetched_instr = false,
-        .instructionToExecute = NULL,
         .fetched = 0,
-        .instructionToDecode = NULL,
+        .instructionAfterDecode = NULL,
 };
 
 int main(int argc, char **argv) {
