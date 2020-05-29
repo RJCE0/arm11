@@ -341,15 +341,14 @@ void execute_sdti(machineState *state, sdtInstruction sdti) {
     }
 }
 
-// incomplete, to finish
-void clear_pipeline(machineState *state) { // to finish
+
+void clear_pipeline(machineState *state) { 
     assert(state);
-    state->fetched = -1;
     state->instructionAfterDecode = NULL;
     state->fetched_instr = false;
 }
 
-void execute_bi(machineState *state) { //branch instr to finish
+void execute_bi(machineState *state) {
     state->registers[PC_REG] += state->instructionAfterDecode->bi.offset;
     clear_pipeline(state);
 }
