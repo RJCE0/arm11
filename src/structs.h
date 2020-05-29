@@ -73,6 +73,7 @@ typedef struct {
     uint32_t fetched;
     decodedInstruction *instructionToDecode;
     decodedInstruction *instructionToExecute;
+    bool fetched_instr;
 } machineState;
 
 
