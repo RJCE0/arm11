@@ -14,17 +14,7 @@ BRANCH -- clear pipeline
 
 */
 
-
-
-typedef enum instructionType {
-    ZERO,
-    DATA_PROCESSING,
-    MULTIPLY,
-    SINGLE_DATA_TRANSFER,
-    BRANCH
-}instructionType;
-
-typedef struct shiftedRegister {
+typedef struct {
     uint32_t operand2;
     uint32_t carryBit;
 } shiftedRegister;
@@ -35,8 +25,8 @@ typedef struct  {
     uint8_t rn : 4;
     uint8_t rd : 4;
 
-    bool carryCond;
-    bool setCond;
+    bool carryBit;
+    bool setBit;
 } dataProcessingInstruction;
 
 typedef struct {
@@ -45,40 +35,29 @@ typedef struct {
     uint8_t rs : 4;
     uint8_t rm : 4;
 
-    bool accu_cond;
-    bool set_cond;
+    bool accumBit;
+    bool setBit;
 } multiplyInstruction;
 
 typedef struct {
-
     uint16_t rn : 4;
     uint16_t rd : 4;
     uint32_t offset;
 
-    bool up_cond;
-    bool load_cond;
-    bool indexing_cond;
-    bool offset_cond;
+    bool upBit;
+    bool loadBit;
+    bool indexingBit;
+    bool offsetBit;
 } sdtInstruction;
 
-/*
-const dpi zeroInstruction = {
-    .opcode = 0,
-    .rn = 0,
-    .rd = 0,
-    .operand2 = 0,
-    .carryCond = false,
-    .setCond = false
-};
-*/
 
-typedef struct branchInstruction {
+typedef struct {
     uint32_t offset : 24;
 } branchInstruction;
 
 typedef struct {
     instructionType type : 3;
-    uint8_t cond_code: 4;
+    uint8_t condCode: 4;
     union {
         dataProcessingInstruction dpi;
         multiplyInstruction mi;
@@ -88,13 +67,12 @@ typedef struct {
 } decodedInstruction;
 
 
-typedef struct machineState {
+typedef struct {
     uint8_t *memory;
     uint32_t *registers;
-    uint32_t instructionFetched;
-    decodedInstruction *instructionToDecode;
+    uint32_t fetched;
+    decodedInstruction *instructionDecode;
     decodedInstruction *instructionToExecute;
-
 } machineState;
 
 

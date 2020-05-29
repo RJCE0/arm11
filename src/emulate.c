@@ -108,28 +108,6 @@ void print_system_state(machineState *state) {
     print_register_values(state);
 }
 
-void decode(machineState *state, uint32_t instruction) {
-    if(check_instruction(state, instruction)){
-        uint32_t mask = 0xFFFFFFF;
-        instruction &= mask;
-        if (instruction >> 26 == 1) {
-            sdt_instruction(state, instruction);
-        } else if (instruction >> 24 == 10) {
-            branch_instruction(state, instruction);
-        } else if (((instruction >> 22) & ((instruction >> 4) & 0xF)) == 9) {
-            multiply_instruction(state, instruction);
-        } else if ((instruction >> 26) == 0) {
-            data_processing_instruction(state, instruction);
-        } else {
-            fprintf(stderr, "An unsupported instruction has been found at [PC: %x] and the program can no longer continue. Exiting...\n", state->registers[PC_REG]);
-            print_system_state(state);
-            free(state->registers);
-            free(state->memory);
-            exit(EXIT_FAILURE);
-        }
-    }    
-}
-
 shiftedRegister operand_shift_register(machineState *state, uint32_t instruction){
     uint32_t rm = instruction & 0xF;
     uint32_t rmContents = get_register(rm, state);
@@ -145,7 +123,7 @@ shiftedRegister operand_shift_register(machineState *state, uint32_t instruction
             result.operand2 = rmContents >> shiftNum;
             result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
-        case ARITH_RIGHT: {
+        case ARITH_RIGHT:
             uint32_t preservedSign = 0;
             uint32_t signBit = rmContents & 0x80000000;
             for (uint32_t i = 0; i < shiftNum; i++) {
@@ -155,9 +133,8 @@ shiftedRegister operand_shift_register(machineState *state, uint32_t instruction
             result.operand2 = (rmContents >> shiftNum) + preservedSign;
             result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
-        }    
         case ROTATE_RIGHT:
-            result.operand2 = (rmContents >> shiftNum) | (rmContents << (32 - shift_num));
+            result.operand2 = (rmContents >> shiftNum) | (rmContents << (32 - shiftNum));
             result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
 
@@ -166,72 +143,141 @@ shiftedRegister operand_shift_register(machineState *state, uint32_t instruction
     }
 }
 
-void data_processing_instruction(machineState *state, uint32_t instruction) {
-    bool immediate = ((instruction >> 25) & 0x1) == 1;
-    uint32_t opcode = (instruction >> 21) & 0xF;
-    uint32_t condition = ((instruction >> 20) & 0x1) == 1;
-    uint32_t operand1 = get_register((instruction >> 16) & 0xF, state);
-    uint32_t dest = (instruction >> 12) & 0xF;
-    uint32_t operand2;
-    uint32_t carryBit;
+dataProcessingInstruction decode_dpi(machineState *state, uint32_t instruction){
+    dataProcessingInstruction dpi;
+    bool immediate = ((instruction >> 25) & 0x1);
+    dpi.opcode = (instruction >> 21) & 0xF;
+    dpi.setBit = (instruction >> 20) & 0x1;
+    dpi.operand1 = get_register((instruction >> 16) & 0xF, state);
+    dpi.dest = (instruction >> 12) & 0xF;
     if (immediate) {
         uint32_t imm = instruction & 0xFF;
         uint32_t rotate = (instruction >> 8) & 0xF;
-        operand2 = imm >> (rotate * 2);
+        dpi.operand2 = imm >> (rotate * 2);
     } else {
         shiftedRegister value = operand_shift_register(state, instruction);
-        operand2 = value.operand2;
-        carryBit = value.carryBit;
+        dpi.operand2 = value.operand2;
+        dpi.carryBit = value.carryBit;
     }
-    uint32_t result = 0;
-    switch (opcode) {
+    return dpi;
+}
+
+static bool is_negative(uint32_t instruction) {
+    return (instruction & 1) != 0;
+}
+
+multiplyInstruction decode_mi(machineState *state, uint32_t instruction){
+    multiplyInstruction mi;
+    mi.rm = instruction & 0xF;
+    mi.rs = (instruction >> 8) & 0xF;
+    mi.rn = (instruction >> 12) & 0xF;
+    mi.rd = (instruction >> 16) & 0xF;
+    mi.setBit = (instruction >> 20) & 0x1;
+    mi.accumBit = (instruction >> 21) & 0x1;
+    return mi;
+}
+
+sdtInstruction decode_sdt(machineState *state, uint32_t instruction){
+    sdtInstruction sdti;
+    bool offsetBit = (instruction >> 25) & 0x1;
+    sdti.indexingBit = (instruction >> 24) & 0x1;
+    sdti.upBit = (instruction >> 23) & 0x1;
+    sdti.loadBit = (instruction >> 20) & 0x1;
+    sdti.rn = (instruction >> 16) & 0xF;
+    sdti.rd = (instruction >> 12) & 0xF;
+
+    if (!offsetBit) {
+        // 0xFFF represents a mask of the least significant 12 bits
+        sdti.offset = instruction & 0xFFF;
+    } else {
+        sdti.offset = operand_shift_register(state, instruction).operand2;
+    }
+    return sdti;
+}
+
+branchInstruction decode_bi(machineState *state, uint32_t instruction){
+    branchInstruction bi;
+    uint32_t offset = instruction & 0xFFFFFF;
+    offset <<= 2;
+    if (is_negative(instruction >> 23)) {
+        offset |= SE_32;
+    }
+    bi.offset = offset;
+    return bi;
+}
+
+void decode(machineState *state, uint32_t instruction){
+    decodedInstruction instr;
+    instr.condCode = (instruction >> 28) & 0xF;
+    if ((instruction >> 26) & 0x1) {
+        instr.type = SINGLE_DATA_TRANSFER;
+        instr.sdt = decode_sdt(state, instruction);
+    } else if (instruction >> 27) & 0x1) {
+        instr.type = BRANCH;
+        instr.bi = decode_bi(state, instruction);
+    } else if (((instruction >> 22) & 3F) && (((instruction >> 4) & 0xF) == 9)) {
+        instr.type = MULTIPLY;
+        instr.mi = decode_mi(state, instruction);
+    } else {
+        if (instruction){
+            instr.type = DATA_PROCESSING;
+        } else {
+            instr.type = ZERO;
+        }
+        instr.dpi = decode_dpi(state, instruction);
+    }
+    int instrNum = (get_register(PC_REG, state) - 4) / 4;
+    state -> instructionDecode[instrNum] = instr;
+}
+
+void execute_dpi(machineState *state, dataProcessingInstruction dpi){
+    switch (dpi.opcode) {
         case AND:
-            result = operand1 & operand2;
-            set_register(dest, state, result);
+            result = dpi.operand1 & dpi.operand2;
+            set_register(dpi.dest, state, result);
             break;
         case EOR:
-            result = operand1 ^ operand2;
-            set_register(dest, state, result);
+            result = dpi.operand1 ^ operand2;
+            set_register(dpi.dest, state, result);
             break;
         case SUB:
-            result = operand1 - operand2;
-            set_register(dest, state, result);
+            result = dpi.operand1 - dpi.operand2;
+            set_register(dpi.dest, state, result);
             break;
         case RSB:
-            result = operand2 - operand1;
-            set_register(dest, state, result);
+            result = dpi.operand2 - dpi.operand1;
+            set_register(dpi.dest, state, result);
             break;
         case ADD:
-            result = operand1 + operand2;
-            set_register(dest, state, result);
+            result = dpi.operand1 + dpi.operand2;
+            set_register(dpi.dest, state, result);
             break;
         case TST:
-            result = operand1 & operand2;
+            result = dpi.operand1 & dpi.operand2;
             break;
         case TEQ:
-            result = operand1 ^ operand2;
+            result = dpi.operand1 ^ dpi.operand2;
             break;
         case CMP:
-            result = operand1 - operand2;
+            result = dpi.operand1 - dpi.operand2;
             break;
         case ORR:
-            result = operand1 | operand2;
-            set_register(dest, state, result);
+            result = dpi.operand1 | dpi.operand2;
+            set_register(dpi.dest, state, result);
             break;
         case MOV:
-            result = operand2;
+            result = dpi.operand2;
             break;
         default:
-         set_register(dest, state, result);
-        //Overflow thing Jaimi was talking about
     }
-    if (condition){
+    if (dpi.setBit){
         uint32_t zBit = 0;
         if (result == 0) {
             zBit = (1 << 30);
         }
         uint32_t nBit = result & 0x80000000;
-        uint32_t cBit = carryBit << 29;
+        // need to complete implemntation for carry for arithmetic ops
+        uint32_t cBit = dpi.carryBit << 29;
         uint32_t flags = nBit + zBit + cBit;
         uint32_t value = get_register(CPSR_REG, state);
         uint32_t mask = 0xFFFFFFF;
@@ -239,29 +285,19 @@ void data_processing_instruction(machineState *state, uint32_t instruction) {
     }
 }
 
-static bool is_negative(uint32_t instruction) {
-    return (instruction & 1) != 0;
-}
-
-void multiply_instruction(machineState *state, uint32_t instruction) {
+void execute_mi(machineState *state, multiplyInstruction mi){
     uint32_t res;
     uint32_t acc;
     uint32_t currentCpsr;
     uint32_t lastBit;
 
-    uint32_t aFlag = (instruction >> 21) & 0x1;
-    uint32_t sFlag = (instruction >> 20) & 0x1;
-    uint32_t rm = (instruction >> 4) & 0xF;
-    uint32_t rs = (instruction >> 12) & 0xF;
-    uint32_t rn = (instruction >> 16) & 0xF;
-    uint32_t rd = (instruction >> 20) & 0xF;
     /*Performing the operation */
-    acc = (aFlag) ? state->registers[rn] : 0;
-    res = (state->registers[rm] * state->registers[rs]) + acc;
-    state->registers[rd] = res;
+    acc = (mi.accumBit) ? state->registers[mi.rn] : 0;
+    res = (state->registers[mi.rm] * state->registers[mi.rs]) + acc;
+    state->registers[mi.rd] = res;
 
     /*Changing flag status if necessary */
-    if (sFlag) {
+    if (mi.setBit) {
          currentCpsr = state->registers[CPSR_REG] & 0xFFFFFFF;
          lastBit = res &= (0x1 >> 31);
         if (res == 0) {
@@ -275,41 +311,25 @@ void multiply_instruction(machineState *state, uint32_t instruction) {
     }
 }
 
-
-void sdt_instruction(machineState *state, uint32_t instruction) {
-    bool offsetBit = (((instruction >> 25) & 1) == 1);
-    bool preindexingBit = (((instruction >> 24) & 1) == 1);
-    bool upBit = (((instruction >> 23) & 1) == 1);
-    bool loadBit = (((instruction >> 20) & 1) == 1);
-    bool baseRegNum = (((instruction >> 16) & 15) == 1);
-    bool srcDestRegNum = (((instruction >> 12) & 15) == 1);
-    uint32_t offset;
-
-    if (!offsetBit) {
-        // 0xFFF represents a mask of the least significant 12 bits
-        offset = instruction & 0xFFF;
-    } else {
-        offset = operand_shift_register(state, instruction).operand2;
-    }
-
-    uint32_t baseRegVal = get_register(baseRegNum, state);
-    uint32_t srcDestRegVal = get_register(srcDestRegNum,state);
-
-    if (loadBit) {
-        set_register(srcDestRegNum, state, baseRegVal);
+void execute_sdti(machineState *state, sdtInstruction sdti){
+    uint32_t baseRegVal = get_register(sdti.rn, state);
+    uint32_t srcDestRegVal = get_register(sdti.rd, state);
+    if (sdti.loadBit) {
+        set_register(sdt.rd, state, baseRegVal);
     } else {
         set_memory(baseRegVal, state, srcDestRegVal);
     }
 
-    if (!preindexingBit) {
-        if (upBit) {
-            set_register(baseRegNum, state, baseRegVal + offset);
+    if (!sdti.indexingBit) {
+        if (sdpti.upBit) {
+            set_register(sdti.rn, state, baseRegVal + sdti.offset);
         } else {
-            set_register(baseRegNum, state, baseRegVal - offset);
+            set_register(sdti.rn, state, baseRegVal - sdti.offset);
         }
     }
 }
 
+// incomplete, to finish
 void clear_pipeline(machineState *state) {
     assert(state);
     state->instructionFetched = -1;
@@ -318,20 +338,12 @@ void clear_pipeline(machineState *state) {
 
 }
 
-void branch_instruction(machineState *state, uint32_t instruction) {
-    uint32_t offset = instruction & 0xFFFFFF;
-    offset <<= 2;
-
-    if (is_negative(instruction >> 23)) {
-        offset |= SE_32;
-    }
+void execute_bi(machineState *state){
     state->registers[PC_REG] += offset;
     clear_pipeline(state);
 }
 
-bool check_instruction(machineState *state, uint32_t instruction) {
-    // takes highest 4 bits of instruction
-    uint32_t instrCond = instruction >> SHIFT_COND;
+bool check_cond(machineState *state, uint8_t instrCond) {
     // takes the highest 4 bits of the CPSR register (i.e. the cond flags)
     uint32_t cpsrFlags = get_register(CPSR_REG,state) >> SHIFT_COND;
     switch (instrCond) {
@@ -358,16 +370,42 @@ bool check_instruction(machineState *state, uint32_t instruction) {
     }
 }
 
-void execute_instructions(machineState *state) {
-    uint32_t current_instruction = get_word(state, get_register(PC_REG, state));
-    while (current_instruction != 0) {
-        decode(state, current_instruction);
-        state->registers[PC_REG] += WORD_SIZE_IN_BYTES;
+void execute_instructions(machineState *state){
+    int execNum = (get_register(PC_REG, state) - 8) / 4;
+    decodedInstruction decoded = state -> instructionDecode[execNum];
+    if (!check_cond(state, decoded.condCode)){
+        // need to check that will exit function at this point
+        return;
+    }
+    switch (decoded.type) {
+        case DATA_PROCESSING:
+            execute_dpi(state, decoded.dpi);
+            break;
+        case MULTIPLY:
+            execute_mi(state, decoded.mi);
+            break;
+        case SINGLE_DATA_TRANSFER:
+            execute_sdti(state, decoded.sdti);
+            break;
+        case BRANCH:
+            execute_bi(state, decoded.bi);
+            break;
+        case ZERO:
+        // to implement
+            break;
     }
 }
 
-void pipeline(machineState *state) {
+void fetch(machineState *state){
+    state->fetched = get_word(state, get_register(PC_REG, state));
+    state->registers[PC_REG] += 4;
+}
 
+// provisional pipeline function, need to implement actual cycle using below functions
+void pipeline(machineState *state) {
+    execute_instructions(state);
+    decode(state, state->fetched);
+    fetch(state);
 }
 
 int main(int argc, char **argv) {
