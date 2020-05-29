@@ -71,7 +71,7 @@ typedef struct {
     uint8_t *memory;
     uint32_t *registers;
     uint32_t fetched;
-    decodedInstruction *instructionDecode;
+    decodedInstruction *instructionToDecode;
     decodedInstruction *instructionToExecute;
 } machineState;
 

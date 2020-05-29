@@ -23,7 +23,7 @@
      binFile = fopen(filename, "rb");
      if (!binFile) {
          fprintf(stderr, "File does not exist. Exiting...\n");
-         return EXIT_FAILURE; /* non-zero val -- couldn't read file */
+         exit(EXIT_FAILURE); /* non-zero val -- couldn't read file */
      }
      /* Elements to be read are each 4 bytes. Binary files can be any size and
      fread will only read till the end of the file or until the size is met.
@@ -148,8 +148,8 @@ dataProcessingInstruction decode_dpi(machineState *state, uint32_t instruction){
     bool immediate = ((instruction >> 25) & 0x1);
     dpi.opcode = (instruction >> 21) & 0xF;
     dpi.setBit = (instruction >> 20) & 0x1;
-    dpi.operand1 = get_register((instruction >> 16) & 0xF, state);
-    dpi.dest = (instruction >> 12) & 0xF;
+    dpi.rn = (instruction >> 16) & 0xF;
+    dpi.rd = (instruction >> 12) & 0xF;
     if (immediate) {
         uint32_t imm = instruction & 0xFF;
         uint32_t rotate = (instruction >> 8) & 0xF;
@@ -227,7 +227,7 @@ void decode(machineState *state, uint32_t instruction){
         instr.dpi = decode_dpi(state, instruction);
     }
     int instrNum = (get_register(PC_REG, state) - 4) / 4;
-    state -> instructionDecode[instrNum] = instr;
+    state -> instructionToDecode[instrNum] = instr;
 }
 
 void execute_dpi(machineState *state, dataProcessingInstruction dpi){
@@ -317,13 +317,13 @@ void execute_sdti(machineState *state, sdtInstruction sdti){
     uint32_t baseRegVal = get_register(sdti.rn, state);
     uint32_t srcDestRegVal = get_register(sdti.rd, state);
     if (sdti.loadBit) {
-        set_register(sdt.rd, state, baseRegVal);
+        set_register(sdti.rd, state, baseRegVal);
     } else {
         set_memory(baseRegVal, state, srcDestRegVal);
     }
 
     if (!sdti.indexingBit) {
-        if (sdpti.upBit) {
+        if (sdti.upBit) {
             set_register(sdti.rn, state, baseRegVal + sdti.offset);
         } else {
             set_register(sdti.rn, state, baseRegVal - sdti.offset);
@@ -332,15 +332,15 @@ void execute_sdti(machineState *state, sdtInstruction sdti){
 }
 
 // incomplete, to finish
-void clear_pipeline(machineState *state) {
+void clear_pipeline(machineState *state) { // to finish
     assert(state);
-    state->instructionFetched = -1;
+    state->fetched = -1;
     state->instructionToDecode = NULL;
     state->instructionToExecute = NULL;
 }
 
-void execute_bi(machineState *state){
-    state->registers[PC_REG] += offset;
+void execute_bi(machineState *state, branchInstruction bi){ //branch instr to finish
+    state->registers[PC_REG] += bi.offset;
     clear_pipeline(state);
 }
 
@@ -373,7 +373,7 @@ bool check_cond(machineState *state, uint8_t instrCond) {
 
 void execute_instructions(machineState *state){
     int execNum = (get_register(PC_REG, state) - 8) / 4;
-    decodedInstruction decoded = state -> instructionDecode[execNum];
+    decodedInstruction decoded = state -> instructionToDecode[execNum];
     if (!check_cond(state, decoded.condCode)){
         // need to check that will exit function at this point
         return;
