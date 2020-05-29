@@ -391,8 +391,13 @@ void execute_instructions(machineState *state){
             execute_bi(state, decoded.bi);
             break;
         case ZERO:
-        // to implement
+            print_system_state(state);
+            free(state->memory);
+            free(state->registers);
+            exit(EXIT_SUCCESS);
             break;
+        default:
+        //error
     }
 }
 
@@ -415,9 +420,5 @@ int main(int argc, char **argv) {
     }
     machineState *state = (machineState *) calloc(1, sizeof(machineState));
     read_file(state, argv[1]);
-    execute_instructions(state);
-    print_system_state(state);
-    free(state->memory);
-    free(state->registers);
-    exit(EXIT_SUCCESS);
+    pipeline(state);
 }
