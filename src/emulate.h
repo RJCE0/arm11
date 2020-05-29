@@ -6,7 +6,7 @@
 #define ARM11_37_EMULATE_H
 
 /*Reads a file with the given filename, loading its contents into an array */
-bool read_file (machineState *state, char *filename);
+bool read_file(machineState *state, char *filename);
 uint32_t get_register(uint32_t regNumber, machineState *state);
 bool set_register(uint32_t regNumber, machineState *state, uint32_t value);
 uint32_t get_memory(uint32_t address, machineState state);
@@ -14,16 +14,22 @@ bool set_memory(uint32_t address, machineState *state, uint8_t value);
 uint32_t get_word(machineState *state, uint32_t address);
 void print_register_values(machineState *state);
 void print_system_state(machineState *state);
-void decode(machineState *state, uint32_t instruction);
 shiftedRegister operand_shift_register(machineState *state, uint32_t instruction);
-void data_processing_instruction( machineState *state, uint32_t instruction);
-void multiply_instruction( machineState *state, uint32_t instruction);
-void sdt_instruction( machineState *state, uint32_t instruction);
-void branch_instruction( machineState *state, uint32_t instruction);
-
-/*Checks the first four bits (assuming big endian) of a given instruction align with the CPSR flags of the machine. */
-bool check_instruction( machineState *state, uint32_t instruction);
+dataProcessingInstruction decode_dpi(machineState *state, uint32_t instruction);
+multiplyInstruction decode_mi(machineState *state, uint32_t instruction);
+sdtInstruction decode_sdt(machineState *state, uint32_t instruction);
+branchInstruction decode_bi(machineState *state, uint32_t instruction);
+void decode(machineState *state, uint32_t instruction);
+void execute_dpi(machineState *state, dataProcessingInstruction dpi);
+void execute_mi(machineState *state, multiplyInstruction mi);
+void execute_sdti(machineState *state, sdtInstruction sdti);
+void clear_pipeline(machineState *state);
+void execute_bi(machineState *state);
+bool check_cond(machineState *state, uint8_t instrCond);
 void execute_instructions(machineState *state);
+void fetch(machineState *state);
+void pipeline(machineState *state);
+
 
 
 #endif //ARM11_37_EMULATE_H
