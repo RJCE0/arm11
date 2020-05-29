@@ -29,7 +29,7 @@ bool read_file(machineState *state, char *filename) {
     fread will only read till the end of the file or until the size is met.
     Fread also returns the number of elements read.
     */
-     long int fileSize = fread(state->memory, MEMORY_SIZE, 1, binFile);
+     unsigned long fileSize = fread(state->memory, MEMORY_SIZE,1, binFile);
     if (ferror(binFile)) {
         fprintf(stderr, "Error while reading file. Exiting...\n");
         exit(EXIT_FAILURE);
@@ -458,12 +458,26 @@ void pipeline(machineState *state) {
     exit(EXIT_SUCCESS);
 }
 
+const machineState default_state = {
+        .registers = {0},
+        .memory = {0},
+        .fetched_instr = false,
+        .instructionToExecute = NULL,
+        .fetched = 0,
+        .instructionToDecode = NULL,
+};
+
 int main(int argc, char **argv) {
+   for (int i = 0; i < argc; i++) {
+        printf("%s\n", argv[i]);
+    }
+
     if (argc != 2) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
     machineState *state = (machineState *) calloc(1, sizeof(machineState));
+    *state = default_state;
     read_file(state, argv[1]);
     pipeline(state);
 
