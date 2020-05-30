@@ -205,11 +205,10 @@ branchInstruction decode_bi(machineState *state, uint32_t instruction) {
 void decode(machineState *state, uint32_t instruction) {
     decodedInstruction instr;
     instr.condCode = (instruction >> 28) & 0xF;
-    instruction &= 0xFFFFFFF;
     if (((instruction >> 26) & 0x3) == 0x1 && !(instruction >> 21 )) { // NONZERO = TRUE, ZERO = FALSE
         instr.type = SINGLE_DATA_TRANSFER;
         instr.u.sdti = decode_sdt(state, instruction);
-    } else if ((instruction >> 24) == 0xA) {
+    } else if (((instruction >> 24) & 0xF) == 0xA) {
         instr.type = BRANCH;
         instr.u.bi = decode_bi(state, instruction);
     } else if (!((instruction >> 22) & 0x3F) && (((instruction >> 4) & 0xF) == 9)) {
@@ -223,8 +222,8 @@ void decode(machineState *state, uint32_t instruction) {
         }
         instr.u.dpi = decode_dpi(state, instruction);
     } else {
-        printf("Unsupported instruction type at PC: 0x%08x\n");
         print_system_state(state);
+        printf("Unsupported instruction type at PC: 0x%08x\n", instruction);
         free(state);
         exit(EXIT_FAILURE);
     }
@@ -240,8 +239,9 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
     uint32_t carryBit = 0;
     if (dpi.immediate) {
         uint32_t imm = dpi.operand2 & 0xFF;
-        uint32_t rotate = (dpi.operand2 >> 8) & 0xF;
-        op2 = imm >> (rotate * 2);
+        uint32_t rotate = ((dpi.operand2 >> 8) & 0xF) * 2;
+        op2 = (imm >> rotate) | (imm << (32 - rotate));
+        carryBit = (imm >> (rotate - 1)) & 0x1;
     } else {
         shiftedRegister value = operand_shift_register(state, dpi.operand2);
         op2 = value.operand2;
