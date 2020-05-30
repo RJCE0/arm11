@@ -7,15 +7,15 @@ CFLAGS  = -Wall -g -D_POSIX_SOURCE -D_DEFAULT_SOURCE -std=c99 -Werror -pedantic
 
 all: Makefile
 
-Makefile: assemble.o emulate.o
-	$(CC) assemble.o emulate.o -o Makefile
+Makefile: assemble emulate
+	$(CC) assemble emulate -o Makefile
 
 
-assemble.o: assemble.c
+assemble: assemble.c
 	$(CC) $(CFLAGS) -c assemble.c
 
 
-emulate.o: emulate.c emulate.h structs.h constants.h
+emulate: emulate.c emulate.h structs.h constants.h
 	$(CC) $(CFLAGS) -c emulate.c
 
 clean:
