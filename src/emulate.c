@@ -57,16 +57,6 @@ bool set_register(uint32_t regNumber, machineState *state, uint32_t value) {
     return true;
 }
 
-bool set_memory(uint32_t address, machineState *state, uint8_t value) {
-    // future improvement: allow writing of only part of a value (using some sort of truncation)
-    if (address > 65532) {
-        fprintf(stderr, "Address specified is too high. Segmentation fault detected.");
-        return false;
-    }
-    state->memory[address] = value;
-    return true;
-}
-
 uint32_t get_word(machineState *state, uint32_t address) {
     uint32_t byte1 = state->memory[address + 3] << 0x18;
     uint32_t byte2 = state->memory[address + 2] << 0x10;
@@ -130,9 +120,10 @@ shiftedRegister operand_shift_register(machineState *state, uint32_t instruction
             result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
         case ARITH_RIGHT: {
-            uint32_t preservedSign = 0;
             uint32_t signBit = rmContents & 0x80000000;
+            uint32_t preservedSign = 0;
             for (uint32_t i = 0; i < shiftNum; i++) {
+
                 preservedSign += signBit;
                 signBit >>= 1;
             }
@@ -144,7 +135,6 @@ shiftedRegister operand_shift_register(machineState *state, uint32_t instruction
             result.operand2 = (rmContents >> shiftNum) | (rmContents << (32 - shiftNum));
             result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
-
         default:
             return result;
     }
@@ -155,7 +145,6 @@ dataProcessingInstruction decode_dpi(machineState *state, uint32_t instruction) 
     bool immediate = ((instruction >> 25) & 0x1);
     dpi.opcode = (instruction >> 21) & 0xF;
     dpi.setBit = (instruction >> 20) & 0x1;
-    dpi.operand2 = get_register((instruction >> 16) & 0xF, state);
     dpi.rn = (instruction >> 16) & 0xF;
     dpi.rd = (instruction >> 12) & 0xF;
     if (immediate) {
@@ -262,7 +251,7 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
             set_register(dpi.rd, state, result);
             break;
         case ADD:
-            dpi.carryBit = 0xFFFFFFFF - operand1 < dpi.operand2;
+            dpi.carryBit = (0xFFFFFFFF - operand1) < dpi.operand2;
             result = operand1 + dpi.operand2;
             set_register(dpi.rd, state, result);
             break;
@@ -325,24 +314,6 @@ void execute_mi(machineState *state, multiplyInstruction mi) {
             currentCpsr |= (NEGATIVE_FLAG << SHIFT_COND);
         }
         state->registers[CPSR_REG] = currentCpsr;
-    }
-}
-
-void execute_sdti(machineState *state, sdtInstruction sdti) {
-    uint32_t baseRegVal = get_register(sdti.rn, state);
-    uint32_t srcDestRegVal = get_register(sdti.rd, state);
-    if (sdti.loadBit) {
-        set_register(sdti.rd, state, baseRegVal);
-    } else {
-        set_memory(baseRegVal, state, srcDestRegVal);
-    }
-
-    if (!sdti.indexingBit) {
-        if (sdti.upBit) {
-            set_register(sdti.rn, state, baseRegVal + sdti.offset);
-        } else {
-            set_register(sdti.rn, state, baseRegVal - sdti.offset);
-        }
     }
 }
 
@@ -451,7 +422,7 @@ void fetch(machineState *state) {
 }
 
 
-
+/*
 bool decoded_instruction_present(machineState *state) {
     if (state->instructionAfterDecode == NULL) {
         return false;
@@ -462,6 +433,7 @@ bool decoded_instruction_present(machineState *state) {
            || state->instructionAfterDecode->type == BRANCH
            || state->instructionAfterDecode->type == ZERO;
 }
+*/
 
 void pipeline(machineState *state) {
     state->fetchedInstr = false;
@@ -470,11 +442,9 @@ void pipeline(machineState *state) {
         if (state->decodedInstr) {
             execute_instructions(state);
         }
-
         if (state->fetchedInstr) {
             decode(state, state->fetched);
         }
-
         fetch(state);
     }
 }
