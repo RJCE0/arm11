@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include "structs.h"
 #include "constants.h"
+#include <stdint.h>
 
 #ifndef ARM11_37_EMULATE_H
 #define ARM11_37_EMULATE_H
@@ -24,7 +25,7 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi);
 void execute_mi(machineState *state, multiplyInstruction mi);
 void execute_sdti(machineState *state, sdtInstruction sdti);
 void clear_pipeline(machineState *state);
-void execute_bi(machineState *state);
+void execute_bi(machineState *state, branchInstruction bi);
 bool check_cond(machineState *state, uint8_t instrCond);
 void execute_instructions(machineState *state);
 void fetch(machineState *state);

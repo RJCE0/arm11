@@ -208,20 +208,20 @@ void decode(machineState *state, uint32_t instruction) {
     instr.condCode = (instruction >> 28) & 0xF;
     if ((instruction >> 26) & 0x1) {
         instr.type = SINGLE_DATA_TRANSFER;
-        instr.sdti = decode_sdt(state, instruction);
+        instr.u.sdti = decode_sdt(state, instruction);
     } else if ((instruction >> 27) & 0x1) {
         instr.type = BRANCH;
-        instr.bi = decode_bi(state, instruction);
+        instr.u.bi = decode_bi(state, instruction);
     } else if (!((instruction >> 22) & 0x3F) && (((instruction >> 4) & 0xF) == 9)) {
         instr.type = MULTIPLY;
-        instr.mi = decode_mi(state, instruction);
+        instr.u.mi = decode_mi(state, instruction);
     } else {
         if (instruction) {
             instr.type = DATA_PROCESSING;
         } else {
             instr.type = ZERO;
         }
-        instr.dpi = decode_dpi(state, instruction);
+        instr.u.dpi = decode_dpi(state, instruction);
     }
     state->decodedInstr = true;
     /*uint32_t instrNum = (get_register(PC_REG, state) - 4) / 4;*/
@@ -292,10 +292,9 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
 }
 
 void execute_mi(machineState *state, multiplyInstruction mi) {
-    uint32_t res;
-    uint32_t acc;
+    uint32_t res = 0;
+    uint32_t acc = 0;
     uint32_t currentCpsr;
-    uint32_t lastBit;
 
     /*Performing the operation */
     acc = (mi.accumBit) ? state->registers[mi.rn] : 0;
@@ -305,7 +304,6 @@ void execute_mi(machineState *state, multiplyInstruction mi) {
     /*Changing flag status if necessary */
     if (mi.setBit) {
         currentCpsr = state->registers[CPSR_REG] & 0xFFFFFFF;
-        lastBit = res &= (0x1 >> 31);
         if (res == 0) {
             /* VCZN */
             currentCpsr |= (ZERO_FLAG << SHIFT_COND);
@@ -319,7 +317,6 @@ void execute_mi(machineState *state, multiplyInstruction mi) {
 
 void execute_sdti(machineState *state, sdtInstruction sdti) {
     uint32_t rnContents = get_register(sdti.rn, state);
-    uint32_t rdContents = get_register(sdti.rd, state);
     uint32_t includingOffset;
     if (sdti.upBit) {
         includingOffset = rnContents + sdti.offset;
@@ -349,8 +346,8 @@ void clear_pipeline(machineState *state) {
     state->decodedInstr = false;
 }
 
-void execute_bi(machineState *state) {
-    state->registers[PC_REG] += state->instructionAfterDecode->bi.offset;
+void execute_bi(machineState *state, branchInstruction bi) {
+    state->registers[PC_REG] += bi.offset;
     clear_pipeline(state);
 }
 
@@ -390,16 +387,16 @@ void execute_instructions(machineState *state) {
     }
     switch (decoded.type) {
         case DATA_PROCESSING:
-            execute_dpi(state, decoded.dpi);
+            execute_dpi(state, decoded.u.dpi);
             break;
         case MULTIPLY:
-            execute_mi(state, decoded.mi);
+            execute_mi(state, decoded.u.mi);
             break;
         case SINGLE_DATA_TRANSFER:
-            execute_sdti(state, decoded.sdti);
+            execute_sdti(state, decoded.u.sdti);
             break;
         case BRANCH:
-            execute_bi(state);
+            execute_bi(state, decoded.u.bi);
             break;
         case ZERO:
             printf("A zero instruction has been found at PC: 0x%x and the program will terminate.",
