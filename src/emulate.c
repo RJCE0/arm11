@@ -61,7 +61,7 @@ uint32_t get_register(uint32_t regNumber, machineState *state) {
 }
 
 bool set_register(uint32_t regNumber, machineState *state, uint32_t value) {
-    if (regNumber == 13 || regNumber == 14 || regNumber < 1 || regNumber > 16) {
+    if (regNumber == 13 || regNumber == 14 || regNumber < 0 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range.");
         return false;
     }
@@ -70,13 +70,18 @@ bool set_register(uint32_t regNumber, machineState *state, uint32_t value) {
 }
 
 uint32_t get_word(machineState *state, uint32_t address) {
-    uint32_t byte1 = state -> memory[address+3] << 0x18;
-    uint32_t byte2 = state->memory[address+2] << 0x10;
-    uint32_t byte3 = state->memory[address+1] << 0x8;
-    uint32_t byte4 = state->memory[address];
-    uint32_t fullWord = byte1 + byte2 + byte3 + byte4;
+    uint32_t fullWord = 0;
+    if (address > MEMORY_SIZE - 4) {
+        printf("Illegal attempt to access word....\n");
+    } else {
+        uint32_t byte1 = state->memory[address + 3] << 0x18;
+        uint32_t byte2 = state->memory[address + 2] << 0x10;
+        uint32_t byte3 = state->memory[address + 1] << 0x8;
+        uint32_t byte4 = state->memory[address];
+        fullWord = byte1 + byte2 + byte3 + byte4;
+        return fullWord;
+    }
 
-    return fullWord;
 }
 
 bool set_word(machineState *state, uint32_t address, uint32_t value){
@@ -205,7 +210,7 @@ branchInstruction decode_bi(machineState *state, uint32_t instruction) {
 void decode(machineState *state, uint32_t instruction) {
     decodedInstruction instr;
     instr.condCode = (instruction >> 28) & 0xF;
-    if (((instruction >> 26) & 0x3) == 0x1 && !(instruction >> 21 )) { // NONZERO = TRUE, ZERO = FALSE
+    if (((instruction >> 26) & 0x3) == 0x1 && !((instruction >> 21 ) & 0x3)) { // NONZERO = TRUE, ZERO = FALSE
         instr.type = SINGLE_DATA_TRANSFER;
         instr.u.sdti = decode_sdt(state, instruction);
     } else if (((instruction >> 24) & 0xF) == 0xA) {
