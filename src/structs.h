@@ -21,11 +21,11 @@ typedef struct {
 
 typedef struct  {
     instructionOpcode opcode : 4;
-    uint32_t operand2;
+    uint16_t operand2 : 12;
     uint8_t rn : 4;
     uint8_t rd : 4;
 
-    bool carryBit;
+    bool immediate;
     bool setBit;
 } dataProcessingInstruction;
 
@@ -42,12 +42,12 @@ typedef struct {
 typedef struct {
     uint16_t rn : 4;
     uint16_t rd : 4;
-    uint32_t offset;
+    uint32_t offset : 12;
 
     bool upBit;
     bool loadBit;
     bool indexingBit;
-    bool offsetBit;
+    bool immediate;
 } sdtInstruction;
 
 

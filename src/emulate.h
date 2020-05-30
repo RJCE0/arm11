@@ -15,7 +15,7 @@ bool set_memory(uint32_t address, machineState *state, uint8_t value);
 uint32_t get_word(machineState *state, uint32_t address);
 void print_register_values(machineState *state);
 void print_system_state(machineState *state);
-shiftedRegister operand_shift_register(machineState *state, uint32_t instruction);
+shiftedRegister operand_shift_register(machineState *state, uint16_t instruction);
 dataProcessingInstruction decode_dpi(machineState *state, uint32_t instruction);
 multiplyInstruction decode_mi(machineState *state, uint32_t instruction);
 sdtInstruction decode_sdt(machineState *state, uint32_t instruction);

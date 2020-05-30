@@ -104,7 +104,7 @@ void print_system_state(machineState *state) {
     print_register_values(state);
 }
 
-shiftedRegister operand_shift_register(machineState *state, uint32_t instruction) {
+shiftedRegister operand_shift_register(machineState *state, uint16_t instruction) {
     uint32_t rm = instruction & 0xF;
     uint32_t rmContents = get_register(rm, state);
     uint32_t shiftNum = (instruction >> 7) & 0x1F;
@@ -142,20 +142,12 @@ shiftedRegister operand_shift_register(machineState *state, uint32_t instruction
 
 dataProcessingInstruction decode_dpi(machineState *state, uint32_t instruction) {
     dataProcessingInstruction dpi;
-    bool immediate = ((instruction >> 25) & 0x1);
+    dpi.immediate = ((instruction >> 25) & 0x1);
     dpi.opcode = (instruction >> 21) & 0xF;
     dpi.setBit = (instruction >> 20) & 0x1;
     dpi.rn = (instruction >> 16) & 0xF;
     dpi.rd = (instruction >> 12) & 0xF;
-    if (immediate) {
-        uint32_t imm = instruction & 0xFF;
-        uint32_t rotate = (instruction >> 8) & 0xF;
-        dpi.operand2 = imm >> (rotate * 2);
-    } else {
-        shiftedRegister value = operand_shift_register(state, instruction);
-        dpi.operand2 = value.operand2;
-        dpi.carryBit = value.carryBit;
-    }
+    dpi.operand2 = instruction & 0xFFF;
     return dpi;
 }
 
@@ -176,19 +168,13 @@ multiplyInstruction decode_mi(machineState *state, uint32_t instruction) {
 
 sdtInstruction decode_sdt(machineState *state, uint32_t instruction) {
     sdtInstruction sdti;
-    bool offsetBit = (instruction >> 25) & 0x1;
+    sdti.immediate = (instruction >> 25) & 0x1;
     sdti.indexingBit = (instruction >> 24) & 0x1;
     sdti.upBit = (instruction >> 23) & 0x1;
     sdti.loadBit = (instruction >> 20) & 0x1;
     sdti.rn = (instruction >> 16) & 0xF;
     sdti.rd = (instruction >> 12) & 0xF;
-
-    if (!offsetBit) {
-        // 0xFFF represents a mask of the least significant 12 bits
-        sdti.offset = instruction & 0xFFF;
-    } else {
-        sdti.offset = operand_shift_register(state, instruction).operand2;
-    }
+    sdti.offset = instruction & 0xFFF;
     return sdti;
 }
 
@@ -228,49 +214,63 @@ void decode(machineState *state, uint32_t instruction) {
     state->instructionAfterDecode = &instr;
 }
 
+
+
+
 void execute_dpi(machineState *state, dataProcessingInstruction dpi){
+    uint32_t op2;
+    uint32_t carryBit;
+    if (dpi.immediate) {
+        uint32_t imm = dpi.operand2 & 0xFF;
+        uint32_t rotate = (dpi.operand2 >> 8) & 0xF;
+        op2 = imm >> (rotate * 2);
+    } else {
+        shiftedRegister value = operand_shift_register(state, dpi.operand2);
+        op2 = value.operand2;
+        carryBit = value.carryBit;
+    }
     uint32_t result;
     uint32_t operand1 = get_register(dpi.rn, state);
     switch (dpi.opcode) {
         case AND:
-            result = operand1 & dpi.operand2;
+            result = operand1 & op2;
             set_register(dpi.rd, state, result);
             break;
         case EOR:
-            result = operand1 ^ dpi.operand2;
+            result = operand1 ^ op2;
             set_register(dpi.rd, state, result);
             break;
         case SUB:
-            dpi.carryBit = dpi.operand2 <= operand1;
-            result = operand1 - dpi.operand2;
+            carryBit = op2 <= operand1;
+            result = operand1 - op2;
             set_register(dpi.rd, state, result);
             break;
         case RSB:
-            dpi.carryBit = operand1 <= dpi.operand2;
-            result = dpi.operand2 - operand1;
+            carryBit = operand1 <= op2;
+            result = op2 - operand1;
             set_register(dpi.rd, state, result);
             break;
         case ADD:
-            dpi.carryBit = (0xFFFFFFFF - operand1) < dpi.operand2;
-            result = operand1 + dpi.operand2;
+            carryBit = (0xFFFFFFFF - operand1) < op2;
+            result = operand1 + op2;
             set_register(dpi.rd, state, result);
             break;
         case TST:
-            result = operand1 & dpi.operand2;
+            result = operand1 & op2;
             break;
         case TEQ:
-            result = operand1 ^ dpi.operand2;
+            result = operand1 ^ op2;
             break;
         case CMP:
-            dpi.carryBit = dpi.operand2 <= operand1;
-            result = operand1 - dpi.operand2;
+            carryBit = op2 <= operand1;
+            result = operand1 - op2;
             break;
         case ORR:
-            result = operand1 | dpi.operand2;
+            result = operand1 | op2;
             set_register(dpi.rd, state, result);
             break;
         case MOV:
-            result = dpi.operand2;
+            result = op2;
             break;
         default:
             fprintf(stderr, "An unknown operand has been found at PC:%0x.", get_register(PC_REG, state));
@@ -283,7 +283,7 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
             zBit = (1 << 30);
         }
         uint32_t nBit = result & 0x80000000;
-        uint32_t cBit = dpi.carryBit << 29;
+        uint32_t cBit = carryBit << 29;
         uint32_t flags = nBit + zBit + cBit;
         uint32_t value = get_register(CPSR_REG, state);
         uint32_t mask = 0xFFFFFFF;
@@ -316,12 +316,18 @@ void execute_mi(machineState *state, multiplyInstruction mi) {
 }
 
 void execute_sdti(machineState *state, sdtInstruction sdti) {
+    uint32_t offset;
+    if (sdti.immediate){
+        offset = operand_shift_register(state, sdti.offset).operand2;
+    } else {
+        offset = sdti.offset;
+    }
     uint32_t rnContents = get_register(sdti.rn, state);
     uint32_t includingOffset;
     if (sdti.upBit) {
-        includingOffset = rnContents + sdti.offset;
+        includingOffset = rnContents + offset;
     } else {
-        includingOffset = rnContents - sdti.offset;
+        includingOffset = rnContents - offset;
     }
     if (sdti.indexingBit) {
         if (sdti.loadBit) {
