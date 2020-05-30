@@ -20,7 +20,6 @@
 
 bool read_file(machineState *state, char *filename) {
     FILE *binFile;
-    char instr[32];
     binFile = fopen(filename, "rb");
     if (!binFile) {
         fprintf(stderr, "File does not exist. Exiting...\n");
@@ -31,10 +30,7 @@ bool read_file(machineState *state, char *filename) {
     Fread also returns the number of elements read.
     */
     //Needs to be fixed, reads backwards for some reason smh
-    while (fgets(instr, sizeof(instr),binFile) != NULL) {
-        printf()
-    }
-    fread(state->memory, MEMORY_SIZE,1, binFile);
+    fread(state->memory, MEMORY_SIZE, 1, binFile);
     if (ferror(binFile)) {
         fprintf(stderr, "Error while reading file. Exiting...\n");
         exit(EXIT_FAILURE);
@@ -61,10 +57,6 @@ bool set_register(uint32_t regNumber, machineState *state, uint32_t value) {
     return true;
 }
 
-uint32_t get_memory(uint32_t address, machineState state) {
-    return state.memory[address];
-}
-
 bool set_memory(uint32_t address, machineState *state, uint8_t value) {
     // future improvement: allow writing of only part of a value (using some sort of truncation)
     if (address > 65532) {
@@ -76,21 +68,13 @@ bool set_memory(uint32_t address, machineState *state, uint8_t value) {
 }
 
 uint32_t get_word(machineState *state, uint32_t address) {
-    uint32_t fullWord = 0;
-    memcpy(&fullWord, &(state->memory[address]), WORD_SIZE_IN_BYTES);
+    uint32_t byte1 = state->memory[address + 3] << 0x12;
+    uint32_t byte2 = state->memory[address + 2] << 0x8;
+    uint32_t byte3 = state->memory[address + 1] << 0x4;
+    uint32_t byte4 = state->memory[address];
+    uint32_t fullWord = byte1 + byte2 + byte3 + byte4;
     return fullWord;
-    // Might be an issue here...
 }
-
-/*static void print_binary_array(uint8_t array[], size_t size) {
-    for (int i = 0; i < size; i++) {
-        printf("%c", array[i]);
-        if (i % 4 == 3) {
-            printf("\n");
-        }
-    }
-}
-*/
 
 void print_register_values(machineState *state) {
     for (int i = 0; i < NUM_OF_REGISTERS; i++) {
@@ -351,7 +335,7 @@ void execute_sdti(machineState *state, sdtInstruction sdti) {
 }
 
 
-void clear_pipeline(machineState *state) { 
+void clear_pipeline(machineState *state) {
     assert(state);
     state->fetchedInstr = false;
     state->decodedInstr = false;
