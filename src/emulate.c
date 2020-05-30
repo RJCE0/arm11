@@ -39,6 +39,18 @@ bool read_file(machineState *state, char *filename) {
     return true;
 }
 
+uint32_t get_memory(machineState *state, uint32_t address) {
+    uint32_t result = 0;
+    for (int i = 0; i < 4; i++) {
+        result += state->memory[address+i];
+        if (i == 3) {
+            break;
+        }
+        result <<=8;
+    }
+    return result;
+}
+
 uint32_t get_register(uint32_t regNumber, machineState *state) {
     if (regNumber == 13 || regNumber == 14 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
@@ -58,17 +70,18 @@ bool set_register(uint32_t regNumber, machineState *state, uint32_t value) {
 }
 
 uint32_t get_word(machineState *state, uint32_t address) {
-    uint32_t byte1 = state->memory[address + 3] << 0x18;
-    uint32_t byte2 = state->memory[address + 2] << 0x10;
-    uint32_t byte3 = state->memory[address + 1] << 0x8;
+    uint32_t byte1 = state -> memory[address+3] << 0x18;
+    uint32_t byte2 = state->memory[address+2] << 0x10;
+    uint32_t byte3 = state->memory[address+1] << 0x8;
     uint32_t byte4 = state->memory[address];
     uint32_t fullWord = byte1 + byte2 + byte3 + byte4;
+
     return fullWord;
 }
 
 bool set_word(machineState *state, uint32_t address, uint32_t value){
     if (address > 65532) {
-        fprintf(stderr, "Address specified is too high. Segmentation fault detected.");
+        fprintf(stderr, "Address specified is too high. Segmentation fault detected.\n");
         return false;
     }
     for (int i = 0; i < 4; i++) {
@@ -81,14 +94,14 @@ bool set_word(machineState *state, uint32_t address, uint32_t value){
 void print_register_values(machineState *state) {
     for (int i = 0; i < NUM_OF_REGISTERS; i++) {
         if (i != 13 && i != 14) {
-            printf("Register %i : 0x%x\n", i, get_register(i, state));
+            printf("Register %i : 0x%08x\n", i, get_register(i, state));
         }
         if (i == PC_REG) {
-            printf("Program counter: 0x%x\n", get_register(PC_REG, state));
+            printf("Program counter: 0x%08x\n", get_register(PC_REG, state));
         }
 
         if (i == CPSR_REG) {
-            printf("CPSR: 0x%x\n", get_register(CPSR_REG, state));
+            printf("CPSR: 0x%08x\n", get_register(CPSR_REG, state));
         }
     }
 }
@@ -97,7 +110,7 @@ void print_system_state(machineState *state) {
     assert(state);
     for (uint32_t i = 0; i < MEMORY_SIZE; i += 4) {
         if (get_word(state, i) != 0) {
-            printf("Memory at 0x%x : 0x%x\n", i, get_word(state, i));
+            printf("Memory at 0x%08x : 0x%08x\n", i, get_memory(state,i));
         }
     }
 
@@ -192,34 +205,39 @@ branchInstruction decode_bi(machineState *state, uint32_t instruction) {
 void decode(machineState *state, uint32_t instruction) {
     decodedInstruction instr;
     instr.condCode = (instruction >> 28) & 0xF;
-    if ((instruction >> 26) & 0x1) {
+    instruction &= 0xFFFFFFF;
+    if (((instruction >> 26) & 0x3) == 0x1 && !(instruction >> 21 )) { // NONZERO = TRUE, ZERO = FALSE
         instr.type = SINGLE_DATA_TRANSFER;
         instr.u.sdti = decode_sdt(state, instruction);
-    } else if ((instruction >> 27) & 0x1) {
+    } else if ((instruction >> 24) == 0xA) {
         instr.type = BRANCH;
         instr.u.bi = decode_bi(state, instruction);
     } else if (!((instruction >> 22) & 0x3F) && (((instruction >> 4) & 0xF) == 9)) {
         instr.type = MULTIPLY;
         instr.u.mi = decode_mi(state, instruction);
-    } else {
+    } else if (!((instruction >> 26) & 0x3)) {
         if (instruction) {
             instr.type = DATA_PROCESSING;
         } else {
             instr.type = ZERO;
         }
         instr.u.dpi = decode_dpi(state, instruction);
+    } else {
+        printf("Unsupported instruction type at PC: 0x%08x\n");
+        print_system_state(state);
+        free(state);
+        exit(EXIT_FAILURE);
     }
     state->decodedInstr = true;
-    /*uint32_t instrNum = (get_register(PC_REG, state) - 4) / 4;*/
-    state->instructionAfterDecode = &instr;
+    state->instructionAfterDecode = instr;
 }
 
 
 
 
 void execute_dpi(machineState *state, dataProcessingInstruction dpi){
-    uint32_t op2;
-    uint32_t carryBit;
+    uint32_t op2 = 0;
+    uint32_t carryBit = 0;
     if (dpi.immediate) {
         uint32_t imm = dpi.operand2 & 0xFF;
         uint32_t rotate = (dpi.operand2 >> 8) & 0xF;
@@ -271,9 +289,10 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
             break;
         case MOV:
             result = op2;
+            set_register(dpi.rd, state, result);
             break;
         default:
-            fprintf(stderr, "An unknown operand has been found at PC:%0x.", get_register(PC_REG, state));
+            fprintf(stderr, "An unknown operand has been found at PC:%0x.\n", get_register(PC_REG, state));
             print_system_state(state);
             exit(EXIT_FAILURE);
     }
@@ -379,14 +398,21 @@ bool check_cond(machineState *state, uint8_t instrCond) {
                      ((instrCond & NEGATIVE_FLAG) == ((instrCond & NEGATIVE_FLAG) >> 3)));
             // = !GT
         default:
-            fprintf(stderr, "An unsupported instruction has been found at PC: %x", get_register(PC_REG, state));
+            fprintf(stderr, "An unsupported instruction has been found at PC: %x\n", get_register(PC_REG, state));
             print_system_state(state);
             exit(EXIT_FAILURE);
     }
 }
 
 void execute_instructions(machineState *state) {
-    decodedInstruction decoded = *(state->instructionAfterDecode);
+    decodedInstruction decoded = state->instructionAfterDecode;
+    if (decoded.type == ZERO) {
+        printf("A zero instruction has been found at PC: 0x%x and the program will terminate.\n",
+               get_register(PC_REG, state));
+        print_system_state(state);
+        free(state);
+        exit(EXIT_SUCCESS);
+    }
     if (!check_cond(state, decoded.condCode)) {
         // need to check that will exit function at this point
         return;
@@ -404,17 +430,12 @@ void execute_instructions(machineState *state) {
         case BRANCH:
             execute_bi(state, decoded.u.bi);
             break;
-        case ZERO:
-            printf("A zero instruction has been found at PC: 0x%x and the program will terminate.",
-                   get_register(PC_REG, state));
-            print_system_state(state);
-            free(state->memory);
-            free(state->registers);
-            exit(EXIT_SUCCESS);
+
         default:
             fprintf(stderr,
                     "An unknown instruction type has been found at PC: 0x%x and the program will terminate.",
                     get_register(PC_REG, state));
+            exit(EXIT_FAILURE);
     }
 }
 
@@ -438,18 +459,24 @@ bool decoded_instruction_present(machineState *state) {
 }
 */
 
+void advance_program_counter(machineState *state) {
+    state->registers[PC_REG] += 4;
+}
+
 void pipeline(machineState *state) {
-    state->fetchedInstr = false;
     while (true) {
-        // Execution of decoded instruction.
         if (state->decodedInstr) {
             execute_instructions(state);
         }
+
         if (state->fetchedInstr) {
             decode(state, state->fetched);
         }
+
         fetch(state);
+
     }
+
 }
 
 

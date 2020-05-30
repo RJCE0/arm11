@@ -10,7 +10,7 @@
 bool read_file(machineState *state, char *filename);
 uint32_t get_register(uint32_t regNumber, machineState *state);
 bool set_register(uint32_t regNumber, machineState *state, uint32_t value);
-uint32_t get_memory(uint32_t address, machineState state);
+uint32_t get_memory(machineState *state, uint32_t address);
 bool set_memory(uint32_t address, machineState *state, uint8_t value);
 uint32_t get_word(machineState *state, uint32_t address);
 void print_register_values(machineState *state);
