@@ -79,8 +79,8 @@ uint32_t get_word(machineState *state, uint32_t address) {
         uint32_t byte3 = state->memory[address + 1] << 0x8;
         uint32_t byte4 = state->memory[address];
         fullWord = byte1 + byte2 + byte3 + byte4;
-        return fullWord;
     }
+    return fullWord;
 
 }
 
