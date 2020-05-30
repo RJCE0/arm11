@@ -241,12 +241,12 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
             set_register(dpi.rd, state, result);
             break;
         case SUB:
-            dpi.carryBit = dpi.operand2 > operand1;
+            dpi.carryBit = dpi.operand2 <= operand1;
             result = operand1 - dpi.operand2;
             set_register(dpi.rd, state, result);
             break;
         case RSB:
-            dpi.carryBit = operand1 > dpi.operand2;
+            dpi.carryBit = operand1 <= dpi.operand2;
             result = dpi.operand2 - operand1;
             set_register(dpi.rd, state, result);
             break;
@@ -262,7 +262,7 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
             result = operand1 ^ dpi.operand2;
             break;
         case CMP:
-            dpi.carryBit = dpi.operand2 > operand1;
+            dpi.carryBit = dpi.operand2 <= operand1;
             result = operand1 - dpi.operand2;
             break;
         case ORR:
