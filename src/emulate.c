@@ -379,26 +379,26 @@ void execute_bi(machineState *state, branchInstruction bi) {
 bool check_cond(machineState *state, uint8_t instrCond) {
     // takes the highest 4 bits of the CPSR register (i.e. the cond flags)
     uint32_t cpsrFlags = get_register(CPSR_REG, state) >> SHIFT_COND;
-    switch (cpsrFlags) {
+    switch (instrCond) {
         // CSPR FLAGS : VCZN in C
         case AL:
             return true;
         case EQ:
-            return instrCond & ZERO_FLAG;
+            return cpsrFlags & ZERO_FLAG;
         case NE:
-            return !(instrCond & ZERO_FLAG);
+            return !(cpsrFlags & ZERO_FLAG);
         case GE:
-            return (instrCond & NEGATIVE_FLAG) == ((instrCond & NEGATIVE_FLAG) >> 3);
+            return (cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3);
         case LT:
-            return (instrCond & NEGATIVE_FLAG) != ((instrCond & NEGATIVE_FLAG) >> 3);
+            return (cpsrFlags & NEGATIVE_FLAG) != ((cpsrFlags & NEGATIVE_FLAG) >> 3);
         case GT:
-            return !(instrCond & ZERO_FLAG) && ((instrCond & NEGATIVE_FLAG) == ((instrCond & NEGATIVE_FLAG) >> 3));
+            return !(cpsrFlags & ZERO_FLAG) && ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3));
         case LE:
-            return !(!(instrCond & ZERO_FLAG) &&
-                     ((instrCond & NEGATIVE_FLAG) == ((instrCond & NEGATIVE_FLAG) >> 3)));
+            return !(!(cpsrFlags & ZERO_FLAG) &&
+                     ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3)));
             // = !GT
         default:
-            fprintf(stderr, "An unsupported instruction has been found at PC: %x\n", get_register(PC_REG, state));
+            fprintf(stderr, "An unsupported instruction (unknown cond. code) has been found at PC: %d (%08x)\n", get_register(PC_REG, state), get_register(PC_REG, state));
             print_system_state(state);
             exit(EXIT_FAILURE);
     }
