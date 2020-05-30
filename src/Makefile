@@ -7,7 +7,7 @@ CFLAGS  = -Wall -g -D_POSIX_SOURCE -D_DEFAULT_SOURCE -std=c99 -Werror -pedantic
 
 all: Makefile
 
-Makefile: assemble emulate
+Makefile: assemble.o emulate.o
 	$(CC) assemble.o emulate.o -o Makefile
 
 
