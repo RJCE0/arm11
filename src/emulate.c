@@ -68,12 +68,24 @@ bool set_memory(uint32_t address, machineState *state, uint8_t value) {
 }
 
 uint32_t get_word(machineState *state, uint32_t address) {
-    uint32_t byte1 = state->memory[address + 3] << 0x12;
-    uint32_t byte2 = state->memory[address + 2] << 0x8;
-    uint32_t byte3 = state->memory[address + 1] << 0x4;
+    uint32_t byte1 = state->memory[address + 3] << 0x18;
+    uint32_t byte2 = state->memory[address + 2] << 0x10;
+    uint32_t byte3 = state->memory[address + 1] << 0x8;
     uint32_t byte4 = state->memory[address];
     uint32_t fullWord = byte1 + byte2 + byte3 + byte4;
     return fullWord;
+}
+
+bool set_word(machineState *state, uint32_t address, uint32_t value){
+    if (address > 65532) {
+        fprintf(stderr, "Address specified is too high. Segmentation fault detected.");
+        return false;
+    }
+    for (int i = 0; i < 4; i++) {
+        state->memory[address + i] = (value & 0xFF);
+        value >>= 8;
+    }
+    return true;
 }
 
 void print_register_values(machineState *state) {
