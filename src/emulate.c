@@ -346,6 +346,31 @@ void execute_sdti(machineState *state, sdtInstruction sdti) {
     }
 }
 
+void execute_sdti(machineState *state, sdtInstruction sdti) {
+    uint32_t rnContents = get_register(sdti.rn, state);
+    uint32_t rdContents = get_register(sdti.rd, state);
+    uint32_t includingOffset;
+    if (sdti.upBit) {
+        includingOffset = rnContents + sdti.offset;
+    } else {
+        includingOffset = rnContents - sdti.offset;
+    }
+    if (sdti.indexingBit) {
+        if (sdti.loadBit) {
+            set_register(sdti.rd, state, get_word(state, includingOffset));
+        } else{
+            set_word(state, includingOffset, get_register(sdti.rd, state));
+        }
+    } else {
+        if (sdti.loadBit) {
+            set_register(sdti.rd, state, get_word(state, rnContents));
+        } else{
+            set_word(state, rnContents, get_register(sdti.rd, state));
+        }
+        set_register(sdti.rn, state, includingOffset);
+    }
+}
+
 
 void clear_pipeline(machineState *state) {
     assert(state);
