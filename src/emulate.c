@@ -42,11 +42,11 @@ bool read_file(machineState *state, char *filename) {
 uint32_t get_memory(machineState *state, uint32_t address) {
     uint32_t result = 0;
     for (int i = 0; i < 4; i++) {
-        result += state->memory[address+i];
+        result += state->memory[address + i];
         if (i == 3) {
             break;
         }
-        result <<=8;
+        result <<= 8;
     }
     return result;
 }
@@ -84,8 +84,8 @@ uint32_t get_word(machineState *state, uint32_t address) {
 
 }
 
-bool set_word(machineState *state, uint32_t address, uint32_t value){
-    if (address > 65532) {
+bool set_word(machineState *state, uint32_t address, uint32_t value) {
+    if (address > 65532 - WORD_SIZE_IN_BYTES) {
         fprintf(stderr, "Address specified is too high. Segmentation fault detected.\n");
         return false;
     }
@@ -97,29 +97,23 @@ bool set_word(machineState *state, uint32_t address, uint32_t value){
 }
 
 void print_register_values(machineState *state) {
-    for (int i = 0; i < NUM_OF_REGISTERS; i++) {
+    for (int i = 0; i < NUM_OF_REGISTERS - 4; i++) {
         if (i != 13 && i != 14) {
-            printf("Register %i : 0x%08x\n", i, get_register(i, state));
-        }
-        if (i == PC_REG) {
-            printf("Program counter: 0x%08x\n", get_register(PC_REG, state));
-        }
-
-        if (i == CPSR_REG) {
-            printf("CPSR: 0x%08x\n", get_register(CPSR_REG, state));
+            printf("$%i : 0x%08x\n", i, get_register(i, state));
         }
     }
+    printf("PC: 0x%08x\n", get_register(PC_REG, state));
+    printf("CPSR: 0x%08x\n", get_register(CPSR_REG, state));
 }
 
 void print_system_state(machineState *state) {
     assert(state);
+    print_register_values(state);
     for (uint32_t i = 0; i < MEMORY_SIZE; i += 4) {
         if (get_word(state, i) != 0) {
-            printf("Memory at 0x%08x : 0x%08x\n", i, get_memory(state,i));
+            printf("Memory at 0x%08x : 0x%08x\n", i, get_memory(state, i));
         }
     }
-
-    print_register_values(state);
 }
 
 shiftedRegister operand_shift_register(machineState *state, uint16_t instruction) {
@@ -170,7 +164,7 @@ dataProcessingInstruction decode_dpi(machineState *state, uint32_t instruction) 
 }
 
 static bool is_negative(uint32_t instruction) {
-    return (instruction & 1) != 0;
+    return (instruction & 0x800000);
 }
 
 multiplyInstruction decode_mi(machineState *state, uint32_t instruction) {
@@ -199,10 +193,10 @@ sdtInstruction decode_sdt(machineState *state, uint32_t instruction) {
 branchInstruction decode_bi(machineState *state, uint32_t instruction) {
     branchInstruction bi;
     uint32_t offset = instruction & 0xFFFFFF;
-    offset <<= 2;
-    if (is_negative(instruction >> 23)) {
+    if (is_negative(offset)) {
         offset |= SE_32;
     }
+    offset <<= 2;
     bi.offset = offset;
     return bi;
 }
@@ -210,7 +204,7 @@ branchInstruction decode_bi(machineState *state, uint32_t instruction) {
 void decode(machineState *state, uint32_t instruction) {
     decodedInstruction instr;
     instr.condCode = (instruction >> 28) & 0xF;
-    if (((instruction >> 26) & 0x3) == 0x1 && !((instruction >> 21 ) & 0x3)) { // NONZERO = TRUE, ZERO = FALSE
+    if (((instruction >> 26) & 0x3) == 0x1 && !((instruction >> 21) & 0x3)) { // NONZERO = TRUE, ZERO = FALSE
         instr.type = SINGLE_DATA_TRANSFER;
         instr.u.sdti = decode_sdt(state, instruction);
     } else if (((instruction >> 24) & 0xF) == 0xA) {
@@ -237,9 +231,7 @@ void decode(machineState *state, uint32_t instruction) {
 }
 
 
-
-
-void execute_dpi(machineState *state, dataProcessingInstruction dpi){
+void execute_dpi(machineState *state, dataProcessingInstruction dpi) {
     uint32_t op2 = 0;
     uint32_t carryBit = 0;
     if (dpi.immediate) {
@@ -301,7 +293,7 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi){
             print_system_state(state);
             exit(EXIT_FAILURE);
     }
-    if (dpi.setBit){
+    if (dpi.setBit) {
         uint32_t zBit = 0;
         if (result == 0) {
             zBit = (1 << 30);
@@ -341,7 +333,7 @@ void execute_mi(machineState *state, multiplyInstruction mi) {
 
 void execute_sdti(machineState *state, sdtInstruction sdti) {
     uint32_t offset;
-    if (sdti.immediate){
+    if (sdti.immediate) {
         offset = operand_shift_register(state, sdti.offset).operand2;
     } else {
         offset = sdti.offset;
@@ -356,13 +348,13 @@ void execute_sdti(machineState *state, sdtInstruction sdti) {
     if (sdti.indexingBit) {
         if (sdti.loadBit) {
             set_register(sdti.rd, state, get_word(state, includingOffset));
-        } else{
+        } else {
             set_word(state, includingOffset, get_register(sdti.rd, state));
         }
     } else {
         if (sdti.loadBit) {
             set_register(sdti.rd, state, get_word(state, rnContents));
-        } else{
+        } else {
             set_word(state, rnContents, get_register(sdti.rd, state));
         }
         set_register(sdti.rn, state, includingOffset);
@@ -376,8 +368,13 @@ void clear_pipeline(machineState *state) {
     state->decodedInstr = false;
 }
 
+
 void execute_bi(machineState *state, branchInstruction bi) {
-    state->registers[PC_REG] += bi.offset;
+    if (bi.offset >> 31 & 0x1) {
+        state->registers[PC_REG] -= ~(bi.offset - 1);
+    } else {
+        state->registers[PC_REG] += bi.offset;
+    }
     clear_pipeline(state);
 }
 
@@ -403,7 +400,8 @@ bool check_cond(machineState *state, uint8_t instrCond) {
                      ((cpsrFlags & NEGATIVE_FLAG) == ((cpsrFlags & NEGATIVE_FLAG) >> 3)));
             // = !GT
         default:
-            fprintf(stderr, "An unsupported instruction (unknown cond. code) has been found at PC: %d (%08x)\n", get_register(PC_REG, state), get_register(PC_REG, state));
+            fprintf(stderr, "An unsupported instruction (unknown cond. code) has been found at PC: %d (%08x)\n",
+                    get_register(PC_REG, state), get_register(PC_REG, state));
             print_system_state(state);
             exit(EXIT_FAILURE);
     }
@@ -483,17 +481,6 @@ void pipeline(machineState *state) {
     }
 
 }
-
-
-/*
-const machineState default_state = {
-        .registers = {0},
-        .memory = {0},
-        .fetchedInstr = false,
-        .fetched = 0,
-        .instructionAfterDecode
-};
-*/
 
 
 int main(int argc, char **argv) {

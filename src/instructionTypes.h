@@ -36,7 +36,7 @@ typedef struct {
 
 
 typedef struct {
-    uint32_t offset : 24;
+    uint32_t offset;
 } branchInstruction;
 
 typedef struct {
