@@ -97,14 +97,11 @@ bool set_word(machineState *state, uint32_t address, uint32_t value) {
 }
 
 void print_register_values(machineState *state) {
-    for (int i = 0; i <= 9; i++) {
-            printf("$%i  :          %u (0x%08x)\n", i,get_register(i, state), get_register(i, state));
+    for (int i = 0; i < NUM_OF_REGISTERS - 4; i++) {
+            printf("$%-3di:%11d (0x%08x)\n", i, get_register(i, state), get_register(i, state));
     }
-    for (int i = 10; i < NUM_OF_REGISTERS - 4; i++) {
-            printf("$%i :          %u (0x%08x)\n", i,get_register(i, state), get_register(i, state));
-    }
-    printf("PC  :         %u (0x%08x)\n",get_register(PC_REG, state), get_register(PC_REG, state));
-    printf("CPSR: %u (0x%08x)\n", get_register(CPSR_REG, state),get_register(CPSR_REG, state));
+    printf("PC  :%11d (0x%08x)\n",get_register(PC_REG, state), get_register(PC_REG, state));
+    printf("CPSR:%11d (0x%08x)\n", get_register(CPSR_REG, state),get_register(CPSR_REG, state));
 }
 
 void print_system_state(machineState *state) {
@@ -114,7 +111,7 @@ void print_system_state(machineState *state) {
     printf("Non-zero memory:\n");
     for (uint32_t i = 0; i < MEMORY_SIZE; i += 4) {
         if (get_word(state, i) != 0) {
-            printf("0x%08x : 0x%08x\n", i, get_memory(state, i));
+            printf("0x%08x: 0x%08x\n", i, get_memory(state, i));
         }
     }
 }
