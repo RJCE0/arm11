@@ -10,6 +10,30 @@ typedef struct {
 } InputFileData;
 
 
+/*
+1: add ... ... ...
+2: sub .... ..
+3: mov ...
+Loop:
+add _ _
+mov
+beq 0x000017
+End loop:
+mov
+add
+<Loop, 17> <End loop, 20>
+
+*/
+
+/*  This function does the first pass in two-pass method. It will take a file
+name and search it for labels only. It will then save each label name in one
+array in parallel with the "next instruction" in another array (all in a struct)
+
+Explained:
+the instructions start from 0 so a label on line 3, would effectively be
+pointing to instruction 3 (as the label doesn't count) hence instructions of 32
+bits would just mean multiplying the number by 4 (bytes), e.g. 3 * 4 = 0x00012.
+*/
 void read_file_first(InputFileData *fileData, char *inputFileName) {
 
     FILE *myfile;
@@ -31,7 +55,7 @@ void read_file_first(InputFileData *fileData, char *inputFileName) {
             printf("\nLabel \"%s\" spotted on line: %d\n", str, line+1);
             printf("So label points to instruction number: %d\n\n", 32 * line);
             *(fileData->labels + (labelCount - 1)) = str;
-            *(fileData->labelNextInstr + (labelCount - 1)) = 32 * line;
+            *(fileData->labelNextInstr + (labelCount - 1)) = 32 * line - labelCount;
         }
         printf("\n---%s---", str);
         do {
@@ -59,12 +83,6 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
         switch (str) {
             // Data Processing type 1:
             case "add":
-                char rn[20];
-                char rd[20];
-                char operand2[20];
-                // rn always register
-                fscaf(myfile, "%s", rn);
-                fscaf(myfile, "%s", rn);
 
                 break;
             case "sub":
@@ -152,19 +170,44 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
     }
 }
 
-void create_data_processing(bool immediateBit, int opcode, int rnNum, int rdNum, int op2Num) {
+add r1, r2, #0x39
+
+bool is_register(char name[], size_t size) {
+    return name[0] == 'r';
+}
+
+int get_register_num(char name[], size_t size) {
+    // name[0] = '';
+    return atoi(name+1);
+}
+
+int get_immediate(char name[], size_t size) {
+    "#0x24a7"
+
+    if (name[1] == '0' && name[2] == 'x') {
+        // convert to decimal somehow
+    }
+    return atoi(name+1);
+}
+
+uint32_t label_to_instruction(char label[], size_t size) {
+    //
+    return 0;
+}
+
+uint32_t create_data_processing(bool immediateBit, int opcode, int rnNum, int rdNum, int op2Num) {
 
 }
 
-void create_multiply(bool accBit, bool setCondBit, int rdNum, int rnNum, int rsNum, int rmNum) {
+uint32_t create_multiply(bool accBit, bool setCondBit, int rdNum, int rnNum, int rsNum, int rmNum) {
 
 }
 
-void create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool upBit,) {
+uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool upBit, ...) {
 
 }
 
-void create_branch() {
+uint32_t create_branch(...) {
 
 }
 
@@ -176,8 +219,7 @@ int main() {
     read_file_first(&fileData, "example.txt");
     read_file_second(&fileData, "example.txt");
 
-    printf("\n\nLabel is: %s\n", *(fileData.labels));
-    printf("Label instruction points to: %d\n\n", *(fileData.labelNextInstr));
-
+    free(fileData.labels);
+    free(fileData.labelNextInstr);
     return 0;
 }
