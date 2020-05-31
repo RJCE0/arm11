@@ -5,17 +5,17 @@ CFLAGS  = -Wall -g -D_POSIX_SOURCE -D_DEFAULT_SOURCE -std=c99 -Werror -pedantic
 
 .PHONY: all clean
 
-all: Makefile
+all: emulate
 
-Makefile: assemble.o emulate.o
-	$(CC) assemble.o emulate.o -o Makefile
+emulate: assemble.o emulate.o
+	$(CC) assemble.o emulate.o -o emulate
 
 
 assemble.o: assemble.c
 	$(CC) $(CFLAGS) -c assemble.c
 
 
-emulate.o: emulate.c emulate.h structs.h constants.h
+emulate.o: emulate.c emulate.h structs.h constants.h instructionTypes.h
 	$(CC) $(CFLAGS) -c emulate.c
 
 clean:
