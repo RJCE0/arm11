@@ -22,10 +22,10 @@ enum condition {
 };
 
 enum csprFlags {
-    OVERFLOW_FLAG = 1,  /* 0001 */
-    CARRY_FLAG = 2,     /* 0010 */
-    ZERO_FLAG = 4,      /* 0100 */
-    NEGATIVE_FLAG = 8   /* 1000 */
+    V_FLAG = 1,  /* 0001 */
+    C_FLAG = 2,  /* 0010 */
+    Z_FLAG = 4,  /* 0100 */
+    N_FLAG = 8   /* 1000 */
 };
 
 typedef enum {
@@ -53,8 +53,7 @@ typedef enum {
     MULTIPLY,
     SINGLE_DATA_TRANSFER,
     BRANCH,
-    ZERO,
-    NULL_I
+    ZERO
 }instructionType;
 
 

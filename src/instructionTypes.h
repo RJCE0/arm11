@@ -1,7 +1,7 @@
 typedef struct {
     uint32_t operand2;
     uint32_t carryBit;
-} shiftedRegister;
+} shifted;
 
 typedef struct  {
     instructionOpcode opcode : 4;
