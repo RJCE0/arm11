@@ -72,7 +72,7 @@ bool set_register(uint32_t regNumber, machineState *state, uint32_t value) {
 uint32_t get_word(machineState *state, uint32_t address) {
     uint32_t fullWord = 0;
     if (address > MEMORY_SIZE - 4) {
-        printf("Illegal attempt to access word....\n");
+        printf("Error: Out of bounds memory access at address 0x%08x\n", address);
     } else {
         uint32_t byte1 = state->memory[address + 3] << 0x18;
         uint32_t byte2 = state->memory[address + 2] << 0x10;
@@ -98,10 +98,10 @@ bool set_word(machineState *state, uint32_t address, uint32_t value) {
 
 void print_register_values(machineState *state) {
     for (int i = 0; i < NUM_OF_REGISTERS - 4; i++) {
-            printf("$%-3di:%11d (0x%08x)\n", i, get_register(i, state), get_register(i, state));
+            printf("$%-3d: %10d (0x%08x)\n", i, get_register(i, state), get_register(i, state));
     }
-    printf("PC  :%11d (0x%08x)\n",get_register(PC_REG, state), get_register(PC_REG, state));
-    printf("CPSR:%11d (0x%08x)\n", get_register(CPSR_REG, state),get_register(CPSR_REG, state));
+    printf("PC  : %10d (0x%08x)\n",get_register(PC_REG, state), get_register(PC_REG, state));
+    printf("CPSR: %10d (0x%08x)\n", get_register(CPSR_REG, state),get_register(CPSR_REG, state));
 }
 
 void print_system_state(machineState *state) {
@@ -119,13 +119,18 @@ void print_system_state(machineState *state) {
 shiftedRegister operand_shift_register(machineState *state, uint16_t instruction) {
     uint32_t rm = instruction & 0xF;
     uint32_t rmContents = get_register(rm, state);
-    uint32_t shiftNum = (instruction >> 7) & 0x1F;
     uint32_t shiftType = (instruction >> 5) & 0x3;
+    uint32_t shiftNum;
+    if ((instruction >> 4) & 0x1) {
+      shiftNum = get_register((instruction >> 8) & 0xF, state) & 0xF;
+    } else {
+      shiftNum = (instruction >> 7) & 0x1F;
+    }
     shiftedRegister result = {0, 0};
     switch (shiftType) {
         case LOGICAL_LEFT:
             result.operand2 = rmContents << shiftNum;
-            result.carryBit = (rmContents >> (32 - shiftNum)) & 0x1;
+            result.carryBit = (rmContents >> (31 - shiftNum)) & 0x1;
             return result;
         case LOGICAL_RIGHT:
             result.operand2 = rmContents >> shiftNum;
