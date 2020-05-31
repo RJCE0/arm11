@@ -19,7 +19,7 @@ typedef struct {
     uint8_t memory[MEMORY_SIZE];
     uint32_t registers[NUM_OF_REGISTERS];
     uint32_t fetched;
-    decodedInstruction instructionAfterDecode;
+    decodedInstruction *instructionAfterDecode;
     bool fetchedInstr;
     bool decodedInstr;
 } machineState;

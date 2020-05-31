@@ -206,30 +206,28 @@ branchInstruction decode_bi(machineState *state, uint32_t instruction) {
 }
 
 void decode(machineState *state, uint32_t instruction) {
-    decodedInstruction instr;
-    instr.condCode = (instruction >> 28) & 0xF;
+    state->instructionAfterDecode->condCode = (instruction >> 28) & 0xF;
     if (((instruction >> 26) & 0x3) == 0x1 && !((instruction >> 21) & 0x3)) { // NONZERO = TRUE, ZERO = FALSE
-        instr.type = SINGLE_DATA_TRANSFER;
-        instr.u.sdti = decode_sdt(state, instruction);
+        state->instructionAfterDecode->type = SINGLE_DATA_TRANSFER;
+        state->instructionAfterDecode->u.sdti = decode_sdt(state, instruction);
     } else if (((instruction >> 24) & 0xF) == 0xA) {
-        instr.type = BRANCH;
-        instr.u.bi = decode_bi(state, instruction);
+        state->instructionAfterDecode->type = BRANCH;
+        state->instructionAfterDecode->u.bi = decode_bi(state, instruction);
     } else if (!((instruction >> 22) & 0x3F) && (((instruction >> 4) & 0xF) == 9)) {
-        instr.type = MULTIPLY;
-        instr.u.mi = decode_mi(state, instruction);
+        state->instructionAfterDecode->type = MULTIPLY;
+        state->instructionAfterDecode->u.mi = decode_mi(state, instruction);
     } else if (!((instruction >> 26) & 0x3)) {
         if (instruction) {
-            instr.type = DATA_PROCESSING;
+            state->instructionAfterDecode->type = DATA_PROCESSING;
         } else {
-            instr.type = ZERO;
+            state->instructionAfterDecode->type = ZERO;
         }
-        instr.u.dpi = decode_dpi(state, instruction);
+        state->instructionAfterDecode->u.dpi = decode_dpi(state, instruction);
     } else {
         printf("Unsupported instruction type to decode at PC: 0x%08x\n", get_register(PC_REG, state) - 4);
         exit_error(state);
     }
     state->decodedInstr = true;
-    state->instructionAfterDecode = instr;
 }
 
 
@@ -410,29 +408,28 @@ bool check_cond(machineState *state, uint8_t instrCond) {
 }
 
 void execute_instructions(machineState *state) {
-    decodedInstruction decoded = state->instructionAfterDecode;
     // exit when ZERO instruction is reached
-    if (decoded.type == ZERO) {
+    if (state->instructionAfterDecode->type == ZERO) {
         print_system_state(state);
         free(state);
         exit(EXIT_SUCCESS);
     }
     // checks condition flags of instruction with CPSR reg, if function returns false then instruction is ignored and not executed
-    if (!check_cond(state, decoded.condCode)) {
+    if (!check_cond(state, state->instructionAfterDecode->condCode)) {
         return;
     }
-    switch (decoded.type) {
+    switch (state->instructionAfterDecode->type) {
         case DATA_PROCESSING:
-            execute_dpi(state, decoded.u.dpi);
+            execute_dpi(state, state->instructionAfterDecode->u.dpi);
             break;
         case MULTIPLY:
-            execute_mi(state, decoded.u.mi);
+            execute_mi(state, state->instructionAfterDecode->u.mi);
             break;
         case SINGLE_DATA_TRANSFER:
-            execute_sdti(state, decoded.u.sdti);
+            execute_sdti(state, state->instructionAfterDecode->u.sdti);
             break;
         case BRANCH:
-            execute_bi(state, decoded.u.bi);
+            execute_bi(state, state->instructionAfterDecode->u.bi);
             break;
         default:
             // instructions should not reach this stage unless error in fetch/decode
@@ -472,6 +469,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     machineState *state = (machineState *) calloc(1, sizeof(machineState));
+    state->instructionAfterDecode = (decodedInstruction *) malloc(sizeof(decodedInstruction));
     // reads bin file and stores it into memory in our machine state
     read_file(state, argv[1]);
     pipeline(state);
