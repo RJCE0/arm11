@@ -97,21 +97,24 @@ bool set_word(machineState *state, uint32_t address, uint32_t value) {
 }
 
 void print_register_values(machineState *state) {
-    for (int i = 0; i < NUM_OF_REGISTERS - 4; i++) {
-        if (i != 13 && i != 14) {
-            printf("$%i : 0x%08x\n", i, get_register(i, state));
-        }
+    for (int i = 0; i <= 9; i++) {
+            printf("$%i  :          %u (0x%08x)\n", i,get_register(i, state), get_register(i, state));
     }
-    printf("PC: 0x%08x\n", get_register(PC_REG, state));
-    printf("CPSR: 0x%08x\n", get_register(CPSR_REG, state));
+    for (int i = 10; i < NUM_OF_REGISTERS - 4; i++) {
+            printf("$%i :          %u (0x%08x)\n", i,get_register(i, state), get_register(i, state));
+    }
+    printf("PC  :         %u (0x%08x)\n",get_register(PC_REG, state), get_register(PC_REG, state));
+    printf("CPSR: %u (0x%08x)\n", get_register(CPSR_REG, state),get_register(CPSR_REG, state));
 }
 
 void print_system_state(machineState *state) {
     assert(state);
+    printf("Registers:\n");
     print_register_values(state);
+    printf("Non-zero memory:\n");
     for (uint32_t i = 0; i < MEMORY_SIZE; i += 4) {
         if (get_word(state, i) != 0) {
-            printf("Memory at 0x%08x : 0x%08x\n", i, get_memory(state, i));
+            printf("0x%08x : 0x%08x\n", i, get_memory(state, i));
         }
     }
 }
@@ -410,8 +413,6 @@ bool check_cond(machineState *state, uint8_t instrCond) {
 void execute_instructions(machineState *state) {
     decodedInstruction decoded = state->instructionAfterDecode;
     if (decoded.type == ZERO) {
-        printf("A zero instruction has been found at PC: 0x%x and the program will terminate.\n",
-               get_register(PC_REG, state));
         print_system_state(state);
         free(state);
         exit(EXIT_SUCCESS);
@@ -448,19 +449,6 @@ void fetch(machineState *state) {
     state->registers[PC_REG] += 4;
 }
 
-
-/*
-bool decoded_instruction_present(machineState *state) {
-    if (state->instructionAfterDecode == NULL) {
-        return false;
-    }
-    return state->instructionAfterDecode->type == DATA_PROCESSING
-           || state->instructionAfterDecode->type == SINGLE_DATA_TRANSFER
-           || state->instructionAfterDecode->type == MULTIPLY
-           || state->instructionAfterDecode->type == BRANCH
-           || state->instructionAfterDecode->type == ZERO;
-}
-*/
 
 void advance_program_counter(machineState *state) {
     state->registers[PC_REG] += 4;
