@@ -53,7 +53,8 @@ typedef enum {
     MULTIPLY,
     SINGLE_DATA_TRANSFER,
     BRANCH,
-    ZERO
+    ZERO,
+    NULL_INSTR
 }instructionType;
 
 

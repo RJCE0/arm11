@@ -227,11 +227,11 @@ void decode(machineState *state, uint32_t instruction) {
         printf("Unsupported instruction type to decode at PC: 0x%08x\n", get_register(PC_REG, state) - 4);
         exit_error(state);
     }
-    state->decodedInstr = true;
 }
 
 
-void execute_dpi(machineState *state, dataProcessingInstruction dpi) {
+void execute_dpi(machineState *state) {
+    dataProcessingInstruction dpi = state->instructionAfterDecode->u.dpi;
     uint32_t operand2 = 0;
     uint32_t carryBit = 0;
     if (dpi.immediate) {
@@ -307,7 +307,8 @@ void execute_dpi(machineState *state, dataProcessingInstruction dpi) {
     }
 }
 
-void execute_mi(machineState *state, multiplyInstruction mi) {
+void execute_mi(machineState *state) {
+    multiplyInstruction mi = state->instructionAfterDecode->u.mi;
     uint32_t res = 0;
     uint32_t acc = 0;
     uint32_t currentCpsr;
@@ -332,7 +333,8 @@ void execute_mi(machineState *state, multiplyInstruction mi) {
     }
 }
 
-void execute_sdti(machineState *state, sdtInstruction sdti) {
+void execute_sdti(machineState *state) {
+    sdtInstruction sdti = state->instructionAfterDecode->u.sdti;
     uint32_t offset;
     if (sdti.immediate) {
         offset = operand_shift_register(state, sdti.offset).operand2;
@@ -366,10 +368,11 @@ void execute_sdti(machineState *state, sdtInstruction sdti) {
 static void clear_pipeline(machineState *state) {
     assert(state);
     state->fetchedInstr = false;
-    state->decodedInstr = false;
+    state->instructionAfterDecode->type = NULL_INSTR;
 }
 
-void execute_bi(machineState *state, branchInstruction bi) {
+void execute_bi(machineState *state) {
+    branchInstruction bi = state->instructionAfterDecode->u.bi;
     if (is_negative(bi.offset, 31)) {
         // if negative then it converts from 2's complement
         state->registers[PC_REG] -= ~(bi.offset - 1);
@@ -379,7 +382,8 @@ void execute_bi(machineState *state, branchInstruction bi) {
     clear_pipeline(state);
 }
 
-bool check_cond(machineState *state, uint8_t instrCond) {
+bool check_cond(machineState *state) {
+    uint8_t instrCond = state->instructionAfterDecode->condCode;
     // takes the highest 4 bits of the CPSR register (i.e. the cond flags)
     uint32_t cpsrFlags = get_register(CPSR_REG, state) >> SHIFT_COND;
     switch (instrCond) {
@@ -415,21 +419,21 @@ void execute_instructions(machineState *state) {
         exit(EXIT_SUCCESS);
     }
     // checks condition flags of instruction with CPSR reg, if function returns false then instruction is ignored and not executed
-    if (!check_cond(state, state->instructionAfterDecode->condCode)) {
+    if (!check_cond(state)) {
         return;
     }
     switch (state->instructionAfterDecode->type) {
         case DATA_PROCESSING:
-            execute_dpi(state, state->instructionAfterDecode->u.dpi);
+            execute_dpi(state);
             break;
         case MULTIPLY:
-            execute_mi(state, state->instructionAfterDecode->u.mi);
+            execute_mi(state);
             break;
         case SINGLE_DATA_TRANSFER:
-            execute_sdti(state, state->instructionAfterDecode->u.sdti);
+            execute_sdti(state);
             break;
         case BRANCH:
-            execute_bi(state, state->instructionAfterDecode->u.bi);
+            execute_bi(state);
             break;
         default:
             // instructions should not reach this stage unless error in fetch/decode
@@ -449,7 +453,7 @@ void pipeline(machineState *state) {
     // will repeat fetch decode execute cycle until ZERO instruction or invalid instruction
     while (true) {
         // first checks whether there has been a decoded instruction in previous cycle before executing
-        if (state->decodedInstr) {
+        if (state->instructionAfterDecode->type != NULL_INSTR) {
             execute_instructions(state);
         }
         // first checks whether there has been a fetched instruction in previous cycle before decoding
@@ -470,6 +474,7 @@ int main(int argc, char **argv) {
     }
     machineState *state = (machineState *) calloc(1, sizeof(machineState));
     state->instructionAfterDecode = (decodedInstruction *) malloc(sizeof(decodedInstruction));
+    state->instructionAfterDecode->type = NULL_INSTR;
     // reads bin file and stores it into memory in our machine state
     read_file(state, argv[1]);
     pipeline(state);

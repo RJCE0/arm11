@@ -21,7 +21,6 @@ typedef struct {
     uint32_t fetched;
     decodedInstruction *instructionAfterDecode;
     bool fetchedInstr;
-    bool decodedInstr;
 } machineState;
 
 
