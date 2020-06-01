@@ -156,73 +156,69 @@ shifted operand_shift_register(machineState *state, uint16_t instruction) {
     }
 }
 
-dataProcessingInstruction decode_dpi(machineState *state, uint32_t instruction) {
-    dataProcessingInstruction dpi;
-    dpi.immediate = ((instruction >> 25) & 0x1);
-    dpi.opcode = (instruction >> 21) & 0xF;
-    dpi.setBit = (instruction >> 20) & 0x1;
-    dpi.rn = (instruction >> 16) & 0xF;
-    dpi.rd = (instruction >> 12) & 0xF;
-    dpi.operand2 = instruction & 0xFFF;
-    return dpi;
+void decode_dpi(machineState *state, uint32_t instruction) {
+    if (instruction) {
+        state->instructionAfterDecode->type = DATA_PROCESSING;
+    } else {
+        state->instructionAfterDecode->type = ZERO;
+    }
+    dataProcessingInstruction *dpi = &(state->instructionAfterDecode->u.dpi);
+    dpi->immediate = ((instruction >> 25) & 0x1);
+    dpi->opcode = (instruction >> 21) & 0xF;
+    dpi->setBit = (instruction >> 20) & 0x1;
+    dpi->rn = (instruction >> 16) & 0xF;
+    dpi->rd = (instruction >> 12) & 0xF;
+    dpi->operand2 = instruction & 0xFFF;
 }
 
 static bool is_negative(uint32_t instruction, int significant) {
     return (instruction >> significant) & 0x1;
 }
 
-multiplyInstruction decode_mi(machineState *state, uint32_t instruction) {
-    multiplyInstruction mi;
-    mi.rm = instruction & 0xF;
-    mi.rs = (instruction >> 8) & 0xF;
-    mi.rn = (instruction >> 12) & 0xF;
-    mi.rd = (instruction >> 16) & 0xF;
-    mi.setBit = (instruction >> 20) & 0x1;
-    mi.accumBit = (instruction >> 21) & 0x1;
-    return mi;
+void decode_mi(machineState *state, uint32_t instruction) {
+    state->instructionAfterDecode->type = MULTIPLY;
+    multiplyInstruction *mi = &(state->instructionAfterDecode->u.mi);
+    mi->rm = instruction & 0xF;
+    mi->rs = (instruction >> 8) & 0xF;
+    mi->rn = (instruction >> 12) & 0xF;
+    mi->rd = (instruction >> 16) & 0xF;
+    mi->setBit = (instruction >> 20) & 0x1;
+    mi->accumBit = (instruction >> 21) & 0x1;
 }
 
-sdtInstruction decode_sdt(machineState *state, uint32_t instruction) {
-    sdtInstruction sdti;
-    sdti.immediate = (instruction >> 25) & 0x1;
-    sdti.indexingBit = (instruction >> 24) & 0x1;
-    sdti.upBit = (instruction >> 23) & 0x1;
-    sdti.loadBit = (instruction >> 20) & 0x1;
-    sdti.rn = (instruction >> 16) & 0xF;
-    sdti.rd = (instruction >> 12) & 0xF;
-    sdti.offset = instruction & 0xFFF;
-    return sdti;
+void decode_sdt(machineState *state, uint32_t instruction) {
+    state->instructionAfterDecode->type = SINGLE_DATA_TRANSFER;
+    sdtInstruction *sdti = &(state->instructionAfterDecode->u.sdti);
+    sdti->immediate = (instruction >> 25) & 0x1;
+    sdti->indexingBit = (instruction >> 24) & 0x1;
+    sdti->upBit = (instruction >> 23) & 0x1;
+    sdti->loadBit = (instruction >> 20) & 0x1;
+    sdti->rn = (instruction >> 16) & 0xF;
+    sdti->rd = (instruction >> 12) & 0xF;
+    sdti->offset = instruction & 0xFFF;
 }
 
-branchInstruction decode_bi(machineState *state, uint32_t instruction) {
-    branchInstruction bi;
+void decode_bi(machineState *state, uint32_t instruction) {
+    state->instructionAfterDecode->type = BRANCH;
+    branchInstruction *bi = &(state->instructionAfterDecode->u.bi);
     uint32_t offset = instruction & 0xFFFFFF;
     if (is_negative(offset, 23)) {
         offset |= SE_32;
     }
     offset <<= 2;
-    bi.offset = offset;
-    return bi;
+    bi->offset = offset;
 }
 
 void decode(machineState *state, uint32_t instruction) {
     state->instructionAfterDecode->condCode = (instruction >> 28) & 0xF;
     if (((instruction >> 26) & 0x3) == 0x1 && !((instruction >> 21) & 0x3)) { // NONZERO = TRUE, ZERO = FALSE
-        state->instructionAfterDecode->type = SINGLE_DATA_TRANSFER;
-        state->instructionAfterDecode->u.sdti = decode_sdt(state, instruction);
+        decode_sdt(state, instruction);
     } else if (((instruction >> 24) & 0xF) == 0xA) {
-        state->instructionAfterDecode->type = BRANCH;
-        state->instructionAfterDecode->u.bi = decode_bi(state, instruction);
+        decode_bi(state, instruction);
     } else if (!((instruction >> 22) & 0x3F) && (((instruction >> 4) & 0xF) == 9)) {
-        state->instructionAfterDecode->type = MULTIPLY;
-        state->instructionAfterDecode->u.mi = decode_mi(state, instruction);
+        decode_mi(state, instruction);
     } else if (!((instruction >> 26) & 0x3)) {
-        if (instruction) {
-            state->instructionAfterDecode->type = DATA_PROCESSING;
-        } else {
-            state->instructionAfterDecode->type = ZERO;
-        }
-        state->instructionAfterDecode->u.dpi = decode_dpi(state, instruction);
+        decode_dpi(state, instruction);
     } else {
         printf("Unsupported instruction type to decode at PC: 0x%08x\n", get_register(PC_REG, state) - 4);
         exit_error(state);
