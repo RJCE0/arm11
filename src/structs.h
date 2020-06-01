@@ -16,12 +16,21 @@ BRANCH -- clear pipeline
 */
 
 typedef struct {
+    uint32_t carryBit;
+    uint32_t operand2;
+} shifted;
+
+typedef struct {
+    cpsrFlags flag;
+    bool set: 1;
+} flagChange;
+
+typedef struct {
     uint8_t memory[MEMORY_SIZE];
     uint32_t registers[NUM_OF_REGISTERS];
     uint32_t fetched;
-    decodedInstruction instructionAfterDecode;
+    decodedInstruction *instructionAfterDecode;
     bool fetchedInstr;
-    bool decodedInstr;
 } machineState;
 
 
