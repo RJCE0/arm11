@@ -262,6 +262,8 @@ static uint32_t get_cond_codes(machineState *state){
     return (get_register(CPSR_REG, state) & 0xF0000000) >> SHIFT_COND;
 }
 
+
+// changes the flags on the CPSR register
 void set_flags(machineState *state, flagChange flags[], int size){
     uint32_t currentFlags = get_cond_codes(state);
     for (size_t i = 0; i < size; i++) {
@@ -365,24 +367,20 @@ void execute_mi(machineState *state) {
     multiplyInstruction *mi = &(state->instructionAfterDecode->u.mi);
     uint32_t res = 0;
     uint32_t acc = 0;
-    uint32_t currentCpsr;
 
     /*Performing the operation */
-    acc = (mi->accumBit) ? state->registers[mi->rn] : 0;
-    res = (state->registers[mi->rm] * state->registers[mi->rs]) + acc;
-    state->registers[mi->rd] = res;
+    acc = (mi->accumBit) ? get_register(mi->rn, state) : 0;
+    res = (get_register(mi->rm, state) * get_register(mi->rs, state)) + acc;
+    set_register(mi->rd, state, res);
 
     /*Changing flag status if necessary */
     if (mi->setBit) {
-        currentCpsr = state->registers[CPSR_REG] & 0xFFFFFFF;
-        if (res == 0) {
-            /* VCZN */
-            currentCpsr |= (Z_FLAG << SHIFT_COND);
-        }
-        if (is_negative(res, 31)) {
-            currentCpsr |= (N_FLAG << SHIFT_COND);
-        }
-        state->registers[CPSR_REG] = currentCpsr;
+        flagChange flags[2];
+        flags[0].flag = Z_FLAG;
+        flags[0].set = (res == 0);
+        flags[1].flag = N_FLAG;
+        flags[1].set = is_negative(res, 31);
+        set_flags(state, flags, 2);
     }
 }
 

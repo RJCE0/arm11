@@ -41,6 +41,5 @@ typedef struct {
         multiplyInstruction mi;
         sdtInstruction sdti;
         branchInstruction bi;
-        nullInstruction ni;
     } u;
 } decodedInstruction;
