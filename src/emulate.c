@@ -199,8 +199,8 @@ void decode(machineState *state) {
 // in separate function as it is used if operand2 in dpi is an immediate
 static shifted rotate_right(uint32_t contents, uint32_t shiftNum){
     shifted result;
-    result.operand2 = (contents >> shiftNum) | (contents << (32 - shiftNum));
     result.carryBit = (contents >> (shiftNum - 1)) & 0x1;
+    result.operand2 = (contents >> shiftNum) | (contents << (32 - shiftNum));
     return result;
 }
 
@@ -218,30 +218,35 @@ shifted operand_shift_register(machineState *state, uint16_t instruction) {
         instruction >>= 3;
         shiftNum = instruction & 0x1F;
     }
-    shifted result = {rmContents, 0};
-    // if the shift amount = 0 then rmContents can be return as it is with no carry
+    shifted result = {0, rmContents};
+    // if the number to shift by = 0 then rmContents can be return as it is with no carry
     if (!shiftNum){
         return result;
     }
     switch (shiftType) {
         case LOGICAL_LEFT:
-            result.operand2 = rmContents << shiftNum;
             result.carryBit = (rmContents >> (32 - shiftNum)) & 0x1;
+            result.operand2 = rmContents << shiftNum;
             return result;
         case LOGICAL_RIGHT:
-            result.operand2 = rmContents >> shiftNum;
             result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
+            result.operand2 = rmContents >> shiftNum;
             return result;
         case ARITH_RIGHT: {
+            result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             uint32_t signBit = rmContents & SIGN_32_BIT;
+            // if signBit is = 0 then returns a normal right shift
+            if (!signBit) {
+                result.operand2 = (rmContents >> shiftNum);
+                return result;
+            }
             uint32_t preservedSign = 0;
             // iterates through ensuring the most significant bit is repeated for each right shift along
             for (uint32_t i = 0; i < shiftNum; i++) {
-                preservedSign += signBit;
+                preservedSign |= signBit;
                 signBit >>= 1;
             }
-            result.operand2 = (rmContents >> shiftNum) + preservedSign;
-            result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
+            result.operand2 = (rmContents >> shiftNum) | preservedSign;
             return result;
         }
         case ROTATE_RIGHT:
@@ -271,22 +276,24 @@ void set_flags(machineState *state, flagChange flags[], int size){
 
 void execute_dpi(machineState *state) {
     dataProcessingInstruction *dpi = &(state->instructionAfterDecode->u.dpi);
-    uint32_t operand2 = 0;
-    uint32_t carryBit = 0;
+    uint32_t operand1 = get_register(dpi->rn, state);
+    uint32_t operand2;
+    uint32_t carryBit;
+    uint32_t result;
+
     if (dpi->immediate) {
         uint32_t imm = dpi->operand2 & 0xFF;
         // >>8 to get the rotate value but * 2 so << 1 therefore >>7 overall
         uint32_t rotate = ((dpi->operand2 & 0xF00) >> 7);
         shifted value = rotate_right(imm, rotate);
-        operand2 = value.operand2;
         carryBit = value.carryBit;
+        operand2 = value.operand2;
     } else {
         shifted value = operand_shift_register(state, dpi->operand2);
-        operand2 = value.operand2;
         carryBit = value.carryBit;
+        operand2 = value.operand2;
     }
-    uint32_t result;
-    uint32_t operand1 = get_register(dpi->rn, state);
+
     switch (dpi->opcode) {
         case AND:
             result = operand1 & operand2;

@@ -1,8 +1,3 @@
-typedef struct {
-    uint32_t operand2;
-    uint32_t carryBit;
-} shifted;
-
 typedef struct  {
     instructionOpcode opcode : 4;
     uint16_t operand2 : 12;
@@ -34,22 +29,9 @@ typedef struct {
     bool immediate;
 } sdtInstruction;
 
-
 typedef struct {
     uint32_t offset;
 } branchInstruction;
-
-typedef struct {
-    int8_t rn : 4;
-    int8_t rd : 4;
-    int8_t rs : 4;
-    int8_t rm : 4;
-
-    bool accumBit;
-    bool setBit;
-}nullInstruction;
-
-
 
 typedef struct {
     instructionType type : 3;

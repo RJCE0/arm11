@@ -14,6 +14,12 @@ After execution, move pointers back one -- change what they're pointed to with e
 BRANCH -- clear pipeline
 
 */
+
+typedef struct {
+    uint32_t carryBit;
+    uint32_t operand2;
+} shifted;
+
 typedef struct {
     cpsrFlags flag;
     bool set: 1;
