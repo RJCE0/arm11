@@ -3,26 +3,37 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
+#include <stdbool.h>
 
 typedef struct {
     char **labels;
     uint32_t *labelNextInstr;
 } InputFileData;
 
+// [Function_A, Function_B, ...]
+// [0x00012, 0x00000128]
 
 /*
-1: add ... ... ...
-2: sub .... ..
-3: mov ...
-Loop:
-add _ _
-mov
-beq 0x000017
-End loop:
-mov
-add
+1:  add ... ... ...                     1. mov r2,#23
+2:  sub .... ..                         2. wait:
+3:  mov ...                             3. sub r2,r2,#1
+4:  Loop:                               4. cmp r2,#0
+5:  add _ _                             5. bne wait
+6:  mov
+7:  beq 0x000017
+8:  nd loop:
+9:  mov
+10: add
 <Loop, 17> <End loop, 20>
 
+*/
+
+
+/* (RJ) branch bit explained for myself:
+so for branching, when i see a branch condition it will be made up of two components
+the type of branch and a target address. The target address might be an actual address
+in or it might be a label. For this reason, I can make a for loop to loop through the
+first array to find the position of the label address in the second array.
 */
 
 /*  This function does the first pass in two-pass method. It will take a file
@@ -170,7 +181,7 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
     }
 }
 
-add r1, r2, #0x39
+//add r1, r2, #0x39
 
 bool is_register(char name[], size_t size) {
     return name[0] == 'r';
@@ -182,7 +193,7 @@ int get_register_num(char name[], size_t size) {
 }
 
 int get_immediate(char name[], size_t size) {
-    "#0x24a7"
+    //"#0x24a7"
 
     if (name[1] == '0' && name[2] == 'x') {
         // convert to decimal somehow
@@ -194,6 +205,23 @@ uint32_t label_to_instruction(char label[], size_t size) {
     //
     return 0;
 }
+
+uint32_t get_label_address(char **labelsArray, char *str ){ 
+    int i = 0;
+    int cols = sizeof(*labelsArray);
+    bool check = i < cols;
+    while(check && strcmp(str, *(*labelsArray + i) != 0)){
+        i++;
+    }
+    if (check){
+        return *(*(labelsArray + 1) + i);
+    }
+    else{
+       printf("String entered wasn't a label");
+    }
+    // RJ need to check this works
+}
+
 
 uint32_t create_data_processing(bool immediateBit, int opcode, int rnNum, int rdNum, int op2Num) {
 
