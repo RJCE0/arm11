@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <math.h>
 
 typedef struct {
     char **labels;
@@ -201,6 +202,26 @@ int get_immediate(char name[], size_t size) {
     return atoi(name+1);
 }
 
+uint32_t hex_to_decimal(char hex[]){
+      int len = strlen(hex);
+      len--;
+
+      uint32_t dec_val = 0;
+
+      for (int i=2; i<=len; i++) {
+              if (hex[i]>='0' && hex[i]<='9') {
+                      dec_val += (hex[i] - 48) * pow(16, (len-i));
+              }
+
+              else if (hex[i]>='A' && hex[i]<='F') {
+                      dec_val += (hex[i] - 55 ) * pow(16, (len-i));
+              }
+      }
+      return dec_val;
+} //think mazen might need this for get immediate (RJ)
+// you just pass in "0x245A2175" for example and it gives back the uint32_t
+// note, i assumed that the hex was in big endian.
+
 uint32_t label_to_instruction(char label[], size_t size) {
     //
     return 0;
@@ -219,7 +240,7 @@ uint32_t get_label_address(char **labelsArray, char *str ){
     else{
        printf("String entered wasn't a label");
     }
-    // RJ need to check this works
+    // (RJ) need to check this works
 }
 
 
