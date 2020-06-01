@@ -6,12 +6,19 @@
 #include <string.h>
 #include <stdint.h>
 
-bool read_file(machineState *state, char *filename) {
+void exit_error(machineState *state) {
+    print_system_state(state);
+    free(state->instructionAfterDecode);
+    free(state);
+    exit(EXIT_FAILURE);
+}
+
+void read_file(machineState *state, char *filename) {
     FILE *binFile;
     binFile = fopen(filename, "rb");
     if (!binFile) {
         fprintf(stderr, "File does not exist. Exiting...\n");
-        exit(EXIT_FAILURE); /* non-zero val -- couldn't read file */
+        exit_error(state); /* non-zero val -- couldn't read file */
     }
     /* Elements to be read are each 4 bytes. Binary files can be any size and
     fread will only read till the end of the file or until the size is met.
@@ -20,55 +27,56 @@ bool read_file(machineState *state, char *filename) {
     fread(state->memory, MEMORY_SIZE, 1, binFile);
     if (ferror(binFile)) {
         fprintf(stderr, "Error while reading file. Exiting...\n");
-        exit(EXIT_FAILURE);
+        exit_error(state);
     }
     fclose(binFile);
-    return true;
 }
 
 uint32_t get_register(uint32_t regNumber, machineState *state) {
     if (regNumber == 13 || regNumber == 14 || regNumber > 16) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
-        print_system_state(state);
-        exit(EXIT_FAILURE);
+        exit_error(state);
     }
     return state->registers[regNumber];
 }
 
-bool set_register(uint32_t regNumber, machineState *state, uint32_t value) {
-    if (regNumber == 13 || regNumber == 14 || regNumber < 0 || regNumber > 16) {
-        fprintf(stderr, "Invalid register number specified, not supported or out of range.");
-        return false;
+void set_register(uint32_t regNumber, machineState *state, uint32_t value) {
+    if (regNumber == 13 || regNumber == 14 || regNumber > 16) {
+        fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
+        exit_error(state);
     }
     state->registers[regNumber] = value;
+}
+
+static bool check_word(uint32_t address) {
+    if (address > MEMORY_SIZE - 4) {
+        printf("Error: Out of bounds memory access at address 0x%08x\n", address);
+        return false;
+    }
     return true;
 }
 
 uint32_t get_word(machineState *state, uint32_t address) {
     uint32_t fullWord = 0;
-    if (address > MEMORY_SIZE - 4) {
-        printf("Error: Out of bounds memory access at address 0x%08x\n", address);
-        return 0;
-    }
+    check_word(address);
     // converts from little endian to big endian
     for (size_t i = 0; i < 4; i++) {
-        fullWord += state->memory[address + i] << (8 * i);
+        fullWord += state->memory[address + i] << (i << 3);
     }
     return fullWord;
 
 }
 
-bool set_word(machineState *state, uint32_t address, uint32_t value) {
+void set_word(machineState *state, uint32_t address, uint32_t value) {
     if (address > MEMORY_SIZE - WORD_SIZE_IN_BYTES) {
         fprintf(stderr, "Address specified is too high. Segmentation fault detected.\n");
-        return false;
+        return;
     }
     // converts from big endian to little endian
     for (int i = 0; i < 4; i++) {
         state->memory[address + i] = (value & 0xFF);
         value >>= 8;
     }
-    return true;
 }
 
 void print_register_values(machineState *state) {
@@ -100,12 +108,95 @@ void print_system_state(machineState *state) {
     }
 }
 
-void exit_error(machineState *state) {
-    print_system_state(state);
-    free(state);
-    exit(EXIT_FAILURE);
+void decode_dpi(machineState *state, uint32_t instruction) {
+    // if instruction is false then it must contain all zeros so is a zero instruction
+    if (instruction) {
+        state->instructionAfterDecode->type = DATA_PROCESSING;
+    } else {
+        state->instructionAfterDecode->type = ZERO;
+    }
+    dataProcessingInstruction *dpi = &(state->instructionAfterDecode->u.dpi);
+    dpi->operand2 = instruction & 0xFFF;
+    instruction >>= 12;
+    dpi->rd = instruction & 0xF;
+    instruction >>= 4;
+    dpi->rn = instruction & 0xF;
+    instruction >>= 4;
+    dpi->setBit = instruction & 0x1;
+    instruction >>= 1;
+    dpi->opcode = instruction & 0xF;
+    instruction >>= 4;
+    dpi->immediate = instruction & 0x1;
 }
 
+static bool is_negative(uint32_t instruction, int negBit) {
+    return (instruction >> negBit) & 0x1;
+}
+
+void decode_mi(machineState *state, uint32_t instruction) {
+    state->instructionAfterDecode->type = MULTIPLY;
+    multiplyInstruction *mi = &(state->instructionAfterDecode->u.mi);
+    mi->rm = instruction & 0xF;
+    instruction >>= 8;
+    mi->rs = instruction & 0xF;
+    instruction >>= 4;
+    mi->rn = instruction & 0xF;
+    instruction >>= 4;
+    mi->rd = instruction & 0xF;
+    instruction >>= 4;
+    mi->setBit = instruction & 0x1;
+    instruction >>= 1;
+    mi->accumBit = instruction & 0x1;
+}
+
+void decode_sdt(machineState *state, uint32_t instruction) {
+    state->instructionAfterDecode->type = SINGLE_DATA_TRANSFER;
+    sdtInstruction *sdti = &(state->instructionAfterDecode->u.sdti);
+    sdti->offset = instruction & 0xFFF;
+    instruction >>= 12;
+    sdti->rd = instruction & 0xF;
+    instruction >>= 4;
+    sdti->rn = instruction & 0xF;
+    instruction >>= 4;
+    sdti->loadBit = instruction & 0x1;
+    instruction >>= 3;
+    sdti->upBit = instruction & 0x1;
+    instruction >>= 1;
+    sdti->indexingBit = instruction & 0x1;
+    instruction >>= 1;
+    sdti->immediate = instruction & 0x1;
+}
+
+void decode_bi(machineState *state, uint32_t instruction) {
+    state->instructionAfterDecode->type = BRANCH;
+    branchInstruction *bi = &(state->instructionAfterDecode->u.bi);
+    uint32_t offset = instruction & 0xFFFFFF;
+    // checks if signed number is negative, if so it gets sign extended from 24 to 32 bits
+    if (is_negative(offset, 23)) {
+        offset |= SE_32;
+    }
+    offset <<= 2;
+    bi->offset = offset;
+}
+
+void decode(machineState *state) {
+    uint32_t instruction = state->fetched;
+    state->instructionAfterDecode->condCode = (instruction >> SHIFT_COND) & 0xF;
+    if (((instruction >> 26) & 0x3) == 0x1 && !((instruction >> 21) & 0x3)) {
+        decode_sdt(state, instruction);
+    } else if (((instruction >> 24) & 0xF) == 0xA) {
+        decode_bi(state, instruction);
+    } else if (!((instruction >> 22) & 0x3F) && (((instruction >> 4) & 0xF) == 9)) {
+        decode_mi(state, instruction);
+    } else if (!((instruction >> 26) & 0x3)) {
+        decode_dpi(state, instruction);
+    } else {
+        printf("Unsupported instruction type to decode at PC: 0x%08x\n", get_register(PC_REG, state) - 4);
+        exit_error(state);
+    }
+}
+
+// in separate function as it is used if operand2 in dpi is an immediate
 static shifted rotate_right(uint32_t contents, uint32_t shiftNum){
     shifted result;
     result.operand2 = (contents >> shiftNum) | (contents << (32 - shiftNum));
@@ -116,17 +207,20 @@ static shifted rotate_right(uint32_t contents, uint32_t shiftNum){
 shifted operand_shift_register(machineState *state, uint16_t instruction) {
     uint32_t rm = instruction & 0xF;
     uint32_t rmContents = get_register(rm, state);
-    uint32_t shiftType = (instruction >> 5) & 0x3;
+    instruction >>= 4;
+    uint32_t shiftType = (instruction & 0x6) >> 1;
     uint32_t shiftNum;
-    if ((instruction >> 4) & 0x1) {
-        shiftNum = get_register((instruction >> 8) & 0xF, state) & 0xF;
+    // checks whether a shift register or integer
+    if (instruction & 0x1) {
+        instruction >>= 4;
+        shiftNum = get_register(instruction & 0xF, state) & 0xF;
     } else {
-        shiftNum = (instruction >> 7) & 0x1F;
+        instruction >>= 3;
+        shiftNum = instruction & 0x1F;
     }
-    shifted result = {0, 0};
+    shifted result = {rmContents, 0};
+    // if the shift amount = 0 then rmContents can be return as it is with no carry
     if (!shiftNum){
-        result.operand2 = rmContents;
-        result.carryBit = 0;
         return result;
     }
     switch (shiftType) {
@@ -141,6 +235,7 @@ shifted operand_shift_register(machineState *state, uint16_t instruction) {
         case ARITH_RIGHT: {
             uint32_t signBit = rmContents & 0x80000000;
             uint32_t preservedSign = 0;
+            // iterates through ensuring the most significant bit is repeated for each right shift along
             for (uint32_t i = 0; i < shiftNum; i++) {
                 preservedSign += signBit;
                 signBit >>= 1;
@@ -152,120 +247,53 @@ shifted operand_shift_register(machineState *state, uint16_t instruction) {
         case ROTATE_RIGHT:
             return rotate_right(rmContents, shiftNum);
         default:
+            fprintf(stderr, "An unknown shift has been found.\n");
+            exit_error(state);
             return result;
     }
 }
 
-void decode_dpi(machineState *state, uint32_t instruction) {
-    if (instruction) {
-        state->instructionAfterDecode->type = DATA_PROCESSING;
-    } else {
-        state->instructionAfterDecode->type = ZERO;
-    }
-    dataProcessingInstruction *dpi = &(state->instructionAfterDecode->u.dpi);
-    dpi->immediate = ((instruction >> 25) & 0x1);
-    dpi->opcode = (instruction >> 21) & 0xF;
-    dpi->setBit = (instruction >> 20) & 0x1;
-    dpi->rn = (instruction >> 16) & 0xF;
-    dpi->rd = (instruction >> 12) & 0xF;
-    dpi->operand2 = instruction & 0xFFF;
-}
-
-static bool is_negative(uint32_t instruction, int significant) {
-    return (instruction >> significant) & 0x1;
-}
-
-void decode_mi(machineState *state, uint32_t instruction) {
-    state->instructionAfterDecode->type = MULTIPLY;
-    multiplyInstruction *mi = &(state->instructionAfterDecode->u.mi);
-    mi->rm = instruction & 0xF;
-    mi->rs = (instruction >> 8) & 0xF;
-    mi->rn = (instruction >> 12) & 0xF;
-    mi->rd = (instruction >> 16) & 0xF;
-    mi->setBit = (instruction >> 20) & 0x1;
-    mi->accumBit = (instruction >> 21) & 0x1;
-}
-
-void decode_sdt(machineState *state, uint32_t instruction) {
-    state->instructionAfterDecode->type = SINGLE_DATA_TRANSFER;
-    sdtInstruction *sdti = &(state->instructionAfterDecode->u.sdti);
-    sdti->immediate = (instruction >> 25) & 0x1;
-    sdti->indexingBit = (instruction >> 24) & 0x1;
-    sdti->upBit = (instruction >> 23) & 0x1;
-    sdti->loadBit = (instruction >> 20) & 0x1;
-    sdti->rn = (instruction >> 16) & 0xF;
-    sdti->rd = (instruction >> 12) & 0xF;
-    sdti->offset = instruction & 0xFFF;
-}
-
-void decode_bi(machineState *state, uint32_t instruction) {
-    state->instructionAfterDecode->type = BRANCH;
-    branchInstruction *bi = &(state->instructionAfterDecode->u.bi);
-    uint32_t offset = instruction & 0xFFFFFF;
-    if (is_negative(offset, 23)) {
-        offset |= SE_32;
-    }
-    offset <<= 2;
-    bi->offset = offset;
-}
-
-void decode(machineState *state, uint32_t instruction) {
-    state->instructionAfterDecode->condCode = (instruction >> 28) & 0xF;
-    if (((instruction >> 26) & 0x3) == 0x1 && !((instruction >> 21) & 0x3)) { // NONZERO = TRUE, ZERO = FALSE
-        decode_sdt(state, instruction);
-    } else if (((instruction >> 24) & 0xF) == 0xA) {
-        decode_bi(state, instruction);
-    } else if (!((instruction >> 22) & 0x3F) && (((instruction >> 4) & 0xF) == 9)) {
-        decode_mi(state, instruction);
-    } else if (!((instruction >> 26) & 0x3)) {
-        decode_dpi(state, instruction);
-    } else {
-        printf("Unsupported instruction type to decode at PC: 0x%08x\n", get_register(PC_REG, state) - 4);
-        exit_error(state);
-    }
-}
-
-
 void execute_dpi(machineState *state) {
-    dataProcessingInstruction dpi = state->instructionAfterDecode->u.dpi;
+    dataProcessingInstruction *dpi = &(state->instructionAfterDecode->u.dpi);
     uint32_t operand2 = 0;
     uint32_t carryBit = 0;
-    if (dpi.immediate) {
-        uint32_t imm = dpi.operand2 & 0xFF;
-        uint32_t rotate = ((dpi.operand2 >> 8) & 0xF) * 2;
+    if (dpi->immediate) {
+        uint32_t imm = dpi->operand2 & 0xFF;
+        // >>8 to get the rotate value but * 2 so << 1 therefore >>7 overall
+        uint32_t rotate = ((dpi->operand2 & 0xF00) >> 7);
         shifted value = rotate_right(imm, rotate);
         operand2 = value.operand2;
         carryBit = value.carryBit;
     } else {
-        shifted value = operand_shift_register(state, dpi.operand2);
+        shifted value = operand_shift_register(state, dpi->operand2);
         operand2 = value.operand2;
         carryBit = value.carryBit;
     }
     uint32_t result;
-    uint32_t operand1 = get_register(dpi.rn, state);
-    switch (dpi.opcode) {
+    uint32_t operand1 = get_register(dpi->rn, state);
+    switch (dpi->opcode) {
         case AND:
             result = operand1 & operand2;
-            set_register(dpi.rd, state, result);
+            set_register(dpi->rd, state, result);
             break;
         case EOR:
             result = operand1 ^ operand2;
-            set_register(dpi.rd, state, result);
+            set_register(dpi->rd, state, result);
             break;
         case SUB:
             carryBit = operand2 <= operand1;
             result = operand1 - operand2;
-            set_register(dpi.rd, state, result);
+            set_register(dpi->rd, state, result);
             break;
         case RSB:
             carryBit = operand1 <= operand2;
             result = operand2 - operand1;
-            set_register(dpi.rd, state, result);
+            set_register(dpi->rd, state, result);
             break;
         case ADD:
             carryBit = (0xFFFFFFFF - operand1) < operand2;
             result = operand1 + operand2;
-            set_register(dpi.rd, state, result);
+            set_register(dpi->rd, state, result);
             break;
         case TST:
             result = operand1 & operand2;
@@ -279,17 +307,19 @@ void execute_dpi(machineState *state) {
             break;
         case ORR:
             result = operand1 | operand2;
-            set_register(dpi.rd, state, result);
+            set_register(dpi->rd, state, result);
             break;
         case MOV:
             result = operand2;
-            set_register(dpi.rd, state, result);
+            set_register(dpi->rd, state, result);
             break;
         default:
-            fprintf(stderr, "An unknown operand has been found at PC: %0x.\n", get_register(PC_REG, state));
+            // will exit as an error if it falls through switch as it should not reach this stage
+            fprintf(stderr, "An unknown operand has been found at PC: %0x.\n", get_register(PC_REG, state) - 8);
             exit_error(state);
     }
-    if (dpi.setBit) {
+    // if setBit is 1 then carryFlags in CPSR are changed
+    if (dpi->setBit) {
         uint32_t zBit = 0;
         if (result == 0) {
             zBit = (1 << 30);
@@ -304,24 +334,23 @@ void execute_dpi(machineState *state) {
 }
 
 void execute_mi(machineState *state) {
-    multiplyInstruction mi = state->instructionAfterDecode->u.mi;
+    multiplyInstruction *mi = &(state->instructionAfterDecode->u.mi);
     uint32_t res = 0;
     uint32_t acc = 0;
     uint32_t currentCpsr;
 
     /*Performing the operation */
-    acc = (mi.accumBit) ? state->registers[mi.rn] : 0;
-    res = (state->registers[mi.rm] * state->registers[mi.rs]) + acc;
-    state->registers[mi.rd] = res;
+    acc = (mi->accumBit) ? state->registers[mi->rn] : 0;
+    res = (state->registers[mi->rm] * state->registers[mi->rs]) + acc;
+    state->registers[mi->rd] = res;
 
     /*Changing flag status if necessary */
-    if (mi.setBit) {
+    if (mi->setBit) {
         currentCpsr = state->registers[CPSR_REG] & 0xFFFFFFF;
         if (res == 0) {
             /* VCZN */
             currentCpsr |= (Z_FLAG << SHIFT_COND);
         }
-        // get tyrell to check
         if (is_negative(res, 31)) {
             currentCpsr |= (N_FLAG << SHIFT_COND);
         }
@@ -329,51 +358,68 @@ void execute_mi(machineState *state) {
     }
 }
 
-void execute_sdti(machineState *state) {
-    sdtInstruction sdti = state->instructionAfterDecode->u.sdti;
-    uint32_t offset;
-    if (sdti.immediate) {
-        offset = operand_shift_register(state, sdti.offset).operand2;
-    } else {
-        offset = sdti.offset;
+static void load(machineState *state, uint32_t destReg, uint32_t address){
+    // if address is out of range will print error and not load a value into the dest register
+    if (!check_word(address)) {
+        return;
     }
-    uint32_t rnContents = get_register(sdti.rn, state);
+    set_register(destReg, state, get_word(state, address));
+}
+
+static void store(machineState *state, uint32_t sourceReg, uint32_t address){
+    // if address out of range will print error (taken care of in set_word) and not store
+    set_word(state, address, get_register(sourceReg, state));
+}
+
+void execute_sdti(machineState *state) {
+    sdtInstruction *sdti = &(state->instructionAfterDecode->u.sdti);
+    uint32_t offset;
+    // shifts offset if immediate bit is 1 if not then extends to unsigned 32bit int
+    if (sdti->immediate) {
+        offset = operand_shift_register(state, sdti->offset).operand2;
+    } else {
+        offset = sdti->offset;
+    }
+    uint32_t rnContents = get_register(sdti->rn, state);
     uint32_t includingOffset;
-    if (sdti.upBit) {
+    // +/- offset to the contents of register rn depending on upBit
+    if (sdti->upBit) {
         includingOffset = rnContents + offset;
     } else {
         includingOffset = rnContents - offset;
     }
-    if (sdti.indexingBit) {
-        if (sdti.loadBit) {
-            set_register(sdti.rd, state, get_word(state, includingOffset));
+    // if true then preIndexing occurs so memory address accessed includes offset
+    if (sdti->indexingBit) {
+        if (sdti->loadBit) {
+            load(state, sdti->rd, includingOffset);
         } else {
-            set_word(state, includingOffset, get_register(sdti.rd, state));
+            store(state, sdti->rd, includingOffset);
         }
     } else {
-        if (sdti.loadBit) {
-            set_register(sdti.rd, state, get_word(state, rnContents));
+        if (sdti->loadBit) {
+            load(state, sdti->rd, rnContents);
         } else {
-            set_word(state, rnContents, get_register(sdti.rd, state));
+            store(state, sdti->rd, rnContents);
         }
-        set_register(sdti.rn, state, includingOffset);
+        // post indexing so includingoffset is written to base register
+        set_register(sdti->rn, state, includingOffset);
     }
 }
 
-
 static void clear_pipeline(machineState *state) {
+    // resets pipeline to how it is in the first fetch, decode, execute cycle
     assert(state);
     state->fetchedInstr = false;
     state->instructionAfterDecode->type = NULL_INSTR;
 }
 
 void execute_bi(machineState *state) {
-    branchInstruction bi = state->instructionAfterDecode->u.bi;
-    if (is_negative(bi.offset, 31)) {
+    branchInstruction *bi = &(state->instructionAfterDecode->u.bi);
+    if (is_negative(bi->offset, 31)) {
         // if negative then it converts from 2's complement
-        state->registers[PC_REG] -= ~(bi.offset - 1);
+        state->registers[PC_REG] -= ~(bi->offset - 1);
     } else {
-        state->registers[PC_REG] += bi.offset;
+        state->registers[PC_REG] += bi->offset;
     }
     clear_pipeline(state);
 }
@@ -441,6 +487,7 @@ void execute_instructions(machineState *state) {
 }
 
 void fetch(machineState *state) {
+    // fetches instruction from memory based on PC and makes bool true so next cycle it will decode
     state->fetched = get_word(state, get_register(PC_REG, state));
     state->fetchedInstr = true;
 }
@@ -453,8 +500,8 @@ void pipeline(machineState *state) {
             execute_instructions(state);
         }
         // first checks whether there has been a fetched instruction in previous cycle before decoding
-        if (state->fetchedInstr) {
-            decode(state, state->fetched);
+        if (state->fetchedInstr){
+            decode(state);
         }
         // fetches next instruction and advances PC by 4
         fetch(state);
@@ -468,6 +515,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "You have not started the program with the correct number of inputs.");
         return EXIT_FAILURE;
     }
+    // initialises memory for machinestate and decodedinstruction
     machineState *state = (machineState *) calloc(1, sizeof(machineState));
     state->instructionAfterDecode = (decodedInstruction *) malloc(sizeof(decodedInstruction));
     state->instructionAfterDecode->type = NULL_INSTR;
