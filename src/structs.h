@@ -14,6 +14,10 @@ After execution, move pointers back one -- change what they're pointed to with e
 BRANCH -- clear pipeline
 
 */
+typedef struct {
+    cpsrFlags flag;
+    bool set: 1;
+} flagChange;
 
 typedef struct {
     uint8_t memory[MEMORY_SIZE];

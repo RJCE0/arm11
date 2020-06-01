@@ -10,6 +10,7 @@
 #define SHIFT_COND 28
 #define SE_32 0xFF000000
 #define WORD_SIZE_IN_BYTES 4
+#define SIGN_32_BIT 0x80000000
 
 enum condition {
     EQ = 0,     /* 0000 */
@@ -21,12 +22,12 @@ enum condition {
     AL = 14     /* 1110 */
 };
 
-enum csprFlags {
+typedef enum {
     V_FLAG = 1,  /* 0001 */
     C_FLAG = 2,  /* 0010 */
     Z_FLAG = 4,  /* 0100 */
     N_FLAG = 8   /* 1000 */
-};
+} cpsrFlags;
 
 typedef enum {
     AND = 0,    /* 0000 */

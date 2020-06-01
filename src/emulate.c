@@ -233,7 +233,7 @@ shifted operand_shift_register(machineState *state, uint16_t instruction) {
             result.carryBit = (rmContents >> (shiftNum - 1)) & 0x1;
             return result;
         case ARITH_RIGHT: {
-            uint32_t signBit = rmContents & 0x80000000;
+            uint32_t signBit = rmContents & SIGN_32_BIT;
             uint32_t preservedSign = 0;
             // iterates through ensuring the most significant bit is repeated for each right shift along
             for (uint32_t i = 0; i < shiftNum; i++) {
@@ -251,6 +251,22 @@ shifted operand_shift_register(machineState *state, uint16_t instruction) {
             exit_error(state);
             return result;
     }
+}
+
+static uint32_t get_cond_codes(machineState *state){
+    return (get_register(CPSR_REG, state) & 0xF0000000) >> SHIFT_COND;
+}
+
+void set_flags(machineState *state, flagChange flags[], int size){
+    uint32_t currentFlags = get_cond_codes(state);
+    for (size_t i = 0; i < size; i++) {
+        if(flags[i].set){
+            currentFlags |= flags[i].flag;
+        } else {
+            currentFlags &= ~flags[i].flag;
+        }
+    }
+    set_register(CPSR_REG, state, currentFlags << SHIFT_COND);
 }
 
 void execute_dpi(machineState *state) {
@@ -281,17 +297,20 @@ void execute_dpi(machineState *state) {
             set_register(dpi->rd, state, result);
             break;
         case SUB:
+            // if operand2 is less than or equal to operand1 then there won't be a borrow so carryBit = 1
             carryBit = operand2 <= operand1;
             result = operand1 - operand2;
             set_register(dpi->rd, state, result);
             break;
         case RSB:
+            // if operand1 is less than or equal to operand2 then there won't be a borrow so carryBit = 1
             carryBit = operand1 <= operand2;
             result = operand2 - operand1;
             set_register(dpi->rd, state, result);
             break;
         case ADD:
-            carryBit = (0xFFFFFFFF - operand1) < operand2;
+            // if operand2 is bigger than the difference between uint32 max and operand 1 then there will be an overflow so carryBit = 1
+            carryBit = (UINT32_MAX - operand1) < operand2;
             result = operand1 + operand2;
             set_register(dpi->rd, state, result);
             break;
@@ -302,6 +321,7 @@ void execute_dpi(machineState *state) {
             result = operand1 ^ operand2;
             break;
         case CMP:
+            // if operand2 is less than or equal to operand1 then there won't be a borrow so carryBit = 1
             carryBit = operand2 <= operand1;
             result = operand1 - operand2;
             break;
@@ -320,16 +340,17 @@ void execute_dpi(machineState *state) {
     }
     // if setBit is 1 then carryFlags in CPSR are changed
     if (dpi->setBit) {
-        uint32_t zBit = 0;
+        flagChange flags[3];
+        flags[0].flag = Z_FLAG;
+        flags[0].set = 0;
         if (result == 0) {
-            zBit = (1 << 30);
+            flags[0].set = 1;
         }
-        uint32_t nBit = result & 0x80000000;
-        uint32_t cBit = carryBit << 29;
-        uint32_t flags = nBit + zBit + cBit;
-        uint32_t current = get_register(CPSR_REG, state);
-        uint32_t mask = 0xFFFFFFF;
-        set_register(CPSR_REG, state, (current & mask) + flags);
+        flags[1].flag = N_FLAG;
+        flags[1].set = result & SIGN_32_BIT;
+        flags[2].flag = C_FLAG;
+        flags[2].set = carryBit;
+        set_flags(state, flags, 3);
     }
 }
 
@@ -427,7 +448,7 @@ void execute_bi(machineState *state) {
 bool check_cond(machineState *state) {
     uint8_t instrCond = state->instructionAfterDecode->condCode;
     // takes the highest 4 bits of the CPSR register (i.e. the cond flags)
-    uint32_t cpsrFlags = get_register(CPSR_REG, state) >> SHIFT_COND;
+    uint32_t cpsrFlags = get_cond_codes(state);
     switch (instrCond) {
         // CSPR FLAGS : VCZN in C
         case EQ:
