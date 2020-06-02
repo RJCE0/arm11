@@ -61,7 +61,7 @@ uint32_t get_word(machineState *state, uint32_t address) {
     uint32_t fullWord = 0;
     check_word(address);
     // converts from little endian to big endian
-    for (size_t i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; ++i) {
         fullWord += state->memory[address + i] << (i << 3);
     }
     return fullWord;
@@ -74,14 +74,14 @@ void set_word(machineState *state, uint32_t address, uint32_t value) {
         return;
     }
     // converts from big endian to little endian
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; ++i) {
         state->memory[address + i] = (value & 0xFF);
         value >>= 8;
     }
 }
 
 void print_register_values(machineState *state) {
-    for (int i = 0; i < NUM_OF_REGISTERS - 4; i++) {
+    for (int i = 0; i < NUM_OF_REGISTERS - 4; ++i) {
             printf("$%-3d: %10d (0x%08x)\n", i, state->registers[i], state->registers[i]);
     }
     printf("PC  : %10d (0x%08x)\n", state->registers[PC_REG], state->registers[PC_REG]);
@@ -238,7 +238,7 @@ void operand_shift_register(machineState *state, uint16_t instruction, bool *car
             }
             uint32_t preservedSign = 0;
             // iterates through ensuring the most significant bit is repeated for each right shift along
-            for (uint32_t i = 0; i < shiftNum; i++) {
+            for (uint32_t i = 0; i < shiftNum; ++i) {
                 preservedSign |= signBit;
                 signBit >>= 1;
             }
@@ -262,7 +262,7 @@ static uint32_t get_cond_codes(machineState *state){
 // changes the flags on the CPSR register
 void set_flags(machineState *state, flagChange flags[], int size){
     uint32_t currentFlags = get_cond_codes(state);
-    for (size_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; ++i) {
         if(flags[i].set){
             currentFlags |= flags[i].flag;
         } else {
