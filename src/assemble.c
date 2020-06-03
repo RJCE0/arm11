@@ -6,6 +6,47 @@
 #include <stdbool.h>
 #include <math.h>
 
+typedef enum {
+    DPI,
+    MI,
+    SDTI,
+    BI,
+    LSL,
+    HALT
+} instructionType;
+
+typedef enum {
+    AND,
+    SUB,
+    RSB,
+    AND,
+    EOR,
+    ORR,
+    MOV,
+    TST,
+    TEQ,
+    CMP,
+    MUL,
+    MLA,
+    LDR,
+    STR,
+    BEQ,
+    BNE,
+    BGE,
+    BLT,
+    BGT,
+    BLE,
+    B,
+    LSL,
+    ANDEQ
+} opcodes;
+
+typedef struct {
+    char *key;
+    instructionType instruction;
+    opcodes opcode;
+} dict
+
 typedef struct {
     char **labels;
     uint32_t *labelNextInstr;
@@ -16,6 +57,27 @@ typedef struct {
     opcode oc;
     char **args;
 } Instruction;
+
+static dict lookuptable[] = {
+    { "add", DPI, ADD}, { "sub", DPI, SUB}, { "rsb", DPI, RSB}, { "and", DPI, AND},
+    { "eor", DPI, EOR}, { "orr", DPI, ORR}, { "mov", DPI, MOV}, { "tst", DPI, TST},
+    { "teq", DPI, TEQ}, { "cmp", DPI, CMP}, { "mul", MI, MUL}, { "mla", MI, MLA},
+    { "ldr", SDTI, LDR}, { "str", SDTI, STR}, { "beq", BI, BEQ}, { "bne", BI, BNE},
+    { "bge", BI, BGE}, { "blt", BI, BLT}, { "bgt", BI, BGT}, { "ble", BI, BLE},
+    { "b", BI, B}, { "lsl", LSL, LSL}, {"andeq", HALT, ANDEQ}
+};
+
+instructionType keyfromstring(char *key, Instruction *instruction){
+    for (int i = 0; i < NUM_OPCODE  ; ++i) {
+        dict *sym = lookuptable[i];
+        if (strcmp(sym->key, key) == 0)
+            instruction->opcode = sym->opcode;
+            return sym->instruction;
+    }
+    //  to change
+    fprintf(stderr, "Instruction not supported by assembler\n");
+    return 0;
+}
 
 // [Function_A, Function_B, ...]
 // [0x00012, 0x00000128]
@@ -88,12 +150,9 @@ void read_file_first(InputFileData *fileData, char *inputFileName) {
 }
 
 void split_on_commas(char *input, Instruction *instruction){
-
     int count = 0;
-
     char *pch = strtok(input, ",");
     instruction->args = pch;
-
     while (pch != NULL) {
         pch = strtok(NULL, ",");
         count++;
@@ -117,62 +176,17 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
 
         char **arrayOfStrs = malloc(5*sizeof(char *));
         Instruction *instruction = malloc(sizeof(Instruction));
-        split_on_commas(input, instruction);
-
+        split_on_commas(argsInInstruction, instruction);
         fileData.pc += 4;
-        switch (str) {
-            // Data Processing type 1:
-            case "add":
+        void (*func[NUM_INSTRUCTION]) (Instruction *instruction);
+        func[0] = data_processing;
+        func[1] = multiply;
+        func[2] = single_data_transfer;
+        func[3] = branch;
+        func[4] = logical_left_shift;
+        func[5] = halt;
 
-                break;
-            case "sub":
-
-                break;
-            case "rsb":
-
-                break;
-            case "and":
-
-                break;
-            case "eor":
-
-                break;
-            case "orr":
-
-                break;
-
-            // Data Processing type 2:
-            case "mov":
-
-                break;
-
-            // Data Processing type 3:
-            case "tst":
-
-                break;
-            case "teq":
-
-                break;
-            case "cmp":
-
-                break;
-
-            // Multiply instructions
-            case "mul":
-
-                break;
-            case "mla":
-
-                break;
-
-            // Single Data Transfer instructions
-            case "ldr":
-
-                break;
-            case "str":
-
-                break;
-
+        (*func[keyfromstring(*str, *opcode)]) (instruction);
             // Branch instructions
             case "beq":
                 uint8_t condCode = 0000;
@@ -220,15 +234,6 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
                 break;
 
             // Special
-            case "lsl":
-
-                break;
-            case "andeq":
-
-                break;
-            default:
-
-                break;
         }
     }
 }
@@ -242,6 +247,30 @@ arguments separately. Those who won't need 3 arguments, initalise the others to 
 
 
 //add r1, r2, #0x39
+
+void data_processing(Instruction *instruction){
+
+}
+
+void multiplyg(Instruction *instruction){
+
+}
+
+void single_data_transfer(Instruction *instruction){
+
+}
+
+void branch(Instruction *instruction){
+
+}
+
+void logical_left_shift(Instruction *instruction){
+
+}
+
+void halt(Instruction *instruction){
+
+}
 
 bool is_register(char name[], size_t size) {
     return name[0] == 'r';
