@@ -33,8 +33,7 @@ typedef struct {
 /* (RJ) branch bit explained for myself:
 so for branching, when i see a branch condition it will be made up of two components
 the type of branch and a target address. The target address might be an actual address
-in or it might be a label. For this reason, I can make a for loop to loop through the
-first array to find the position of the label address in the second array.
+in or it might be a label, so I'll just use my function I built. 
 */
 
 /*  This function does the first pass in two-pass method. It will take a file
@@ -147,25 +146,42 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
 
             // Branch instructions
             case "beq":
-
+                uint8_t condCode = 0000;
+                //offset = current address - branch address;
+                //offset >>= 2;
+                // need to take care of sumn about an off-by-8 bytes  
+                // effect that will occur due to the ARM pipeline
                 break;
             case "bne":
-
+                uint8_t condCode = 0001;
+                //offset = current address - branch address;
+                //offset >>= 2;
                 break;
             case "bge":
-
+                uint8_t condCode = 1010;
+                //offset = current address - branch address;
+                //offset >>= 2;
                 break;
             case "blt":
-
+                uint8_t condCode = 1011;
+                //offset = current address - branch address;
+                //offset >>= 2;
                 break;
             case "bgt":
-
+                uint8_t condCode = 1100;
+                //offset = current address - branch address;
+                //offset >>= 2;
                 break;
             case "ble":
-
+                uint8_t condCode = 1101;
+                //offset = current address - branch address;
+                //offset >>= 2;
                 break;
             case "b":
-
+            case "bal":
+                uint8_t condCode = 1110;
+                //offset = current address - branch address;
+                //offset >>= 2;
                 break;
 
             // Special
@@ -227,6 +243,11 @@ uint32_t label_to_instruction(char label[], size_t size) {
     return 0;
 }
 
+/*
+The target address might be an actual address in or it might be a label.
+ For this reason, I can made a function to loop through the
+first array to find the position of the label address in the second array
+*/
 uint32_t get_label_address(char **labelsArray, char *str ){ 
     int i = 0;
     int cols = sizeof(*labelsArray);
@@ -256,8 +277,8 @@ uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool
 
 }
 
-uint32_t create_branch(...) {
-
+uint32_t create_branch(uint8_t conCode, uint32_t offset) {
+    uint8_t middle = 1010; 
 }
 
 int main() {
