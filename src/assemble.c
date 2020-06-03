@@ -9,6 +9,7 @@
 typedef struct {
     char **labels;
     uint32_t *labelNextInstr;
+    uint32_t pc;
 } InputFileData;
 
 // [Function_A, Function_B, ...]
@@ -82,6 +83,7 @@ void read_file_first(InputFileData *fileData, char *inputFileName) {
 }
 
 void read_file_second(InputFileData fileData, char *inputFileName) {
+    fileData.pc = 0;
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
     if (myfile == NULL) {
@@ -91,6 +93,7 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
     while (!feof(myfile)) {
         char str[20];
         fscanf(myfile, "%s", str);
+        fileData.pc += 4;
         switch (str) {
             // Data Processing type 1:
             case "add":
@@ -147,40 +150,46 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
             // Branch instructions
             case "beq":
                 uint8_t condCode = 0000;
-                //offset = current address - branch address;
+                //offset = pc - branch address;
+                //offset += 8;
                 //offset >>= 2;
                 // need to take care of sumn about an off-by-8 bytes  
                 // effect that will occur due to the ARM pipeline
                 break;
             case "bne":
                 uint8_t condCode = 0001;
-                //offset = current address - branch address;
+                //offset = pc - branch address;
+                //offset += 8;
                 //offset >>= 2;
                 break;
             case "bge":
                 uint8_t condCode = 1010;
-                //offset = current address - branch address;
+                //offset = pc - branch address;
+                //offset += 8;
                 //offset >>= 2;
                 break;
             case "blt":
                 uint8_t condCode = 1011;
-                //offset = current address - branch address;
+                //offset = pc - branch address;
+                //offset += 8;
                 //offset >>= 2;
                 break;
             case "bgt":
                 uint8_t condCode = 1100;
-                //offset = current address - branch address;
+                //offset = pc - branch address;
                 //offset >>= 2;
                 break;
             case "ble":
                 uint8_t condCode = 1101;
-                //offset = current address - branch address;
+                //offset = pc - branch address;
+                //offset += 8;
                 //offset >>= 2;
                 break;
             case "b":
             case "bal":
                 uint8_t condCode = 1110;
-                //offset = current address - branch address;
+                //offset = pc - branch address;
+                //offset += 8;
                 //offset >>= 2;
                 break;
 
@@ -197,6 +206,14 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
         }
     }
 }
+
+/*
+Need a function that will split the arguments, on commas. We will be taking in 
+the full line on the fscanf but won't be able to differentiate between arguments.
+it would be best to store these in a struct so we can access each part of the
+arguments separately. Those who won't need 3 arguments, initalise the others to null.  
+*/
+
 
 //add r1, r2, #0x39
 
@@ -218,6 +235,9 @@ int get_immediate(char name[], size_t size) {
     return atoi(name+1);
 }
 
+//think mazen might need this for get immediate (RJ)
+// you just pass in "0x245A2175" for example and it gives back the uint32_t
+// note, i assumed that the hex was in big endian.
 uint32_t hex_to_decimal(char hex[]){
       int len = strlen(hex);
       len--;
@@ -234,9 +254,7 @@ uint32_t hex_to_decimal(char hex[]){
               }
       }
       return dec_val;
-} //think mazen might need this for get immediate (RJ)
-// you just pass in "0x245A2175" for example and it gives back the uint32_t
-// note, i assumed that the hex was in big endian.
+} 
 
 uint32_t label_to_instruction(char label[], size_t size) {
     //
