@@ -11,7 +11,7 @@ emulate: assemble.o emulate.o
 	$(CC) assemble.o emulate.o -o emulate
 
 
-assemble.o: assemble.c
+assemble.o: assemble/assemble.c
 	$(CC) $(CFLAGS) -c assemble.c
 
 
