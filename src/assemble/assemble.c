@@ -51,54 +51,55 @@ void single_data_transfer(Instruction *instruction){
 
 }
 
-void branch(Instruction *instruction){
-    //TODO: Figure out a way of implementing function pointers inside branch
-   /* case "beq":
-        uint8_t condCode = 0000;
-    //offset = pc - branch address;
-    //offset += 8;
-    //offset >>= 2;
-    // need to take care of sumn about an off-by-8 bytes
-    // effect that will occur due to the ARM pipeline
-    break;
-    case "bne":
-        uint8_t condCode = 0001;
-    //offset = pc - branch address;
-    //offset += 8;
-    //offset >>= 2;
-    break;
-    case "bge":
-        uint8_t condCode = 1010;
-    //offset = pc - branch address;
-    //offset += 8;
-    //offset >>= 2;
-    break;
-    case "blt":
-        uint8_t condCode = 1011;
-    //offset = pc - branch address;
-    //offset += 8;
-    //offset >>= 2;
-    break;
-    case "bgt":
-        uint8_t condCode = 1100;
-    //offset = pc - branch address;
-    //offset >>= 2;
-    break;
-    case "ble":
-        uint8_t condCode = 1101;
-    //offset = pc - branch address;
-    //offset += 8;
-    //offset >>= 2;
-    break;
-    case "b":
-    case "bal":
-        uint8_t condCode = 1110;
-    //offset = pc - branch address;
-    //offset += 8;
-    //offset >>= 2;
-    break;*/
+/* 
+Few problems: 
 
-    // Special
+Had to include the pc counter as being passed to the function
+
+gonna need the labels 2d array in order to find the address of the label
+
+*/
+
+void branch(Instruction *instruction, char **labels, int pc){
+    uint8_t condCode;
+    uint32_t offset;
+    uint32_t newAddress = get_label_address(labels, instruction->args[0]);
+    switch (instruction->oc){
+    case BEQ:
+        condCode = 0000;
+        break;
+    case BNE:
+        condCode = 0001;
+        break;
+    case BGE:
+        condCode = 1010;
+        break;
+    case BLT:
+        condCode = 1011;
+        break;
+    case BGT:
+        condCode = 1100;
+        break;
+    case BLE:
+        condCode = 1101;
+        break;
+    case B:
+        condCode = 1110;
+        break;
+    default:
+        printf("Not a valid opcode");
+        exit(EXIT_FAILURE);
+    }
+
+    if(newAddress == NULL){
+        offset = pc - hex_to_decimal(instruction->args[0]);
+    }
+    else{
+        offset = pc - newAddress;
+    }
+    offset += 8;
+    offset >>= 2;
+    create_branch(condCode, offset);
 }
 
 void logical_left_shift(Instruction *instruction){
@@ -183,6 +184,8 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
         func[5] = halt;
 
         (*func[keyfromstring(str, instruction)]) (instruction);
+        //After this we know the instruction type
+        //so we need a switch so we can go into the void functions
 
     }
 }

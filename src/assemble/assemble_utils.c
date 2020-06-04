@@ -51,7 +51,7 @@ typedef struct {
 typedef struct {
     char **labels;
     uint32_t *labelNextInstr;
-    uint32_t pc;
+    int pc;
 } InputFileData;
 
 typedef struct {
@@ -65,7 +65,7 @@ static dict lookuptable[] = {
         { "teq", DPI, TEQ}, { "cmp", DPI, CMP}, { "mul", MI, MUL}, { "mla", MI, MLA},
         { "ldr", SDTI, LDR}, { "str", SDTI, STR}, { "beq", BI, BEQ}, { "bne", BI, BNE},
         { "bge", BI, BGE}, { "blt", BI, BLT}, { "bgt", BI, BGT}, { "ble", BI, BLE},
-        { "b", BI, B}, { "lsl", LSL, LSL}, {"andeq", HALT, HALT}
+        { "b", BI, B},  {"bal", BI, B}, { "lsl", LSL, LSL}, {"andeq", HALT, HALT}
 };
 
 
@@ -141,7 +141,8 @@ uint32_t get_label_address(char **labelsArray, char *str ){
         return *(*(labelsArray + 1) + i);
     }
     else{
-        printf("String entered wasn't a label");
+        printf("Wasn't a label");
+        return NULL;
     }
     // (RJ) need to check this works
 }
