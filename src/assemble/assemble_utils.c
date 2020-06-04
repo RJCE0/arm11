@@ -106,9 +106,7 @@ int keyfromstring(char *key, instruction *instr){
                     instr->u.condCode = sym->mnemonic;
                     break;
                 case LSL:
-                // to implement
                 case HALT:
-                // to implement
                 default:
                     break;
             }

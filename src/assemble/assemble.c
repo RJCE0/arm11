@@ -92,11 +92,8 @@ void branch(instruction *instr){
 
 void logical_left_shift(instruction *instr){
     uint32_t condCode = 14 << SHIFT_COND; //shift_cond
-    uint32_t immediate = 0;
     uint32_t opcode = MOV << 21;
-    uint32_t setBit = 0;
     uint32_t rn = get_register_num(instr->args[0]);
-    uint32_t rd = 0;
     uint32_t shiftNum = (get_immediate(inst->args[1]) & 0x1F) << 7;
     uint32_t result = condCode || opcode || (rn << 16) || shiftNum || rn;
 }
