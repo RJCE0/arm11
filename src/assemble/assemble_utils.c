@@ -21,7 +21,7 @@ typedef enum {
 } instructionType;
 
 typedef enum {
-    AND = 4,
+    ADD = 4,
     SUB = 2,
     RSB = 3,
     AND = 0,
