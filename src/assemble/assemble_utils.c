@@ -85,6 +85,8 @@ static dict lookuptable[] = {
         { "b", BI, B},  {"bal", BI, B}, { "lsl", LSL, LSL}, {"andeq", HALT, HALT}
 };
 
+// for function pointer array
+typedef void (*func[NUM_INSTRUCTION]) (instruction *instr);
 
 int keyfromstring(char *key, instruction *instr){
     for (int i = 0; i < NUM_OPCODE  ; ++i) {

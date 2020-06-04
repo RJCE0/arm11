@@ -158,16 +158,14 @@ void read_file_second(inputFileData fileData, char *inputFileName) {
         char argsInInstruction[500];
         fscanf(myfile, "%s", str);
         fscanf(myfile, "%s", argsInInstruction);
-
         char **arrayOfStrs = malloc(5*sizeof(char *));
         instruction *instr = malloc(sizeof(instruction));
         instr->args = arrayOfStrs;
         instr->state = &fileData;
         split_on_commas(argsInInstruction, instr);
         fileData.pc += 4;
-        typedef void (*func[NUM_INSTRUCTION]) (instruction *instr);
         func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt}
-        (*func[keyfromstring(str, instr)]) (instr);
+        (*func[keyfromstring(argsInInstruction, instr)]) (instr);
         //After this we know the instruction type
         //so we need a switch so we can go into the void functions
 
