@@ -39,20 +39,20 @@ pointing to instruction 3 (as the label doesn't count) hence instructions of 32
 bits would just mean multiplying the number by 4 (bytes), e.g. 3 * 4 = 0x00012.
 */
 
-void data_processing(Instruction *instruction){
+void data_processing(instruction *instr){
 
 }
 
-void multiply(Instruction *instruction){
+void multiply(instruction *instr){
 
 }
 
-void single_data_transfer(Instruction *instruction){
+void single_data_transfer(instruction *instr){
 
 }
 
-/* 
-Few problems: 
+/*
+Few problems:
 
 Had to include the pc counter as being passed to the function
 
@@ -60,57 +60,30 @@ gonna need the labels 2d array in order to find the address of the label
 
 */
 
-void branch(Instruction *instruction, char **labels, int pc){
+void branch(instruction *instr, char **labels, int pc){
     uint8_t condCode;
     uint32_t offset;
-    uint32_t newAddress = get_label_address(labels, instruction->args[0]);
-    switch (instruction->oc){
-    case BEQ:
-        condCode = 0000;
-        break;
-    case BNE:
-        condCode = 0001;
-        break;
-    case BGE:
-        condCode = 1010;
-        break;
-    case BLT:
-        condCode = 1011;
-        break;
-    case BGT:
-        condCode = 1100;
-        break;
-    case BLE:
-        condCode = 1101;
-        break;
-    case B:
-        condCode = 1110;
-        break;
-    default:
-        printf("Not a valid opcode");
-        exit(EXIT_FAILURE);
-    }
-
+    uint32_t newAddress = get_label_address(labels, instr->args[0]);
     if(newAddress == NULL){
-        offset = pc - hex_to_decimal(instruction->args[0]);
+        offset = pc - hex_to_decimal(instr->args[0]);
     }
     else{
         offset = pc - newAddress;
     }
     offset += 8;
     offset >>= 2;
-    create_branch(condCode, offset);
+    create_branch(instr->u.condCode, offset);
 }
 
-void logical_left_shift(Instruction *instruction){
-
-}
-
-void halt(Instruction *instruction){
+void logical_left_shift(instruction *instr){
 
 }
 
-void read_file_first(InputFileData *fileData, char *inputFileName) {
+void halt(instruction *instr){
+
+}
+
+void read_file_first(inputFileData *fileData, char *inputFileName) {
 
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
@@ -146,14 +119,14 @@ void read_file_first(InputFileData *fileData, char *inputFileName) {
     fclose(myfile);
 }
 
-void split_on_commas(char *input, Instruction *instruction){
+void split_on_commas(char *input, instruction *instr){
     int count = 0;
     char *pch = strtok(input, ",");
-    instruction->args = pch;
+    instr->args = pch;
     while (pch != NULL) {
         pch = strtok(NULL, ",");
         count++;
-        instruction->args[count] = pch;
+        instr->args[count] = pch;
     }
 }
 
@@ -172,10 +145,10 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
         fscanf(myfile, "%s", argsInInstruction);
 
         char **arrayOfStrs = malloc(5*sizeof(char *));
-        Instruction *instruction = malloc(sizeof(Instruction));
-        split_on_commas(argsInInstruction, instruction);
+        instruction *instr = malloc(sizeof(instruction));
+        split_on_commas(argsInInstruction, instr);
         fileData.pc += 4;
-        void (*func[NUM_INSTRUCTION]) (Instruction *instruction);
+        void (*func[NUM_INSTRUCTION]) (instruction *instr);
         func[0] = data_processing;
         func[1] = multiply;
         func[2] = single_data_transfer;
@@ -183,7 +156,7 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
         func[4] = logical_left_shift;
         func[5] = halt;
 
-        (*func[keyfromstring(str, instruction)]) (instruction);
+        (*func[keyfromstring(str, instr)]) (instr);
         //After this we know the instruction type
         //so we need a switch so we can go into the void functions
 
@@ -214,7 +187,7 @@ uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool
 
 }
 
-uint32_t create_branch(uint8_t conCode, uint32_t offset) {
+uint32_t create_branch(uint8_t condCode, uint32_t offset) {
     uint8_t middle = 1010;
 }
 
