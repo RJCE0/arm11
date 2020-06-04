@@ -7,7 +7,9 @@
 //
 
 #define NUM_INSTRUCTION 6
-#define NUM_OPCODE 23
+// including bal
+#define NUM_OPCODE 24
+#define SHIFT_COND 28
 
 typedef enum {
     DPI,
@@ -19,45 +21,60 @@ typedef enum {
 } instructionType;
 
 typedef enum {
-    ADD,
-    SUB,
-    RSB,
-    AND,
-    EOR,
-    ORR,
-    MOV,
-    TST,
-    TEQ,
-    CMP,
-    MUL,
-    MLA,
-    LDR,
-    STR,
-    BEQ,
-    BNE,
-    BGE,
-    BLT,
-    BGT,
-    BLE,
-    B,
-} opcodes;
+    AND = 4,
+    SUB = 2,
+    RSB = 3,
+    AND = 0,
+    EOR = 1,
+    ORR = 13,
+    MOV = 14,
+    TST = 8,
+    TEQ = 9,
+    CMP = 10
+} dpiType;
+
+typedef enum {
+    MUL = 0,
+    MLA = 1
+} multiplyType;
+
+typedef enum {
+    STR = 0,
+    LDR = 1
+} sdtType;
+
+typedef enum {
+    BEQ = 0,
+    BNE = 1,
+    BGE = 10,
+    BLT = 11,
+    BGT = 12,
+    BLE = 13,
+    B = 14
+} branchType;
 
 typedef struct {
     char *key;
-    int instruction;
-    int opcode;
+    instructionType type;
+    int mnemonic;
 } dict;
 
 typedef struct {
     char **labels;
     uint32_t *labelNextInstr;
     int pc;
-} InputFileData;
+} inputFileData;
 
 typedef struct {
-    opcodes oc;
+    union {
+        dpiType opcode;
+        multiplyType accBit;
+        sdtType loadBit;
+        branchType condCode;
+    } u;
     char **args;
-} Instruction;
+    inputFileData *state;
+} instruction;
 
 static dict lookuptable[] = {
         { "add", DPI, ADD}, { "sub", DPI, SUB}, { "rsb", DPI, RSB}, { "and", DPI, AND},
@@ -68,29 +85,49 @@ static dict lookuptable[] = {
         { "b", BI, B},  {"bal", BI, B}, { "lsl", LSL, LSL}, {"andeq", HALT, HALT}
 };
 
+// for function pointer array
+typedef void (*func[NUM_INSTRUCTION]) (instruction *instr);
 
-int keyfromstring(char *key, Instruction *instruction){
+int keyfromstring(char *key, instruction *instr){
     for (int i = 0; i < NUM_OPCODE  ; ++i) {
         dict *sym = &lookuptable[i];
-        if (strcmp(sym->key, key) == 0)
-            instruction->oc = sym->opcode;
-        return sym->instruction;
+        if (strcmp(sym->key, key) == 0){
+            switch (sym->type) {
+                case DPI:
+                    instr->u.opcode = sym->mnemonic;
+                    break;
+                case MI:
+                    instr->u.accBit = sym->mnemonic;
+                    break;
+                case SDTI:
+                    instr->u.loadBit = sym->mnemonic;
+                    break;
+                case BI:
+                    instr->u.condCode = sym->mnemonic;
+                    break;
+                case LSL:
+                case HALT:
+                default:
+                    break;
+            }
+            return sym->type;
+        }
     }
     //  to change
     fprintf(stderr, "Instruction not supported by assembler\n");
     return 0;
 }
 
-bool is_register(char name[], size_t size) {
+bool is_register(char *name) {
     return name[0] == 'r';
 }
 
-int get_register_num(char name[], size_t size) {
+int get_register_num(char *name) {
     // name[0] = '';
     return atoi(name+1);
 }
 
-int get_immediate(char name[], size_t size) {
+int get_immediate(char *name) {
     //"#0x24a7"
 
     if (name[1] == '0' && name[2] == 'x') {
@@ -146,5 +183,3 @@ uint32_t get_label_address(char **labelsArray, char *str ){
     }
     // (RJ) need to check this works
 }
-
-

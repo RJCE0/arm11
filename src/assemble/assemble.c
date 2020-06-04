@@ -39,20 +39,36 @@ pointing to instruction 3 (as the label doesn't count) hence instructions of 32
 bits would just mean multiplying the number by 4 (bytes), e.g. 3 * 4 = 0x00012.
 */
 
-void data_processing(Instruction *instruction){
+void data_processing(instruction *instr){
+    uint32_t condCode = 14 << SHIFT_COND; //shift_cond
+    uint32_t immediate = 1 << 25;
+    uint32_t opcode = instr->u.opcode << 21;
+    uint32_t setBit = 0;
+    uint32_t rn = 0;
+    uint32_t rd = 0;
+    uint32_t operand2 = = get_immediate(instr->args[2]);
+    if (instr->u.opcode == 14) {
+        rd = get_register_num(instr->args[0]) << 12;
+    } else if ((inst->u.opcode <= 10) && (inst->u.opcode >= 8)){
+        rn = get_register_num(instr->args[0]) << 16;
+        setBit = 1 << 20;
+    } else {
+        rd = get_register_num(instr->args[0]) << 12;
+        rn = get_register_num(instr->args[1]) << 16;
+    }
+    uint32_t result = condCode | immediate | opcode | setBit | rn | rd | operand2;
+}
+
+void multiply(instruction *instr){
 
 }
 
-void multiply(Instruction *instruction){
+void single_data_transfer(instruction *instr){
 
 }
 
-void single_data_transfer(Instruction *instruction){
-
-}
-
-/* 
-Few problems: 
+/*
+Few problems:
 
 Had to include the pc counter as being passed to the function
 
@@ -60,57 +76,33 @@ gonna need the labels 2d array in order to find the address of the label
 
 */
 
-void branch(Instruction *instruction, char **labels, int pc){
-    uint8_t condCode;
+void branch(instruction *instr){
     uint32_t offset;
-    uint32_t newAddress = get_label_address(labels, instruction->args[0]);
-    switch (instruction->oc){
-    case BEQ:
-        condCode = 0000;
-        break;
-    case BNE:
-        condCode = 0001;
-        break;
-    case BGE:
-        condCode = 1010;
-        break;
-    case BLT:
-        condCode = 1011;
-        break;
-    case BGT:
-        condCode = 1100;
-        break;
-    case BLE:
-        condCode = 1101;
-        break;
-    case B:
-        condCode = 1110;
-        break;
-    default:
-        printf("Not a valid opcode");
-        exit(EXIT_FAILURE);
-    }
-
+    uint32_t newAddress = get_label_address(instr->state.labels, instr->args[0]);
     if(newAddress == NULL){
-        offset = pc - hex_to_decimal(instruction->args[0]);
+        offset = instr->state.pc - hex_to_decimal(instr->args[0]);
     }
     else{
-        offset = pc - newAddress;
+        offset = instr->state.pc - newAddress;
     }
     offset += 8;
     offset >>= 2;
-    create_branch(condCode, offset);
+    create_branch(instr->u.condCode, offset);
 }
 
-void logical_left_shift(Instruction *instruction){
-
+void logical_left_shift(instruction *instr){
+    uint32_t condCode = 14 << SHIFT_COND; //shift_cond
+    uint32_t opcode = MOV << 21;
+    uint32_t rn = get_register_num(instr->args[0]);
+    uint32_t shiftNum = (get_immediate(inst->args[1]) & 0x1F) << 7;
+    uint32_t result = condCode || opcode || (rn << 16) || shiftNum || rn;
 }
 
-void halt(Instruction *instruction){
-
+void halt(instruction *instr){
+    uint32_t result = 0;
 }
 
-void read_file_first(InputFileData *fileData, char *inputFileName) {
+void read_file_first(inputFileData *fileData, char *inputFileName) {
 
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
@@ -146,18 +138,18 @@ void read_file_first(InputFileData *fileData, char *inputFileName) {
     fclose(myfile);
 }
 
-void split_on_commas(char *input, Instruction *instruction){
+void split_on_commas(char *input, instruction *instr){
     int count = 0;
     char *pch = strtok(input, ",");
-    instruction->args = pch;
+    instr->args = pch;
     while (pch != NULL) {
         pch = strtok(NULL, ",");
         count++;
-        instruction->args[count] = pch;
+        instr->args[count] = pch;
     }
 }
 
-void read_file_second(InputFileData fileData, char *inputFileName) {
+void read_file_second(inputFileData fileData, char *inputFileName) {
     fileData.pc = 0;
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
@@ -170,20 +162,14 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
         char argsInInstruction[500];
         fscanf(myfile, "%s", str);
         fscanf(myfile, "%s", argsInInstruction);
-
         char **arrayOfStrs = malloc(5*sizeof(char *));
-        Instruction *instruction = malloc(sizeof(Instruction));
-        split_on_commas(argsInInstruction, instruction);
+        instruction *instr = malloc(sizeof(instruction));
+        instr->args = arrayOfStrs;
+        instr->state = &fileData;
+        split_on_commas(argsInInstruction, instr);
         fileData.pc += 4;
-        void (*func[NUM_INSTRUCTION]) (Instruction *instruction);
-        func[0] = data_processing;
-        func[1] = multiply;
-        func[2] = single_data_transfer;
-        func[3] = branch;
-        func[4] = logical_left_shift;
-        func[5] = halt;
-
-        (*func[keyfromstring(str, instruction)]) (instruction);
+        func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt}
+        (*func[keyfromstring(argsInInstruction, instr)]) (instr);
         //After this we know the instruction type
         //so we need a switch so we can go into the void functions
 
@@ -203,10 +189,6 @@ arguments separately. Those who won't need 3 arguments, initalise the others to 
 
 
 
-uint32_t create_data_processing(bool immediateBit, int opcode, int rnNum, int rdNum, int op2Num) {
-
-}
-
 uint32_t create_multiply(bool accBit, bool setCondBit, int rdNum, int rnNum, int rsNum, int rmNum) {
 }
 
@@ -214,7 +196,7 @@ uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool
 
 }
 
-uint32_t create_branch(uint8_t conCode, uint32_t offset) {
+uint32_t create_branch(uint8_t condCode, uint32_t offset) {
     uint8_t middle = 1010;
 }
 
