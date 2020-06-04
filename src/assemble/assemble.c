@@ -46,10 +46,10 @@ void data_processing(instruction *instr){
     uint32_t setBit = 0;
     uint32_t rn = 0;
     uint32_t rd = 0;
-    uint32_t operand2 = = get_immediate(instr->args[2]);
+    uint32_t operand2 = get_immediate(instr->args[2]);
     if (instr->u.opcode == 14) {
         rd = get_register_num(instr->args[0]) << 12;
-    } else if ((inst->u.opcode <= 10) && (inst->u.opcode >= 8)){
+    } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)){
         rn = get_register_num(instr->args[0]) << 16;
         setBit = 1 << 20;
     } else {
@@ -60,8 +60,21 @@ void data_processing(instruction *instr){
 }
 
 void multiply(instruction *instr){
+    uint32_t result;
+    uint16_t condition_code = MULTIPLY_CONDITION_CODE << SHIFT_COND;
+    uint32_t accBit = instr->u.accBit << 21;
+    uint32_t setBit = 0 << 20;
+    uint32_t rd = get_register_num(instr->args[0]) << 16;
+    uint32_t rn = (instr->u.accBit) ? get_register_num(instr->args[3]) << 12: 0;
+    uint32_t rs = get_register_num(instr->args[1]) << 8;
+    uint32_t constRm = (9 << 4) || get_register_num(instr->args[2]);
+    result = condition_code || accBit || setBit || rd || rn || rs || constRm;
+
+
+
 
 }
+
 
 void single_data_transfer(instruction *instr){
 
@@ -76,14 +89,15 @@ gonna need the labels 2d array in order to find the address of the label
 
 */
 
+
 void branch(instruction *instr){
     uint32_t offset;
-    uint32_t newAddress = get_label_address(instr->state.labels, instr->args[0]);
+    uint32_t newAddress = get_label_address(instr->state->labels, instr->args[0]);
     if(newAddress == NULL){
-        offset = instr->state.pc - hex_to_decimal(instr->args[0]);
+        offset = instr->state->pc - hex_to_decimal(instr->args[0]);
     }
     else{
-        offset = instr->state.pc - newAddress;
+        offset = instr->state->pc - newAddress;
     }
     offset += 8;
     offset >>= 2;
@@ -94,7 +108,7 @@ void logical_left_shift(instruction *instr){
     uint32_t condCode = 14 << SHIFT_COND; //shift_cond
     uint32_t opcode = MOV << 21;
     uint32_t rn = get_register_num(instr->args[0]);
-    uint32_t shiftNum = (get_immediate(inst->args[1]) & 0x1F) << 7;
+    uint32_t shiftNum = (get_immediate(instr->args[1]) & 0x1F) << 7;
     uint32_t result = condCode || opcode || (rn << 16) || shiftNum || rn;
 }
 
@@ -168,8 +182,8 @@ void read_file_second(inputFileData fileData, char *inputFileName) {
         instr->state = &fileData;
         split_on_commas(argsInInstruction, instr);
         fileData.pc += 4;
-        func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt}
-        (*func[keyfromstring(argsInInstruction, instr)]) (instr);
+        func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt};
+        *func[keyfromstring(argsInInstruction, instr)] (instr);
         //After this we know the instruction type
         //so we need a switch so we can go into the void functions
 
@@ -186,22 +200,16 @@ arguments separately. Those who won't need 3 arguments, initalise the others to 
 
 //add r1, r2, #0x39
 
-
-
-
-uint32_t create_multiply(bool accBit, bool setCondBit, int rdNum, int rnNum, int rsNum, int rmNum) {
-}
-
 uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool upBit, ...) {
 
 }
 
-uint32_t create_branch(uint8_t condCode, uint32_t offset) {
+void create_branch(uint8_t condCode, uint32_t offset) {
     uint8_t middle = 1010;
 }
 
 int main() {
-    InputFileData fileData;
+    inputFileData fileData;
     fileData.labels = (char **) malloc (10 * sizeof(char *));
     fileData.labelNextInstr = (int *) malloc (10 * sizeof(int));
 
