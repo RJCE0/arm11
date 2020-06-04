@@ -60,12 +60,6 @@ typedef struct {
 } dict;
 
 typedef struct {
-    char **labels;
-    uint32_t *labelNextInstr;
-    int pc;
-} inputFileData;
-
-typedef struct {
     union {
         dpiType opcode;
         multiplyType accBit;
@@ -73,8 +67,18 @@ typedef struct {
         branchType condCode;
     } u;
     char **args;
-    inputFileData *state;
+    state *state;
 } instruction;
+
+typedef struct {
+    char **labels;
+    int pc;
+} state;
+
+typedef struct {
+    char **labels;
+    int lines;
+} firstRead
 
 static dict lookuptable[] = {
         { "add", DPI, ADD}, { "sub", DPI, SUB}, { "rsb", DPI, RSB}, { "and", DPI, AND},
@@ -86,7 +90,7 @@ static dict lookuptable[] = {
 };
 
 // for function pointer array
-typedef void (*func[NUM_INSTRUCTION]) (instruction *instr);
+typedef uint32_t (*func[NUM_INSTRUCTION]) (instruction *instr);
 
 int keyfromstring(char *key, instruction *instr){
     for (int i = 0; i < NUM_OPCODE  ; ++i) {

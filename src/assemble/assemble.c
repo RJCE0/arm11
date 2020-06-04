@@ -39,7 +39,7 @@ pointing to instruction 3 (as the label doesn't count) hence instructions of 32
 bits would just mean multiplying the number by 4 (bytes), e.g. 3 * 4 = 0x00012.
 */
 
-void data_processing(instruction *instr){
+uint32_t data_processing(instruction *instr, state *state){
     uint32_t condCode = 14 << SHIFT_COND; //shift_cond
     uint32_t immediate = 1 << 25;
     uint32_t opcode = instr->u.opcode << 21;
@@ -56,23 +56,17 @@ void data_processing(instruction *instr){
         rd = get_register_num(instr->args[0]) << 12;
         rn = get_register_num(instr->args[1]) << 16;
     }
-    uint32_t result = condCode | immediate | opcode | setBit | rn | rd | operand2;
+    return condCode | immediate | opcode | setBit | rn | rd | operand2;
 }
 
-void multiply(instruction *instr){
-    uint32_t result;
+uint32_t multiply(instruction *instr){
     uint16_t condition_code = MULTIPLY_CONDITION_CODE << SHIFT_COND;
     uint32_t accBit = instr->u.accBit << 21;
-    uint32_t setBit = 0 << 20;
     uint32_t rd = get_register_num(instr->args[0]) << 16;
     uint32_t rn = (instr->u.accBit) ? get_register_num(instr->args[3]) << 12: 0;
     uint32_t rs = get_register_num(instr->args[1]) << 8;
     uint32_t constRm = (9 << 4) || get_register_num(instr->args[2]);
-    result = condition_code || accBit || setBit || rd || rn || rs || constRm;
-
-
-
-
+    return condition_code || accBit || rd || rn || rs || constRm;
 }
 
 
@@ -90,7 +84,7 @@ gonna need the labels 2d array in order to find the address of the label
 */
 
 
-void branch(instruction *instr){
+uint32_t branch(instruction *instr){
     uint32_t offset;
     uint32_t newAddress = get_label_address(instr->state->labels, instr->args[0]);
     if(newAddress == NULL){
@@ -104,27 +98,26 @@ void branch(instruction *instr){
     create_branch(instr->u.condCode, offset);
 }
 
-void logical_left_shift(instruction *instr){
+uint32_t logical_left_shift(instruction *instr){
     uint32_t condCode = 14 << SHIFT_COND; //shift_cond
     uint32_t opcode = MOV << 21;
     uint32_t rn = get_register_num(instr->args[0]);
     uint32_t shiftNum = (get_immediate(instr->args[1]) & 0x1F) << 7;
-    uint32_t result = condCode || opcode || (rn << 16) || shiftNum || rn;
+    return condCode || opcode || (rn << 16) || shiftNum || rn;
 }
 
-void halt(instruction *instr){
-    uint32_t result = 0;
+uint32_t halt(instruction *instr){
+    return 0;
 }
 
-void read_file_first(inputFileData *fileData, char *inputFileName) {
-
+void read_file_first(firstRead *firstRead, char *inputFileName) {
+    uint32_t *labelNextInstr = (int *) malloc (10 * sizeof(int));
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
     if (myfile == NULL) {
         printf("file not found, exiting...\n");
         return;
     }
-
     int line = 0;
     int labelCount = 0;
     while (!feof(myfile)) {
@@ -136,8 +129,8 @@ void read_file_first(inputFileData *fileData, char *inputFileName) {
             labelCount++;
             printf("\nLabel \"%s\" spotted on line: %d\n", str, line+1);
             printf("So label points to instruction number: %d\n\n", 32 * line);
-            *(fileData->labels + (labelCount - 1)) = str;
-            *(fileData->labelNextInstr + (labelCount - 1)) = 32 * line - labelCount;
+            firstRead->labels[labelCount - 1] = str;
+            labelNextInstr[labelCount - 1] = 32 * line - labelCount;
         }
         printf("\n---%s---", str);
         do {
@@ -145,11 +138,10 @@ void read_file_first(inputFileData *fileData, char *inputFileName) {
                 return;
             }
         } while (fgetc(myfile) != '\n');
-
         line++;
     }
-
     fclose(myfile);
+    firstRead->lines = line - labelCount;
 }
 
 void split_on_commas(char *input, instruction *instr){
@@ -163,31 +155,39 @@ void split_on_commas(char *input, instruction *instr){
     }
 }
 
-void read_file_second(inputFileData fileData, char *inputFileName) {
-    fileData.pc = 0;
+uint32_t *read_file_second(firstRead *firstRead, char *inputFileName) {
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
     if (myfile == NULL) {
         printf("file not found, exiting...\n");
         return;
     }
+    instruction *instr = malloc(sizeof(instruction));
+    instr->args = malloc(5 * sizeof(char *));
+    // need counter in first read
+    state *state = malloc(sizeof(state));
+    uint32_t *decoded = malloc(firstRead->lines * sizeof(uint32_t));
+    state->labels = firstRead->labels;
+    state->pc = 0;
     while (!feof(myfile)) {
         char str[20];
         char argsInInstruction[500];
         fscanf(myfile, "%s", str);
         fscanf(myfile, "%s", argsInInstruction);
-        char **arrayOfStrs = malloc(5*sizeof(char *));
-        instruction *instr = malloc(sizeof(instruction));
-        instr->args = arrayOfStrs;
-        instr->state = &fileData;
         split_on_commas(argsInInstruction, instr);
-        fileData.pc += 4;
         func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt};
-        *func[keyfromstring(argsInInstruction, instr)] (instr);
-        //After this we know the instruction type
-        //so we need a switch so we can go into the void functions
-
+        uint32_t result = *func[keyfromstring(argsInInstruction, instr)] (instr);
+        decoded[state->pc / 4] = result;
+        if (!result) {
+            break;
+        }
+        state->pc += 4;
     }
+    free(instr->args);
+    free(instr);
+    free(state->labels);
+    free(state);
+    return decoded;
 }
 
 /*
@@ -209,14 +209,15 @@ void create_branch(uint8_t condCode, uint32_t offset) {
 }
 
 int main() {
-    inputFileData fileData;
-    fileData.labels = (char **) malloc (10 * sizeof(char *));
-    fileData.labelNextInstr = (int *) malloc (10 * sizeof(int));
-
-    read_file_first(&fileData, "example.txt");
-    read_file_second(fileData, "example.txt");
-
-    free(fileData.labels);
-    free(fileData.labelNextInstr);
+    firstRead *firstRead = (firstRead *) malloc (sizeof(firstRead *));
+    firstRead->labels = (char **) malloc (10 * sizeof(char *));
+    read_file_first(firstRead, "example.txt");
+    uint32_t *decoded = read_file_second(firstRead, "example.txt");
+    // decoded size to do
+    fwrite(decoded, sizeof(uint32_t), firstRead->lines, my_file);
+    fclose(my_file);
+    free(firstRead->labels);
+    free(firstRead);
+    free(decoded);
     return 0;
 }
