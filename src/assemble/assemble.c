@@ -40,7 +40,23 @@ bits would just mean multiplying the number by 4 (bytes), e.g. 3 * 4 = 0x00012.
 */
 
 void data_processing(instruction *instr){
-
+    uint32_t condCode = 14 << SHIFT_COND; //shift_cond
+    uint32_t immediate = 1 << 25;
+    uint32_t opcode = instr->u.opcode << 21;
+    uint32_t setBit = 0;
+    uint32_t rn = 0;
+    uint32_t rd = 0;
+    uint32_t operand2 = = get_immediate(instr->args[2]);
+    if (instr->u.opcode == 14) {
+        rd = get_register_num(instr->args[0]) << 12;
+    } else if ((inst->u.opcode <= 10) && (inst->u.opcode >= 8)){
+        rn = get_register_num(instr->args[0]) << 16;
+        setBit = 1 << 20;
+    } else {
+        rd = get_register_num(instr->args[0]) << 12;
+        rn = get_register_num(instr->args[1]) << 16;
+    }
+    uint32_t result = condCode | immediate | opcode | setBit | rn | rd | operand2;
 }
 
 void multiply(instruction *instr){
@@ -60,15 +76,14 @@ gonna need the labels 2d array in order to find the address of the label
 
 */
 
-void branch(instruction *instr, char **labels, int pc){
-    uint8_t condCode;
+void branch(instruction *instr){
     uint32_t offset;
-    uint32_t newAddress = get_label_address(labels, instr->args[0]);
+    uint32_t newAddress = get_label_address(instr->state.labels, instr->args[0]);
     if(newAddress == NULL){
-        offset = pc - hex_to_decimal(instr->args[0]);
+        offset = instr->state.pc - hex_to_decimal(instr->args[0]);
     }
     else{
-        offset = pc - newAddress;
+        offset = instr->state.pc - newAddress;
     }
     offset += 8;
     offset >>= 2;
@@ -130,7 +145,7 @@ void split_on_commas(char *input, instruction *instr){
     }
 }
 
-void read_file_second(InputFileData fileData, char *inputFileName) {
+void read_file_second(inputFileData fileData, char *inputFileName) {
     fileData.pc = 0;
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
@@ -146,16 +161,12 @@ void read_file_second(InputFileData fileData, char *inputFileName) {
 
         char **arrayOfStrs = malloc(5*sizeof(char *));
         instruction *instr = malloc(sizeof(instruction));
+        instr->args = arrayOfStrs;
+        instr->state = &fileData;
         split_on_commas(argsInInstruction, instr);
         fileData.pc += 4;
-        void (*func[NUM_INSTRUCTION]) (instruction *instr);
-        func[0] = data_processing;
-        func[1] = multiply;
-        func[2] = single_data_transfer;
-        func[3] = branch;
-        func[4] = logical_left_shift;
-        func[5] = halt;
-
+        typedef void (*func[NUM_INSTRUCTION]) (instruction *instr);
+        func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt}
         (*func[keyfromstring(str, instr)]) (instr);
         //After this we know the instruction type
         //so we need a switch so we can go into the void functions
@@ -175,10 +186,6 @@ arguments separately. Those who won't need 3 arguments, initalise the others to 
 
 
 
-
-uint32_t create_data_processing(bool immediateBit, int opcode, int rnNum, int rdNum, int op2Num) {
-
-}
 
 uint32_t create_multiply(bool accBit, bool setCondBit, int rdNum, int rnNum, int rsNum, int rmNum) {
 }

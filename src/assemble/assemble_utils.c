@@ -9,6 +9,7 @@
 #define NUM_INSTRUCTION 6
 // including bal
 #define NUM_OPCODE 24
+#define SHIFT_COND 28
 
 typedef enum {
     DPI,
@@ -72,6 +73,7 @@ typedef struct {
         branchType condCode;
     } u;
     char **args;
+    inputFileData *state;
 } instruction;
 
 static dict lookuptable[] = {
@@ -116,16 +118,16 @@ int keyfromstring(char *key, instruction *instr){
     return 0;
 }
 
-bool is_register(char name[], size_t size) {
+bool is_register(char *name) {
     return name[0] == 'r';
 }
 
-int get_register_num(char name[], size_t size) {
+int get_register_num(char *name) {
     // name[0] = '';
     return atoi(name+1);
 }
 
-int get_immediate(char name[], size_t size) {
+int get_immediate(char *name) {
     //"#0x24a7"
 
     if (name[1] == '0' && name[2] == 'x') {
