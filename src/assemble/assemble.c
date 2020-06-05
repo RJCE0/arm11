@@ -85,7 +85,7 @@ uint32_t branch(instruction *instr){
     }
     offset += 8;
     offset >>= 2;
-    create_branch(instr->u.condCode, offset);
+    return create_branch(instr->u.condCode, offset);
 }
 
 uint32_t logical_left_shift(instruction *instr){
@@ -194,23 +194,23 @@ uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool
 
 }
 
-void create_branch(uint8_t condCode, uint32_t offset) {
+uint32_t create_branch(uint8_t condCode, uint32_t offset) {
     //assuming big endian
     uint32_t middle = 10 << 26;
     uint32_t left_end = condCode << 28;
     //idk how where im meant to put the value afterwards;
-
-    uint32_t res = left_end + middle + offset; 
+    return left_end | middle | offset;
 }
 
-int main() {
+int main(int argc, char **argv) {
     firstRead *firstRead = (firstRead *) malloc (sizeof(firstRead *));
     firstRead->labels = (char **) malloc (10 * sizeof(char *));
-    read_file_first(firstRead, "example.txt");
+    read_file_first(firstRead, argv[1]);
     uint32_t *decoded = read_file_second(firstRead, "example.txt");
-    // decoded size to do
-    fwrite(decoded, sizeof(uint32_t), firstRead->lines, my_file);
-    fclose(my_file);
+    FILE *binFile;
+    binFile = fopen(argv[2], "rb");
+    fwrite(decoded, sizeof(uint32_t), firstRead->lines, binFile);
+    fclose(binFile);
     free(firstRead->labels);
     free(firstRead);
     free(decoded);
