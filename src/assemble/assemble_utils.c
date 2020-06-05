@@ -78,7 +78,7 @@ typedef struct {
 typedef struct {
     char **labels;
     int lines;
-} firstRead
+} firstRead;
 
 static dict lookuptable[] = {
         { "add", DPI, ADD}, { "sub", DPI, SUB}, { "rsb", DPI, RSB}, { "and", DPI, AND},

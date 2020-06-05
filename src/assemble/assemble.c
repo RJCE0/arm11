@@ -74,16 +74,6 @@ void single_data_transfer(instruction *instr){
 
 }
 
-/*
-Few problems:
-
-Had to include the pc counter as being passed to the function
-
-gonna need the labels 2d array in order to find the address of the label
-
-*/
-
-
 uint32_t branch(instruction *instr){
     uint32_t offset;
     uint32_t newAddress = get_label_address(instr->state->labels, instr->args[0]);
@@ -205,7 +195,12 @@ uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool
 }
 
 void create_branch(uint8_t condCode, uint32_t offset) {
-    uint8_t middle = 1010;
+    //assuming big endian
+    uint32_t middle = 10 << 26;
+    uint32_t left_end = condCode << 28;
+    //idk how where im meant to put the value afterwards;
+
+    uint32_t res = left_end + middle + offset; 
 }
 
 int main() {
