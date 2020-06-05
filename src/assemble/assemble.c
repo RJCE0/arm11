@@ -9,7 +9,7 @@
 3:  mov ...                             3. sub r2,r2,#1
 4:  Loop:                               4. cmp r2,#0
 5:  add _ _                             5. bne wait
-6:  mov
+6:  mov,
 7:  beq 0x000017
 8:  nd loop:
 9:  mov
@@ -67,19 +67,18 @@ uint32_t multiply(instruction *instr){
 
 
 uint32_t single_data_transfer(instruction *instr){
-
+  return 0;
 }
 
 uint32_t branch(instruction *instr){
-    uint32_t offset;
-    uint32_t newAddress = get_label_address(instr->state->labels, instr->state->numLabels, instr->args[0]);
-    if(newAddress == NULL){
-        offset = instr->state->pc - hex_to_decimal(instr->args[0]);
+    int32_t offset;
+    bool checkLabel = false;
+    uint32_t newAddress = get_label_address(instr->state, instr->args[0], &checkLabel);
+    if(checkLabel){
+        offset = newAddress - instr->state->pc - 8;
+    } else {
+        offset = hex_to_decimal(instr->args[0]) - instr->state->pc - 8;
     }
-    else{
-        offset = instr->state->pc - newAddress;
-    }
-    offset += 8;
     offset >>= 2;
     return create_branch(instr->u.condCode, offset);
 }
@@ -97,7 +96,6 @@ uint32_t halt(instruction *instr){
 }
 
 void read_file_first(firstFile *firstRead, char *inputFileName) {
-    uint32_t *labelNextInstr = (uint32_t *) malloc(10 * sizeof(uint32_t));
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
     if (myfile == NULL) {
@@ -116,13 +114,15 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
             printf("\nLabel \"%s\" spotted on line: %d\n", str, line+1);
             printf("So label points to instruction number: %d\n\n", 32 * line);
             firstRead->labels[labelCount - 1] = str;
-            labelNextInstr[labelCount - 1] = 32 * line - labelCount;
+            firstRead->labelNextInstr[labelCount - 1] = 4 * (line + 1);
         }
         printf("\n---%s---", str);
+        //segmentation error here
         do {
             if (feof(myfile)) {
                 return;
             }
+            printf("check");
         } while (fgetc(myfile) != '\n');
         line++;
     }
@@ -152,10 +152,9 @@ uint32_t *read_file_second(firstFile *firstRead, char *inputFileName) {
     instruction *instr = (instruction *) malloc(sizeof(instruction));
     instr->args = (char **) malloc(5 * sizeof(char *));
     // need counter in first read
-    instr->state = (branchState *) malloc(sizeof(branchState));
-    instr->state->labels = firstRead->labels;
+    instr->state = (firstFile *) malloc(sizeof(firstFile));
+    instr->state = firstRead;
     instr->state->pc = 0;
-    instr->state->numLabels = firstRead->numLabels;
     uint32_t *decoded = (uint32_t *) malloc(firstRead->lines * sizeof(uint32_t));
     while (!feof(myfile)) {
         char str[20];
@@ -165,7 +164,7 @@ uint32_t *read_file_second(firstFile *firstRead, char *inputFileName) {
         split_on_commas(argsInInstruction, instr);
         typedef uint32_t (*func[NUM_INSTRUCTION]) (instruction *instr);
         func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt};
-        uint32_t result = funcPointers[keyfromstring(argsInInstruction, instr)] (instr);
+        uint32_t result = funcPointers[keyfromstring(str, instr)] (instr);
         decoded[instr->state->pc / 4] = result;
         if (!result) {
             break;
@@ -174,6 +173,7 @@ uint32_t *read_file_second(firstFile *firstRead, char *inputFileName) {
     }
     free(instr->args);
     free(instr->state->labels);
+    free(instr->state->labelNextInstr);
     free(instr->state);
     free(instr);
     return decoded;
@@ -189,28 +189,31 @@ arguments separately. Those who won't need 3 arguments, initalise the others to 
 
 //add r1, r2, #0x39
 
-uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool upBit, ...) {
-
+uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool upBit) {
+    return 0;
 }
 
-uint32_t create_branch(uint8_t condCode, uint32_t offset) {
+uint32_t create_branch(uint8_t condCode, int32_t offset) {
     //assuming big endian
-    uint32_t middle = 10 << 26;
+    uint32_t middle = 10 << 24;
     uint32_t left_end = condCode << 28;
     //idk how where im meant to put the value afterwards;
-    return left_end | middle | offset;
+    return (left_end | middle | (offset & 0xFFFFFF));
 }
 
 int main(int argc, char **argv) {
     firstFile *firstRead = (firstFile *) malloc(sizeof(firstRead));
     firstRead->labels = (char **) malloc(10 * sizeof(char *));
+    firstRead->labelNextInstr = (uint32_t *) malloc(10 * sizeof(uint32_t));
     read_file_first(firstRead, argv[1]);
-    uint32_t *decoded = read_file_second(firstRead, argv[1]);
+    uint32_t *decoded = (uint32_t *) malloc(firstRead->lines * sizeof(uint32_t));
+    decoded = read_file_second(firstRead, argv[1]);
     FILE *binFile;
     binFile = fopen(argv[2], "rb");
     fwrite(decoded, sizeof(uint32_t), firstRead->lines, binFile);
     fclose(binFile);
     free(firstRead->labels);
+    free(firstRead->labelNextInstr);
     free(firstRead);
     free(decoded);
     return 0;
