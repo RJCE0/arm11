@@ -72,7 +72,7 @@ uint32_t single_data_transfer(instruction *instr){
 
 uint32_t branch(instruction *instr){
     uint32_t offset;
-    uint32_t newAddress = get_label_address(instr->state->labels, instr->args[0]);
+    uint32_t newAddress = get_label_address(instr->state->labels, instr->state->numLabels, instr->args[0]);
     if(newAddress == NULL){
         offset = instr->state->pc - hex_to_decimal(instr->args[0]);
     }
@@ -128,6 +128,7 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
     }
     fclose(myfile);
     firstRead->lines = line - labelCount;
+    firstRead->numLabels = labelCount;
 }
 
 void split_on_commas(char *input, instruction *instr){
@@ -154,6 +155,7 @@ uint32_t *read_file_second(firstFile *firstRead, char *inputFileName) {
     instr->state = (branchState *) malloc(sizeof(branchState));
     instr->state->labels = firstRead->labels;
     instr->state->pc = 0;
+    instr->state->numLabels = firstRead->numLabels;
     uint32_t *decoded = (uint32_t *) malloc(firstRead->lines * sizeof(uint32_t));
     while (!feof(myfile)) {
         char str[20];

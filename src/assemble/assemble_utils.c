@@ -57,6 +57,7 @@ typedef enum {
 typedef struct {
     char **labels;
     int lines;
+    int numLabels;
 } firstFile;
 
 typedef struct {
@@ -68,6 +69,7 @@ typedef struct {
 typedef struct {
     char **labels;
     int pc;
+    int numLabels;
 } branchState;
 
 typedef struct {
@@ -172,19 +174,14 @@ The target address might be an actual address in or it might be a label.
  For this reason, I can made a function to loop through the
 first array to find the position of the label address in the second array
 */
-uint32_t get_label_address(char **labelsArray, char *str ){
-    int i = 0;
-    int cols = sizeof(*labelsArray);
-    bool check = i < cols;
-    while(check && strcmp(str, *(*labelsArray + i)) != 0){
-        i++;
+bool get_label_address(char **labelsArray, int size, char *str, uint32_t *newAddress){
+    for (int i = 0; i < size; i++) {
+      if (strcmp(str, labelsArray[i]) != 0) {
+        newAddress = labelsArray[i + 1];
+        return true;
+      }
     }
-    if (check){
-        return *(*(labelsArray + 1) + i);
-    }
-    else{
-        printf("Wasn't a label");
-        return NULL;
-    }
+    printf("Wasn't a label");
+    return false;
     // (RJ) need to check this works
 }
