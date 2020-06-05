@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stdint.h>
 // Created by Tyrell Duku on 03/06/2020.
 //
 
@@ -54,10 +55,20 @@ typedef enum {
 } branchType;
 
 typedef struct {
+    char **labels;
+    int lines;
+} firstFile;
+
+typedef struct {
     char *key;
     instructionType type;
     int mnemonic;
 } dict;
+
+typedef struct {
+    char **labels;
+    int pc;
+} branchState;
 
 typedef struct {
     union {
@@ -67,18 +78,8 @@ typedef struct {
         branchType condCode;
     } u;
     char **args;
-    state *state;
+    branchState *state;
 } instruction;
-
-typedef struct {
-    char **labels;
-    int pc;
-} state;
-
-typedef struct {
-    char **labels;
-    int lines;
-} firstRead;
 
 static dict lookuptable[] = {
         { "add", DPI, ADD}, { "sub", DPI, SUB}, { "rsb", DPI, RSB}, { "and", DPI, AND},
@@ -90,7 +91,7 @@ static dict lookuptable[] = {
 };
 
 // for function pointer array
-typedef uint32_t (*func[NUM_INSTRUCTION]) (instruction *instr);
+
 
 int keyfromstring(char *key, instruction *instr){
     for (int i = 0; i < NUM_OPCODE  ; ++i) {
@@ -98,16 +99,16 @@ int keyfromstring(char *key, instruction *instr){
         if (strcmp(sym->key, key) == 0){
             switch (sym->type) {
                 case DPI:
-                    instr->u.opcode = sym->mnemonic;
+                    instr->u.opcode = (dpiType) sym->mnemonic;
                     break;
                 case MI:
-                    instr->u.accBit = sym->mnemonic;
+                    instr->u.accBit = (multiplyType) sym->mnemonic;
                     break;
                 case SDTI:
-                    instr->u.loadBit = sym->mnemonic;
+                    instr->u.loadBit = (sdtType) sym->mnemonic;
                     break;
                 case BI:
-                    instr->u.condCode = sym->mnemonic;
+                    instr->u.condCode = (branchType) sym->mnemonic;
                     break;
                 case LSL:
                 case HALT:

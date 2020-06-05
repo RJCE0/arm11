@@ -1,8 +1,4 @@
-
 #include "assemble_utils.h"
-
-
-
 
 // [Function_A, Function_B, ...]
 // [0x00012, 0x00000128]
@@ -39,7 +35,7 @@ pointing to instruction 3 (as the label doesn't count) hence instructions of 32
 bits would just mean multiplying the number by 4 (bytes), e.g. 3 * 4 = 0x00012.
 */
 
-uint32_t data_processing(instruction *instr, state *state){
+uint32_t data_processing(instruction *instr){
     uint32_t condCode = 14 << SHIFT_COND; //shift_cond
     uint32_t immediate = 1 << 25;
     uint32_t opcode = instr->u.opcode << 21;
@@ -60,7 +56,7 @@ uint32_t data_processing(instruction *instr, state *state){
 }
 
 uint32_t multiply(instruction *instr){
-    uint16_t condition_code = MULTIPLY_CONDITION_CODE << SHIFT_COND;
+    uint32_t condition_code = MULTIPLY_CONDITION_CODE << SHIFT_COND;
     uint32_t accBit = instr->u.accBit << 21;
     uint32_t rd = get_register_num(instr->args[0]) << 16;
     uint32_t rn = (instr->u.accBit) ? get_register_num(instr->args[3]) << 12: 0;
@@ -70,7 +66,7 @@ uint32_t multiply(instruction *instr){
 }
 
 
-void single_data_transfer(instruction *instr){
+uint32_t single_data_transfer(instruction *instr){
 
 }
 
@@ -100,8 +96,8 @@ uint32_t halt(instruction *instr){
     return 0;
 }
 
-void read_file_first(firstRead *firstRead, char *inputFileName) {
-    uint32_t *labelNextInstr = (int *) malloc (10 * sizeof(int));
+void read_file_first(firstFile *firstRead, char *inputFileName) {
+    uint32_t *labelNextInstr = (uint32_t *) malloc(10 * sizeof(uint32_t));
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
     if (myfile == NULL) {
@@ -137,7 +133,7 @@ void read_file_first(firstRead *firstRead, char *inputFileName) {
 void split_on_commas(char *input, instruction *instr){
     int count = 0;
     char *pch = strtok(input, ",");
-    instr->args = pch;
+    instr->args[count] = pch;
     while (pch != NULL) {
         pch = strtok(NULL, ",");
         count++;
@@ -145,38 +141,39 @@ void split_on_commas(char *input, instruction *instr){
     }
 }
 
-uint32_t *read_file_second(firstRead *firstRead, char *inputFileName) {
+uint32_t *read_file_second(firstFile *firstRead, char *inputFileName) {
     FILE *myfile;
     myfile = fopen(inputFileName, "r");
     if (myfile == NULL) {
         printf("file not found, exiting...\n");
-        return;
+        return NULL;
     }
-    instruction *instr = malloc(sizeof(instruction));
-    instr->args = malloc(5 * sizeof(char *));
+    instruction *instr = (instruction *) malloc(sizeof(instruction));
+    instr->args = (char **) malloc(5 * sizeof(char *));
     // need counter in first read
-    state *state = malloc(sizeof(state));
-    uint32_t *decoded = malloc(firstRead->lines * sizeof(uint32_t));
-    state->labels = firstRead->labels;
-    state->pc = 0;
+    instr->state = (branchState *) malloc(sizeof(branchState));
+    instr->state->labels = firstRead->labels;
+    instr->state->pc = 0;
+    uint32_t *decoded = (uint32_t *) malloc(firstRead->lines * sizeof(uint32_t));
     while (!feof(myfile)) {
         char str[20];
         char argsInInstruction[500];
         fscanf(myfile, "%s", str);
         fscanf(myfile, "%s", argsInInstruction);
         split_on_commas(argsInInstruction, instr);
+        typedef uint32_t (*func[NUM_INSTRUCTION]) (instruction *instr);
         func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt};
-        uint32_t result = *func[keyfromstring(argsInInstruction, instr)] (instr);
-        decoded[state->pc / 4] = result;
+        uint32_t result = funcPointers[keyfromstring(argsInInstruction, instr)] (instr);
+        decoded[instr->state->pc / 4] = result;
         if (!result) {
             break;
         }
-        state->pc += 4;
+        instr->state->pc += 4;
     }
     free(instr->args);
+    free(instr->state->labels);
+    free(instr->state);
     free(instr);
-    free(state->labels);
-    free(state);
     return decoded;
 }
 
@@ -203,10 +200,10 @@ uint32_t create_branch(uint8_t condCode, uint32_t offset) {
 }
 
 int main(int argc, char **argv) {
-    firstRead *firstRead = (firstRead *) malloc (sizeof(firstRead *));
-    firstRead->labels = (char **) malloc (10 * sizeof(char *));
+    firstFile *firstRead = (firstFile *) malloc(sizeof(firstRead));
+    firstRead->labels = (char **) malloc(10 * sizeof(char *));
     read_file_first(firstRead, argv[1]);
-    uint32_t *decoded = read_file_second(firstRead, "example.txt");
+    uint32_t *decoded = read_file_second(firstRead, argv[1]);
     FILE *binFile;
     binFile = fopen(argv[2], "rb");
     fwrite(decoded, sizeof(uint32_t), firstRead->lines, binFile);

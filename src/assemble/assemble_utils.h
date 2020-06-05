@@ -14,11 +14,11 @@
 #ifndef ARM11_37_ASSEMBLE_UTILS_H
 #define ARM11_37_ASSEMBLE_UTILS_H
 
-int keyfromstring(char *key, Instruction *instruction);
+int keyfromstring(char *key, instruction *instruction);
 uint32_t hex_to_decimal(char hex[]);
 uint32_t label_to_instruction(char label[], size_t size);
 uint32_t get_label_address(char **labelsArray, char *str);
-void create_branch(uint8_t condCode, uint32_t offset);
+uint32_t create_branch(uint8_t condCode, uint32_t offset);
 
 
 
