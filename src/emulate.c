@@ -461,6 +461,7 @@ void execute_instructions(machineState *state) {
     // exit when ZERO instruction is reached
     if (state->instructionAfterDecode->type == ZERO) {
         print_system_state(state);
+        free(state->instructionAfterDecode);
         free(state);
         exit(EXIT_SUCCESS);
     }
