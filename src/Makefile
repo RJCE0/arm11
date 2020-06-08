@@ -5,18 +5,20 @@ CFLAGS  = -Wall -g -D_POSIX_SOURCE -D_DEFAULT_SOURCE -std=c99 -Werror -pedantic
 
 .PHONY: all clean
 
-all: emulate
+all: emulate assemble
 
-emulate: assemble.o emulate.o
-	$(CC) assemble.o emulate.o -o emulate
+emulate: emulate.o
+	$(CC) emulate.o -o emulate
+
+assemble: assemble.o
+	$(CC) assemble.o -o assemble
+
+assemble.o: assembler/assemble.c assembler/assemble_utils.c assembler/assemble_utils.h
+	$(CC) $(CFLAGS) -c assembler/assemble.c
 
 
-assemble.o: assemble/assemble.c
-	$(CC) $(CFLAGS) -c assemble.c
-
-
-emulate.o: emulate.c emulate.h structs.h constants.h instructionTypes.h
-	$(CC) $(CFLAGS) -c emulate.c
+emulate.o: emulator/emulate.c emulator/emulate.h emulator/structs.h emulator/constants.h emulator/instructionTypes.h
+	$(CC) $(CFLAGS) -c emulator/emulate.c
 
 clean:
 	rm -f $(wildcard *.o)
