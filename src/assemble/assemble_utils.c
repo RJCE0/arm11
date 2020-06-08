@@ -57,6 +57,9 @@ typedef enum {
 typedef struct {
     char **labels;
     int lines;
+    int numLabels;
+    uint32_t *labelNextInstr;
+    int pc;
 } firstFile;
 
 typedef struct {
@@ -65,10 +68,14 @@ typedef struct {
     int mnemonic;
 } dict;
 
+/*
 typedef struct {
     char **labels;
     int pc;
+    int numLabels;
+    uint32_t *labelNextInstr;
 } branchState;
+*/
 
 typedef struct {
     union {
@@ -78,7 +85,7 @@ typedef struct {
         branchType condCode;
     } u;
     char **args;
-    branchState *state;
+    firstFile *state;
 } instruction;
 
 static dict lookuptable[] = {
@@ -144,22 +151,8 @@ int get_immediate(char *name) {
 //think mazen might need this for get immediate (RJ)
 // you just pass in "0x245A2175" for example and it gives back the uint32_t
 // note, i assumed that the hex was in big endian.
-uint32_t hex_to_decimal(char hex[]){
-    int len = strlen(hex);
-    len--;
-
-    uint32_t dec_val = 0;
-
-    for (int i=2; i<=len; i++) {
-        if (hex[i]>='0' && hex[i]<='9') {
-            dec_val += (hex[i] - 48) * pow(16, (len-i));
-        }
-
-        else if (hex[i]>='A' && hex[i]<='F') {
-            dec_val += (hex[i] - 55 ) * pow(16, (len-i));
-        }
-    }
-    return dec_val;
+int32_t hex_to_decimal(char hex[]){
+    return (int32_t) strtol(hex, NULL, 0);
 }
 
 uint32_t label_to_instruction(char label[], size_t size) {
@@ -172,19 +165,15 @@ The target address might be an actual address in or it might be a label.
  For this reason, I can made a function to loop through the
 first array to find the position of the label address in the second array
 */
-uint32_t get_label_address(char **labelsArray, char *str ){
-    int i = 0;
-    int cols = sizeof(*labelsArray);
-    bool check = i < cols;
-    while(check && strcmp(str, *(*labelsArray + i)) != 0){
-        i++;
+uint32_t get_label_address(firstFile *state, char *str, bool *check){
+    bool checked = true;
+    for (int i = 0; i < state->numLabels; i++) {
+      if (strcmp(str, state->labels[i]) == 0) {
+        check = &checked;
+        return state->labelNextInstr[i];
+      }
     }
-    if (check){
-        return *(*(labelsArray + 1) + i);
-    }
-    else{
-        printf("Wasn't a label");
-        return NULL;
-    }
+    printf("Wasn't a label");
+    return 0;
     // (RJ) need to check this works
 }
