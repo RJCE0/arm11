@@ -1,11 +1,14 @@
 #include <stdbool.h>
-#include "structs.h"
+#include "machineState.h"
 #include "constants.h"
 #include <stdint.h>
 
 #ifndef ARM11_37_EMULATE_H
 #define ARM11_37_EMULATE_H
 
+machineState *initialise_state(void);
+void free_state(machineState *state);
+void exit_error(machineState *state);
 /*Reads a file with the given filename, loading its contents into an array */
 void read_file(machineState *state, char *filename);
 uint32_t get_register(machineState *state, uint32_t regNumber);
