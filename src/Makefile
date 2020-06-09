@@ -17,7 +17,7 @@ assemble.o: assembler/assemble.c assembler/assemble_utils.c assembler/assemble_u
 	$(CC) $(CFLAGS) -c assembler/assemble.c
 
 
-emulate.o: emulator/emulate.c emulator/emulate.h emulator/structs.h emulator/constants.h emulator/instructionTypes.h
+emulate.o: emulator/emulate.c emulator/emulate.h emulator/machineState.h emulator/constants.h emulator/instructionTypes.h
 	$(CC) $(CFLAGS) -c emulator/emulate.c
 
 clean:
