@@ -15,17 +15,14 @@
 #define ARM11_37_ASSEMBLE_UTILS_H
 
 int keyfromstring(char *key, instruction *instruction);
+
 int32_t hex_to_decimal(char hex[]);
+
 uint32_t label_to_instruction(char label[], size_t size);
+
 uint32_t get_label_address(firstFile *state, char *str, bool *check);
+
 uint32_t create_branch(uint8_t condCode, int32_t offset);
-
-
-
-
-
-
-
 
 
 #endif //ARM11_37_ASSEMBLE_UTILS_H

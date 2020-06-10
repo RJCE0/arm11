@@ -1,9 +1,11 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
+
 #include <stdlib.h>
 #include <stdint.h>
 #include "constants.h"
 #include "instructionTypes.h"
+
 /* Idea for pipeline:
  *  - point to the previous step in the cycle so that we don't lose it.
  *  - Start off by initialising it null for the first cycle.

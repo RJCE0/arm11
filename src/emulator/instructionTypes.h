@@ -1,27 +1,27 @@
-typedef struct  {
-    instructionOpcode opcode : 4;
-    uint16_t operand2 : 12;
-    uint8_t rn : 4;
-    uint8_t rd : 4;
+typedef struct {
+    instructionOpcode opcode: 4;
+    uint16_t operand2: 12;
+    uint8_t rn: 4;
+    uint8_t rd: 4;
 
     bool immediate;
     bool setBit;
 } dataProcessingInstruction;
 
 typedef struct {
-    uint8_t rn : 4;
-    uint8_t rd : 4;
-    uint8_t rs : 4;
-    uint8_t rm : 4;
+    uint8_t rn: 4;
+    uint8_t rd: 4;
+    uint8_t rs: 4;
+    uint8_t rm: 4;
 
     bool accumBit;
     bool setBit;
 } multiplyInstruction;
 
 typedef struct {
-    uint16_t rn : 4;
-    uint16_t rd : 4;
-    uint32_t offset : 12;
+    uint16_t rn: 4;
+    uint16_t rd: 4;
+    uint32_t offset: 12;
 
     bool upBit;
     bool loadBit;
@@ -34,7 +34,7 @@ typedef struct {
 } branchInstruction;
 
 typedef struct {
-    instructionType type : 3;
+    instructionType type: 3;
     uint8_t condCode: 4;
     union {
         dataProcessingInstruction dpi;
