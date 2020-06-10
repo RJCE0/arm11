@@ -7,7 +7,8 @@
 #include <math.h>
 #include <stdint.h>
 
-#define MULTIPLY_CONDITION_CODE 15
+#define MULTIPLY_CONDITION_CODE 14
+#define MULITPLY_BITS_4_THROUGH_7 9
 // Created by Tyrell Duku on 03/06/2020.
 //
 
