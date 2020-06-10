@@ -6,10 +6,10 @@
 #include <string.h>
 #include <stdint.h>
 
-machineState *initialise_state(void){
+machineState *initialise_state(void) {
     machineState *state = (machineState *) calloc(1, sizeof(machineState));
     state->instructionAfterDecode = (decodedInstruction *)
-    malloc(sizeof(decodedInstruction));
+            malloc(sizeof(decodedInstruction));
     state->instructionAfterDecode->type = NULL_INSTR;
     return state;
 }
@@ -94,22 +94,22 @@ void set_word(machineState *state, uint32_t address, uint32_t value) {
 
 void print_register_values(machineState *state) {
     for (int i = 0; i < NUM_OF_REGISTERS - 4; ++i) {
-            printf("$%-3d: %10d (0x%08x)\n", i,
-            state->registers[i], state->registers[i]);
+        printf("$%-3d: %10d (0x%08x)\n", i,
+               state->registers[i], state->registers[i]);
     }
     printf("PC  : %10d (0x%08x)\n", state->registers[PC_REG],
-    state->registers[PC_REG]);
+           state->registers[PC_REG]);
     printf("CPSR: %10d (0x%08x)\n", state->registers[CPSR_REG],
-    state->registers[CPSR_REG]);
+           state->registers[CPSR_REG]);
 }
 
 void print_memory(machineState *state, uint32_t address) {
     printf("0x%08x: 0x%02x%02x%02x%02x\n",
-    address,
-    state->memory[address],
-    state->memory[address + 1],
-    state->memory[address + 2],
-    state->memory[address + 3]);
+           address,
+           state->memory[address],
+           state->memory[address + 1],
+           state->memory[address + 2],
+           state->memory[address + 3]);
 }
 
 void print_system_state(machineState *state) {
@@ -204,20 +204,20 @@ void decode(machineState *state) {
         decode_dpi(&(state->instructionAfterDecode->u.dpi), instruction);
     } else {
         printf("Unsupported instruction type to decode at PC: 0x%08x\n",
-        state->registers[PC_REG] - 4);
+               state->registers[PC_REG] - 4);
         exit_error(state);
     }
 }
 
 // in separate function as it is used if operand2 in dpi is an immediate
 void rotate_right(uint32_t contents, uint32_t shiftNum, bool *carryBit,
-  uint32_t *operand2){
+                  uint32_t *operand2) {
     *carryBit = (contents >> (shiftNum - 1)) & 0x1;
     *operand2 = (contents >> shiftNum) | (contents << (32 - shiftNum));
 }
 
 void operand_shift_register(machineState *state, uint16_t instruction,
-  bool *carryBit, uint32_t *operand2) {
+                            bool *carryBit, uint32_t *operand2) {
     uint32_t rm = instruction & 0xF;
     uint32_t rmContents = get_register(state, rm);
     instruction >>= 4;
@@ -232,7 +232,7 @@ void operand_shift_register(machineState *state, uint16_t instruction,
         shiftNum = instruction & 0x1F;
     }
     // if the number to shift by = 0 then rmContents can be return as it is with no carry
-    if (!shiftNum){
+    if (!shiftNum) {
         *carryBit = 0;
         *operand2 = rmContents;
         return;
@@ -272,16 +272,16 @@ void operand_shift_register(machineState *state, uint16_t instruction,
     }
 }
 
-static uint32_t get_cond_codes(machineState *state){
+static uint32_t get_cond_codes(machineState *state) {
     return (state->registers[CPSR_REG] & 0xF0000000) >> SHIFT_COND;
 }
 
 
 // changes the flags on the CPSR register
-void set_flags(machineState *state, flagChange flags[], int size){
+void set_flags(machineState *state, flagChange flags[], int size) {
     uint32_t currentFlags = get_cond_codes(state);
     for (size_t i = 0; i < size; ++i) {
-        if(flags[i].set){
+        if (flags[i].set) {
             currentFlags |= flags[i].flag;
         } else {
             currentFlags &= ~flags[i].flag;
@@ -340,11 +340,11 @@ void execute_dpi(machineState *state) {
         default:
             // will exit as an error if it falls through switch as it should not reach this stage
             fprintf(stderr, "An unknown operand has been found at PC: %0x.\n",
-            state->registers[PC_REG] - 8);
+                    state->registers[PC_REG] - 8);
             exit_error(state);
     }
     // to reduce code duplication in switch if opcode is not tst, teq, cmp then it will be written to register rd
-    if (dpi->opcode < 8 || dpi->opcode > 10){
+    if (dpi->opcode < 8 || dpi->opcode > 10) {
         set_register(state, dpi->rd, result);
     }
     // if setBit is 1 then carryFlags in CPSR are changed
@@ -384,7 +384,7 @@ void execute_mi(machineState *state) {
     }
 }
 
-static void load(machineState *state, uint32_t destReg, uint32_t address){
+static void load(machineState *state, uint32_t destReg, uint32_t address) {
     // if address is out of range will print error and not load a value into the dest register
     if (!check_word(address)) {
         return;
@@ -463,16 +463,16 @@ bool check_cond(machineState *state) {
             return (cpsrFlags & N_FLAG) != (cpsrFlags & V_FLAG);
         case GT:
             return !(cpsrFlags & Z_FLAG) && ((cpsrFlags & N_FLAG)
-            == (cpsrFlags & V_FLAG));
+                                             == (cpsrFlags & V_FLAG));
         case LE:
             return (cpsrFlags & Z_FLAG) || ((cpsrFlags & N_FLAG)
-            != (cpsrFlags & V_FLAG));
+                                            != (cpsrFlags & V_FLAG));
         case AL:
             return true;
         default:
             // should not reach here unless earlier bug with assigning flags
             fprintf(stderr, "An unsupported instruction (unknown cond. code) has been found at PC: %d (%08x)\n",
-            state->registers[PC_REG], state->registers[PC_REG]);
+                    state->registers[PC_REG], state->registers[PC_REG]);
             exit_error(state);
             return false;
     }
@@ -504,8 +504,8 @@ void execute_instructions(machineState *state) {
         default:
             // instructions should not reach this stage unless error in fetch/decode
             fprintf(stderr,
-            "An unknown instruction type has been found at PC: 0x%x and the program will terminate.",
-            state->registers[PC_REG]);
+                    "An unknown instruction type has been found at PC: 0x%x and the program will terminate.",
+                    state->registers[PC_REG]);
             exit(EXIT_FAILURE);
     }
 }
@@ -524,7 +524,7 @@ void pipeline(machineState *state) {
             execute_instructions(state);
         }
         // first checks whether there has been a fetched instruction in previous cycle before decoding
-        if (state->fetchedInstr){
+        if (state->fetchedInstr) {
             decode(state);
         }
         // fetches next instruction and advances PC by 4

@@ -56,8 +56,7 @@ typedef enum {
     BRANCH,
     ZERO,
     NULL_INSTR
-}instructionType;
-
+} instructionType;
 
 
 #endif

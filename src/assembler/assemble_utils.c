@@ -89,21 +89,39 @@ typedef struct {
 } instruction;
 
 static dict lookuptable[] = {
-        { "add", DPI, ADD}, { "sub", DPI, SUB}, { "rsb", DPI, RSB}, { "and", DPI, AND},
-        { "eor", DPI, EOR}, { "orr", DPI, ORR}, { "mov", DPI, MOV}, { "tst", DPI, TST},
-        { "teq", DPI, TEQ}, { "cmp", DPI, CMP}, { "mul", MI, MUL}, { "mla", MI, MLA},
-        { "ldr", SDTI, LDR}, { "str", SDTI, STR}, { "beq", BI, BEQ}, { "bne", BI, BNE},
-        { "bge", BI, BGE}, { "blt", BI, BLT}, { "bgt", BI, BGT}, { "ble", BI, BLE},
-        { "b", BI, B},  {"bal", BI, B}, { "lsl", LSL, LSL}, {"andeq", HALT, HALT}
+        {"add",   DPI,  ADD},
+        {"sub",   DPI,  SUB},
+        {"rsb",   DPI,  RSB},
+        {"and",   DPI,  AND},
+        {"eor",   DPI,  EOR},
+        {"orr",   DPI,  ORR},
+        {"mov",   DPI,  MOV},
+        {"tst",   DPI,  TST},
+        {"teq",   DPI,  TEQ},
+        {"cmp",   DPI,  CMP},
+        {"mul",   MI,   MUL},
+        {"mla",   MI,   MLA},
+        {"ldr",   SDTI, LDR},
+        {"str",   SDTI, STR},
+        {"beq",   BI,   BEQ},
+        {"bne",   BI,   BNE},
+        {"bge",   BI,   BGE},
+        {"blt",   BI,   BLT},
+        {"bgt",   BI,   BGT},
+        {"ble",   BI,   BLE},
+        {"b",     BI,   B},
+        {"bal",   BI,   B},
+        {"lsl",   LSL,  LSL},
+        {"andeq", HALT, HALT}
 };
 
 // for function pointer array
 
 
-int keyfromstring(char *key, instruction *instr){
-    for (int i = 0; i < NUM_OPCODE  ; ++i) {
+int keyfromstring(char *key, instruction *instr) {
+    for (int i = 0; i < NUM_OPCODE; ++i) {
         dict *sym = &lookuptable[i];
-        if (strcmp(sym->key, key) == 0){
+        if (strcmp(sym->key, key) == 0) {
             switch (sym->type) {
                 case DPI:
                     instr->u.opcode = (dpiType) sym->mnemonic;
@@ -136,7 +154,7 @@ bool is_register(char *name) {
 
 int get_register_num(char *name) {
     // name[0] = '';
-    return atoi(name+1);
+    return atoi(name + 1);
 }
 
 int get_immediate(char *name) {
@@ -145,13 +163,13 @@ int get_immediate(char *name) {
     if (name[1] == '0' && name[2] == 'x') {
         // convert to decimal somehow
     }
-    return atoi(name+1);
+    return atoi(name + 1);
 }
 
 //think mazen might need this for get immediate (RJ)
 // you just pass in "0x245A2175" for example and it gives back the uint32_t
 // note, i assumed that the hex was in big endian.
-int32_t hex_to_decimal(char hex[]){
+int32_t hex_to_decimal(char hex[]) {
     return (int32_t) strtol(hex, NULL, 0);
 }
 
@@ -165,13 +183,13 @@ The target address might be an actual address in or it might be a label.
  For this reason, I can made a function to loop through the
 first array to find the position of the label address in the second array
 */
-uint32_t get_label_address(firstFile *state, char *str, bool *check){
+uint32_t get_label_address(firstFile *state, char *str, bool *check) {
     bool checked = true;
     for (int i = 0; i < state->numLabels; i++) {
-      if (strcmp(str, state->labels[i]) == 0) {
-        check = &checked;
-        return state->labelNextInstr[i];
-      }
+        if (strcmp(str, state->labels[i]) == 0) {
+            check = &checked;
+            return state->labelNextInstr[i];
+        }
     }
     printf("Wasn't a label");
     return 0;
