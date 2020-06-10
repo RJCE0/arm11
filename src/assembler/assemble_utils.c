@@ -13,12 +13,12 @@
 #define SHIFT_COND 28
 
 typedef enum {
-    DPI,
-    MI,
-    SDTI,
-    BI,
-    LSL,
-    HALT
+    DPI = 0,
+    MI = 1,
+    SDTI = 2,
+    BI = 3,
+    LSL = 4,
+    HALT = 5
 } instructionType;
 
 typedef enum {
@@ -27,8 +27,8 @@ typedef enum {
     RSB = 3,
     AND = 0,
     EOR = 1,
-    ORR = 13,
-    MOV = 14,
+    ORR = 12,
+    MOV = 13,
     TST = 8,
     TEQ = 9,
     CMP = 10

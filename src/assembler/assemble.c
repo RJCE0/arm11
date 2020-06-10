@@ -3,22 +3,6 @@
 // [Function_A, Function_B, ...]
 // [0x00012, 0x00000128]
 
-/*
-1:  add ... ... ...                     1. mov r2,#23
-2:  sub .... ..                         2. wait:
-3:  mov ...                             3. sub r2,r2,#1
-4:  Loop:                               4. cmp r2,#0
-5:  add _ _                             5. bne wait
-6:  mov,
-7:  beq 0x000017
-8:  nd loop:
-9:  mov
-10: add
-<Loop, 17> <End loop, 20>
-
-*/
-
-
 /* (RJ) branch bit explained for myself:
 so for branching, when i see a branch condition it will be made up of two components
 the type of branch and a target address. The target address might be an actual address
@@ -42,13 +26,16 @@ uint32_t data_processing(instruction *instr) {
     uint32_t setBit = 0;
     uint32_t rn = 0;
     uint32_t rd = 0;
-    uint32_t operand2 = get_immediate(instr->args[2]);
-    if (instr->u.opcode == 14) {
+    uint32_t operand2;
+    if (instr->u.opcode == 13) {
+        operand2 = get_immediate(instr->args[1]);
         rd = get_register_num(instr->args[0]) << 12;
     } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)) {
+        operand2 = get_immediate(instr->args[1]);
         rn = get_register_num(instr->args[0]) << 16;
         setBit = 1 << 20;
     } else {
+        operand2 = get_immediate(instr->args[2]);
         rd = get_register_num(instr->args[0]) << 12;
         rn = get_register_num(instr->args[1]) << 16;
     }
@@ -104,26 +91,13 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
     }
     int line = 0;
     int labelCount = 0;
-    while (!feof(myfile)) {
-        // need to change string length
-        char str[20];
-        fscanf(myfile, "%s", str);
-        printf("\n---%s---", str);
-        if (str[strlen(str) - 1] == ':') {
-            labelCount++;
-            printf("\nLabel \"%s\" spotted on line: %d\n", str, line + 1);
-            printf("So label points to instruction number: %d\n\n", 32 * line);
-            firstRead->labels[labelCount - 1] = str;
-            firstRead->labelNextInstr[labelCount - 1] = 4 * (line + 1);
+    char str[511];
+    while (fgets(str, 511, myfile)) {
+        if (str[strlen(str) - 2] == ':') {
+            strcpy(firstRead->labels[labelCount], str);
+            firstRead->labelNextInstr[labelCount++] = line * 4;
+            //labels = realloc(labels, (labelCount + 2) * sizeof(label));
         }
-        printf("\n---%s---", str);
-        //segmentation error here
-        do {
-            if (feof(myfile)) {
-                return;
-            }
-            printf("check");
-        } while (fgetc(myfile) != '\n');
         line++;
     }
     fclose(myfile);
@@ -151,26 +125,31 @@ uint32_t *read_file_second(firstFile *firstRead, char *inputFileName) {
     }
     instruction *instr = (instruction *) malloc(sizeof(instruction));
     instr->args = (char **) malloc(5 * sizeof(char *));
+    for (int i = 0; i < 5; ++i) {
+      instr->args[i] = (char *) calloc(10, sizeof(char));
+    }
     // need counter in first read
     instr->state = (firstFile *) malloc(sizeof(firstFile));
     instr->state = firstRead;
     instr->state->pc = 0;
     uint32_t *decoded = (uint32_t *) malloc(firstRead->lines * sizeof(uint32_t));
-    while (!feof(myfile)) {
-        char str[20];
-        char argsInInstruction[500];
-        fscanf(myfile, "%s", str);
-        fscanf(myfile, "%s", argsInInstruction);
+
+    char str[511];
+    while (fgets(str, 511, myfile)) {
+        char *argsInInstruction;
+        char *ptrToFirstSpace = strchr(str, ' ');
+        argsInInstruction = ptrToFirstSpace + 1;
+        *ptrToFirstSpace = '\0';
         split_on_commas(argsInInstruction, instr);
-        typedef uint32_t (*func[NUM_INSTRUCTION])(instruction *instr);
-        func funcPointers = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt};
-        uint32_t result = funcPointers[keyfromstring(str, instr)](instr);
+        uint32_t (*func[NUM_INSTRUCTION])(instruction *instr) = {data_processing, multiply, single_data_transfer, branch, logical_left_shift, halt};
+        uint32_t result = func[keyfromstring(str, instr)](instr);
         decoded[instr->state->pc / 4] = result;
         if (!result) {
             break;
         }
         instr->state->pc += 4;
     }
+
     free(instr->args);
     free(instr->state->labels);
     free(instr->state->labelNextInstr);
@@ -185,7 +164,6 @@ the full line on the fscanf but won't be able to differentiate between arguments
 it would be best to store these in a struct so we can access each part of the
 arguments separately. Those who won't need 3 arguments, initalise the others to null.
 */
-
 
 //add r1, r2, #0x39
 
@@ -202,14 +180,21 @@ uint32_t create_branch(uint8_t condCode, int32_t offset) {
 }
 
 int main(int argc, char **argv) {
-    firstFile *firstRead = (firstFile *) malloc(sizeof(firstRead));
-    firstRead->labels = (char **) malloc(10 * sizeof(char *));
+    if (argc != 3) {
+        fprintf(stderr, "Program does not have correct number of arguments.");
+        exit(EXIT_FAILURE);
+    }
+    firstFile *firstRead = (firstFile *) malloc(sizeof(firstFile));
+    firstRead->labels = (char **) calloc(10, sizeof(char *));
+    for (int i = 0; i < 10; i++) {
+        firstRead->labels[i] = calloc(10, sizeof(char));
+    }
     firstRead->labelNextInstr = (uint32_t *) malloc(10 * sizeof(uint32_t));
     read_file_first(firstRead, argv[1]);
     uint32_t *decoded = (uint32_t *) malloc(firstRead->lines * sizeof(uint32_t));
     decoded = read_file_second(firstRead, argv[1]);
     FILE *binFile;
-    binFile = fopen(argv[2], "rb");
+    binFile = fopen(argv[2], "wb");
     fwrite(decoded, sizeof(uint32_t), firstRead->lines, binFile);
     fclose(binFile);
     free(firstRead->labels);
