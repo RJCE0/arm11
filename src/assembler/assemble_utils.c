@@ -13,6 +13,32 @@
 #define SHIFT_COND 28
 
 typedef enum {
+    LSLA,
+    LSR,
+    ASR,
+    ROR
+} shiftType;
+
+typedef struct {
+    char *key;
+    shiftType type;
+} shiftDict;
+
+static shiftDict lookup[] = {
+   {"LSL", LSLA}, {"LSR", LSR}, {"ASR", ASR}, {"ROR", ROR}
+};
+
+int shift_key(char *key) {
+  for (int i = 0; i < 4  ; ++i) {
+      shiftDict *sym = &lookup[i];
+      if (strcmp(sym->key, key) == 0){
+          return sym->type;
+      }
+  }
+  return 0;
+}
+
+typedef enum {
     DPI = 0,
     MI = 1,
     SDTI = 2,
@@ -157,21 +183,26 @@ int get_register_num(char *name) {
     return atoi(name + 1);
 }
 
+int32_t hex_to_decimal(char hex[]) {
+    printf("%s\n", hex);
+    return (int32_t) strtol(hex, NULL, 0);
+}
+
 int get_immediate(char *name) {
     //"#0x24a7"
 
     if (name[1] == '0' && name[2] == 'x') {
-        // convert to decimal somehow
+        return hex_to_decimal(name + 1);
     }
-    return atoi(name + 1);
+    printf("%s\n", name + 1);
+    uint32_t result = strtol(name+1, NULL, 10);
+    printf("%x\n", result);
+    return result;
 }
 
 //think mazen might need this for get immediate (RJ)
 // you just pass in "0x245A2175" for example and it gives back the uint32_t
 // note, i assumed that the hex was in big endian.
-int32_t hex_to_decimal(char hex[]) {
-    return (int32_t) strtol(hex, NULL, 0);
-}
 
 uint32_t label_to_instruction(char label[], size_t size) {
     //

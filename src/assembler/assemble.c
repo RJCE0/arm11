@@ -19,6 +19,58 @@ pointing to instruction 3 (as the label doesn't count) hence instructions of 32
 bits would just mean multiplying the number by 4 (bytes), e.g. 3 * 4 = 0x00012.
 */
 
+void shift(uint32_t *regNum, char *shiftOp){
+    uint32_t shiftType = shift_key(strtok(shiftOp, " ")) << 5;
+    char *string;
+    uint32_t shiftNum = 0;
+    uint32_t regBit = 0;
+    string = strtok(NULL, " ");
+    if (is_register(string)) {
+      shiftNum = (get_register_num(string) & 0xF) << 8;
+      regBit = 0x10;
+    } else {
+      shiftNum = (get_immediate(string) & 0x1F) << 7;
+    }
+    *regNum |= shiftNum | shiftType | regBit;
+}
+
+void reg_checker(char** args, uint32_t *operand2, uint32_t *immediate){
+  if (is_register(args[0])) {
+      *operand2 = get_register_num(args[0]) & 0xF;
+      if (args[1]) {
+          shift(operand2, args[1]);
+      }
+  } else{
+      *immediate = 1 << 25;
+      *operand2 = get_immediate(args[0]);
+  }
+}
+
+uint32_t data_processing(instruction *instr){
+    uint32_t condCode = 14 << SHIFT_COND; //shift_cond
+    uint32_t immediate = 0;
+    uint32_t opcode = instr->u.opcode << 21;
+    uint32_t setBit = 0;
+    uint32_t rn = 0;
+    uint32_t rd = 0;
+    uint32_t operand2;
+    if (instr->u.opcode == 13) {
+        rd = get_register_num(instr->args[0]) << 12;
+        reg_checker(instr->args + 1, &operand2, &immediate);
+    } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)){
+        rn = get_register_num(instr->args[0]) << 16;
+        setBit = 1 << 20;
+        reg_checker(instr->args + 1, &operand2, &immediate);
+    } else {
+        rd = get_register_num(instr->args[0]) << 12;
+        rn = get_register_num(instr->args[1]) << 16;
+        reg_checker(instr->args + 2, &operand2, &immediate);
+    }
+    return condCode | immediate | opcode | setBit | rn | rd | operand2;
+}
+
+/*
+
 uint32_t data_processing(instruction *instr) {
     uint32_t condCode = 14 << SHIFT_COND; //shift_cond
     uint32_t immediate = 1 << 25;
@@ -41,6 +93,7 @@ uint32_t data_processing(instruction *instr) {
     }
     return condCode | immediate | opcode | setBit | rn | rd | operand2;
 }
+*/
 
 uint32_t multiply(instruction *instr) {
     uint32_t condition_code = MULTIPLY_CONDITION_CODE << SHIFT_COND;
@@ -49,7 +102,7 @@ uint32_t multiply(instruction *instr) {
     uint32_t rn = (instr->u.accBit) ? get_register_num(instr->args[3]) << 12 : 0;
     uint32_t rs = get_register_num(instr->args[1]) << 8;
     uint32_t constRm = (9 << 4) || get_register_num(instr->args[2]);
-    return condition_code || accBit || rd || rn || rs || constRm;
+    return condition_code | accBit | rd | rn | rs | constRm;
 }
 
 
@@ -73,9 +126,9 @@ uint32_t branch(instruction *instr) {
 uint32_t logical_left_shift(instruction *instr) {
     uint32_t condCode = 14 << SHIFT_COND; //shift_cond
     uint32_t opcode = MOV << 21;
-    uint32_t rn = get_register_num(instr->args[0]);
+    uint32_t rd = get_register_num(instr->args[0]) & 0xF;
     uint32_t shiftNum = (get_immediate(instr->args[1]) & 0x1F) << 7;
-    return condCode || opcode || (rn << 16) || shiftNum || rn;
+    return condCode | opcode | shiftNum | (rd << 12) | rd; 
 }
 
 uint32_t halt(instruction *instr) {
@@ -110,7 +163,7 @@ void split_on_commas(char *input, instruction *instr) {
     char *pch = strtok(input, ",");
     instr->args[count] = pch;
     while (pch != NULL) {
-        pch = strtok(NULL, ",");
+        pch = strtok(NULL, ", ");
         count++;
         instr->args[count] = pch;
     }
@@ -126,7 +179,7 @@ uint32_t *read_file_second(firstFile *firstRead, char *inputFileName) {
     instruction *instr = (instruction *) malloc(sizeof(instruction));
     instr->args = (char **) malloc(5 * sizeof(char *));
     for (int i = 0; i < 5; ++i) {
-      instr->args[i] = (char *) calloc(10, sizeof(char));
+      instr->args[i] = (char *) calloc(20, sizeof(char));
     }
     // need counter in first read
     instr->state = (firstFile *) malloc(sizeof(firstFile));
@@ -151,9 +204,6 @@ uint32_t *read_file_second(firstFile *firstRead, char *inputFileName) {
     }
 
     free(instr->args);
-    free(instr->state->labels);
-    free(instr->state->labelNextInstr);
-    free(instr->state);
     free(instr);
     return decoded;
 }
