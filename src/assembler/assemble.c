@@ -42,7 +42,13 @@ void reg_checker(char **args, uint32_t *operand2, uint32_t *immediate) {
         }
     } else {
         *immediate = 1 << 25;
-        *operand2 = get_immediate(args[0]);
+        uint32_t imm = get_immediate(args[0]);
+        uint32_t rotate = 0;
+        while (imm & 0xFFFFFF00) {
+          imm = imm << 2 | imm >> 30;
+          rotate += 1;
+        }
+        *operand2 = rotate << 8 | imm;
     }
 }
 
@@ -69,31 +75,6 @@ uint32_t data_processing(instruction *instr) {
     return condCode | immediate | opcode | setBit | rn | rd | operand2;
 }
 
-/*
-
-uint32_t data_processing(instruction *instr) {
-    uint32_t condCode = 14 << SHIFT_COND; //shift_cond
-    uint32_t immediate = 1 << 25;
-    uint32_t opcode = instr->u.opcode << 21;
-    uint32_t setBit = 0;
-    uint32_t rn = 0;
-    uint32_t rd = 0;
-    uint32_t operand2;
-    if (instr->u.opcode == 13) {
-        operand2 = get_immediate(instr->args[1]);
-        rd = get_register_num(instr->args[0]) << 12;
-    } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)) {
-        operand2 = get_immediate(instr->args[1]);
-        rn = get_register_num(instr->args[0]) << 16;
-        setBit = 1 << 20;
-    } else {
-        operand2 = get_immediate(instr->args[2]);
-        rd = get_register_num(instr->args[0]) << 12;
-        rn = get_register_num(instr->args[1]) << 16;
-    }
-    return condCode | immediate | opcode | setBit | rn | rd | operand2;
-}
-*/
 
 uint32_t multiply(instruction *instr) {
     // EXPECTED: E0020191
