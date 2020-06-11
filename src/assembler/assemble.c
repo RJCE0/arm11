@@ -9,16 +9,6 @@ the type of branch and a target address. The target address might be an actual a
 in or it might be a label, so I'll just use my function I built.
 */
 
-/*  This function does the first pass in two-pass method. It will take a file
-name and search it for labels only. It will then save each label name in one
-array in parallel with the "next instruction" in another array (all in a struct)
-
-Explained:
-the instructions start from 0 so a label on line 3, would effectively be
-pointing to instruction 3 (as the label doesn't count) hence instructions of 32
-bits would just mean multiplying the number by 4 (bytes), e.g. 3 * 4 = 0x00012.
-*/
-
 void shift(uint32_t *regNum, char *shiftOp) {
     uint32_t shiftType = shift_key(strtok(shiftOp, " ")) << 5;
     char *string;
@@ -97,7 +87,74 @@ uint32_t multiply(instruction *instr) {
 
 
 uint32_t single_data_transfer(instruction *instr) {
-    return 0;
+    const uint32_t condCode = 14;
+    const uint32_t immBit = 0;
+    uint32_t preIndexBit = 0;
+    uint32_t upBit = 1;
+    uint32_t loadBit = 0;
+    uint32_t rn = 0;
+    uint32_t rd = 0;
+    uint32_t offset = 0;
+
+    rd = get_register_num(instr->args[0]);
+
+    // TODO: remove debug
+    printf("\n First Arg: %s", args[0]);
+    printf("\n Second Arg: %s", args[1]);
+    //
+
+    // <=expression> type (ldr)
+    /* Assuming I don't need to take into account if any other instruction has
+    already been stored here */
+    if (*(instr->args[1]) == '=') {
+        uint32_t expression = get_immediate(instr->args[1]);
+        if (expression <= 0xFF) {
+            // more efficient implementation for keyfromstring, maybe one liner?
+            // 6 characters coz of "mov ", a comma, and end character
+            char *strArg = malloc(6 + strlen(instr->args[0]) + strlen(instr->args[1]));
+            strArg = "mov ";
+            strcat(strArg, instr->args[0]);
+                        return 0;
+            strcat(strArg, ",");
+            strcat(strArg, instr->args[1]);
+
+            keyfromstring(strArg, instr);
+            return data_processing(instr);
+        } else {
+            uint32_t address = instr->state->lines * 4;
+            // TODO: is cast required?
+            rn = (uint32_t) instr->state->pc;
+            // TODO: change to hex?
+            offset = 4095 & address;
+        }
+    }
+    // [Rn] case
+    // only other case with only two arguments
+    // TODO: assuming any set args can never be zero?
+    // else if (*(instr->args[1] == '[' && args[2] == 0)) {
+    else if (instr->args[2] == 0) {
+        // +1 to ignore first square bracket in string
+        rn = get_register_num(instr->args[1] + 1);
+        preIndexBit = 1;
+    } else {
+        /* this will compare to check whether this is the pre-indexed case
+         or the post indexed case (both with some <#expression>) */
+        char *tempPtr = instr->args[2];
+        while (!*tempPtr) {
+            if (*tempPtr == ']') {
+                preIndexBit = 1;
+                *tempPtr = '\0';
+            }
+        }
+        rn = get_register_num(instr->args[1] + 1);
+        // preIndex case
+        offset = get_immediate(instr->args[2]);
+    }
+    if (instr->u.loadBit == 1) {
+        loadBit = 1;
+    }
+    return (condCode << SHIFT_COND) | (1 << 26) | (immBit << 25) | (preIndexBit << 24)
+            | (upBit << 23) | (loadBit << 20) | (rn << 16) | (rd << 12) | offset;
 }
 
 uint32_t branch(instruction *instr) {
