@@ -166,8 +166,8 @@ uint32_t branch(instruction *instr) {
     } else {
         offset = hex_to_decimal(instr->args[0]) - instr->state->pc - 8;
     }
-    offset >>= 2;
-    return create_branch(instr->u.condCode, offset);
+    offset >>= 2; 
+    return (instr->u.condCode << 28 | 10 << 24 | (offset & 0xFFFFFF));
 }
 
 uint32_t logical_left_shift(instruction *instr) {
@@ -267,14 +267,6 @@ arguments separately. Those who won't need 3 arguments, initalise the others to 
 
 uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool upBit) {
     return 0;
-}
-
-uint32_t create_branch(uint8_t condCode, int32_t offset) {
-    //assuming big endian
-    uint32_t middle = 10 << 24;
-    uint32_t left_end = condCode << 28;
-    //idk how where im meant to put the value afterwards;
-    return (left_end | middle | (offset & 0xFFFFFF));
 }
 
 int main(int argc, char **argv) {
