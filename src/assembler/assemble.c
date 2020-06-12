@@ -124,8 +124,8 @@ void single_data_transfer(instruction *instr, state *curr) {
             printf("expr %x\n", expression);
             printf("index %d\n", curr->lastAddress/4);
             curr->decoded[curr->lastAddress/4] = expression;
-
             curr->lastAddress += 4;
+						curr->decoded = (uint32_t *) realloc(curr->decoded, (curr->lastAddress/4 + 1) * sizeof(uint32_t));
         }
     }
     // [Rn] case
@@ -198,11 +198,12 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
     while (fgets(str, 511, file)) {
         if (str[strlen(str) - 2] == ':') {
             str[strlen(str) - 2] = '\0';
+						firstRead->labels = (labelInfo *) realloc(firstRead->labels, (labelCount + 1) * sizeof(labelInfo));
+						firstRead->labels[labelCount].s = (char *) malloc(10 * sizeof(char));
             strcpy(firstRead->labels[labelCount].s, str);
             firstRead->labels[labelCount].i = (line - labelCount) * 4;
             labelCount++;
             // to implement realloc
-            //labels = realloc(labels, (labelCount + 2) * sizeof(label));
         }
         if (str[0] != '\n') {
           line++;
@@ -211,6 +212,7 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
     }
     fclose(file);
     firstRead->lines = line - labelCount;
+		firstRead->labelCount = labelCount;
 }
 
 void split_on_commas(char *input, instruction *instr) {
@@ -239,16 +241,15 @@ void split_on_commas(char *input, instruction *instr) {
 
 state *initalise_state(firstFile *firstRead){
     state *curr = (state *) malloc(sizeof(state));
-    curr->decoded= (uint32_t *) malloc(20 * sizeof(uint32_t));
     curr->labels = firstRead->labels;
     curr->lastAddress = firstRead->lines * 4;
 		curr->pc = 0;
-    free(firstRead);
+		curr->decoded = (uint32_t *) malloc((curr->lastAddress/4 + 1) * sizeof(uint32_t));
     return curr;
 }
 
-void free_state(state *curr){
-    for (int i = 0; i < 10; i++) {
+void free_state(state *curr, int size){
+    for (int i = 0; i < size; i++) {
         free(curr->labels[i].s);
     }
     free(curr->labels);
@@ -258,7 +259,7 @@ void free_state(state *curr){
 
 instruction *initalise_instruction(void){
     instruction *instr = (instruction *) malloc(sizeof(instruction));
-    instr->args = (char **) calloc(5, sizeof(char *));
+    instr->args = (char **) calloc(6, sizeof(char *));
     for (int i = 0; i < 6; i++) {
         instr->args[i] = (char *) calloc(20, sizeof(char));
     }
@@ -340,10 +341,7 @@ uint32_t create_branch(uint8_t condCode, int32_t offset) {
 
 firstFile *initalise_first_file(void){
     firstFile *firstRead = (firstFile *) malloc(sizeof(firstFile));
-    firstRead->labels = (labelInfo *) calloc(10, sizeof(labelInfo));
-    for (int i = 0; i < 10; i++) {
-        firstRead->labels[i].s = (char *) calloc(10, sizeof(char));
-    }
+    firstRead->labels = (labelInfo *) malloc(sizeof(labelInfo));
     return firstRead;
 }
 
@@ -360,6 +358,7 @@ int main(int argc, char **argv) {
     binFile = fopen(argv[2], "wb");
     fwrite(curr->decoded, sizeof(uint32_t), curr->lastAddress/4, binFile);
     fclose(binFile);
-    free_state(curr);
+    free_state(curr, firstRead->labelCount);
+		free(firstRead);
     return 0;
 }
