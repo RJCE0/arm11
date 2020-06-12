@@ -114,6 +114,7 @@ void single_data_transfer(instruction *instr, state *curr) {
     else if (!instr->args[2]) {
         // +1 to ignore first square bracket in string
         rn = get_reg_num(instr->args[1] + 1);
+				printf("check the [case]\n");
     } else {
         /* this will compare to check whether this is the pre-indexed case
          or the post indexed case (both with some <#expression>) */
@@ -190,12 +191,16 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
 void split_on_commas(char *input, instruction *instr) {
     int count = 0;
     char *pch = strtok(input, ", ");
-    instr->args[count] = pch;
+		strcpy(instr->args[count], pch);
     printf("args%d:%s\n", count, instr->args[count]);
     while (pch != NULL) {
         pch = strtok(NULL, ", ");
         count++;
-        instr->args[count] = pch;
+				printf("%d lemme see\n", count);
+				if (!pch) {
+					break;
+				}
+        strcpy(instr->args[count], pch);
         printf("args%d:%s\n", count, instr->args[count]);
     }
 }
@@ -203,7 +208,6 @@ void split_on_commas(char *input, instruction *instr) {
 state *initalise_state(firstFile *firstRead){
     state *curr = (state *) malloc(sizeof(state));
     curr->decoded= (uint32_t *) malloc(10 * sizeof(uint32_t));
-    curr->labels = (labelInfo *) calloc(10, sizeof(labelInfo));
     curr->labels = firstRead->labels;
     curr->lastAddress = firstRead->lines * 4;
 		curr->pc = 0;
@@ -231,9 +235,9 @@ instruction *initalise_instruction(void){
 
 
 void free_instruction(instruction *instr){
-    /*for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) {
         free(instr->args[i]);
-    }*/
+    }
     free(instr->args);
     free(instr);
 }
@@ -305,10 +309,6 @@ firstFile *initalise_first_file(void){
         firstRead->labels[i].s = (char *) calloc(10, sizeof(char));
     }
     return firstRead;
-}
-
-void free_first_file(firstFile *firstRead){
-    free(firstRead);
 }
 
 int main(int argc, char **argv) {
