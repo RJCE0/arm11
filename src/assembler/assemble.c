@@ -9,29 +9,25 @@ the type of branch and a target address. The target address might be an actual a
 in or it might be a label, so I'll just use my function I built.
 */
 
-void shift(uint32_t *regNum, char *shiftOp) {
-    printf("shift:%s\n", shiftOp);
-    uint32_t shiftType = shift_key(strtok(shiftOp, " ")) << 5;
-    printf("type:%x\n", shiftType);
-    printf("shift:%s\n", shiftOp);
-    char *string;
+void shift(uint32_t *regNum, char *shiftOp, char *offset) {
+    uint32_t shiftType = shift_key(shiftOp) << 5;
     uint32_t shiftNum = 0;
     uint32_t regBit = 0;
-    string = strtok(NULL, " ");
-    if (is_register(string)) {
-        shiftNum = (get_register_num(string) & 0xF) << 8;
+    if (is_reg(offset)) {
+        shiftNum = (get_reg_num(offset) & 0xF) << 8;
         regBit = 0x10;
     } else {
-        shiftNum = (get_immediate(string) & 0x1F) << 7;
+        shiftNum = (get_immediate(offset) & 0x1F) << 7;
     }
     *regNum |= shiftNum | shiftType | regBit;
 }
 
 void operand2_checker(char **args, uint32_t *operand2, uint32_t *immediate) {
-    if (is_register(args[0])) {
-        *operand2 = get_register_num(args[0]) & 0xF;
+    if (is_reg(args[0])) {
+        *operand2 = get_reg_num(args[0]) & 0xF;
         if (args[1]) {
-            shift(operand2, args[1]);
+          printf("%s\n", args[1]);
+            shift(operand2, args[1], args[2]);
         }
     } else {
         *immediate = 1 << 25;
@@ -54,15 +50,15 @@ void data_processing(instruction *instr, state *curr) {
     uint32_t rd = 0;
     uint32_t operand2;
     if (instr->u.opcode == 13) {
-        rd = get_register_num(instr->args[0]) << 12;
+        rd = get_reg_num(instr->args[0]) << 12;
         operand2_checker(instr->args + 1, &operand2, &immediate);
     } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)) {
-        rn = get_register_num(instr->args[0]) << 16;
+        rn = get_reg_num(instr->args[0]) << 16;
         setBit = 1 << 20;
         operand2_checker(instr->args + 1, &operand2, &immediate);
     } else {
-        rd = get_register_num(instr->args[0]) << 12;
-        rn = get_register_num(instr->args[1]) << 16;
+        rd = get_reg_num(instr->args[0]) << 12;
+        rn = get_reg_num(instr->args[1]) << 16;
         operand2_checker(instr->args + 2, &operand2, &immediate);
     }
     uint32_t result = condCode | immediate | opcode | setBit | rn | rd | operand2;
@@ -74,12 +70,12 @@ void multiply(instruction *instr, state *curr) {
     uint32_t fullInstr;
     uint32_t condition_code = MULTIPLY_CONDITION_CODE << SHIFT_COND;
     uint32_t accBit = instr->u.accBit << 21;
-    uint32_t rd = get_register_num(instr->args[0]) << 16;
-    uint32_t rn = (instr->u.accBit) ? get_register_num(instr->args[3]) << 12 : 0;
-    uint32_t rm = get_register_num(instr->args[1]);
+    uint32_t rd = get_reg_num(instr->args[0]) << 16;
+    uint32_t rn = (instr->u.accBit) ? get_reg_num(instr->args[3]) << 12 : 0;
+    uint32_t rm = get_reg_num(instr->args[1]);
     // do you need shift?
     uint32_t constant = MULITPLY_BITS_4_THROUGH_7 << 4;
-    uint32_t rs = get_register_num(instr->args[2]) << 8;
+    uint32_t rs = get_reg_num(instr->args[2]) << 8;
     fullInstr = condition_code | accBit | rd | rn | rs | constant | rm;
     curr->decoded[curr->pc / 4] = fullInstr;
 }
@@ -93,7 +89,7 @@ void single_data_transfer(instruction *instr, state *curr) {
     uint32_t rn = 0;
     uint32_t rd = 0;
     uint32_t offset = 0;
-    rd = get_register_num(instr->args[0]);
+    rd = get_reg_num(instr->args[0]);
     // <=expression> type (ldr)
     /* Assuming I don't need to take into account if any other instruction has
     already been stored here */
@@ -118,7 +114,7 @@ void single_data_transfer(instruction *instr, state *curr) {
     // else if (*(instr->args[1] == '[' && args[2] == 0)) {
     else if (!instr->args[2]) {
         // +1 to ignore first square bracket in string
-        rn = get_register_num(instr->args[1] + 1);
+        rn = get_reg_num(instr->args[1] + 1);
     } else {
         /* this will compare to check whether this is the pre-indexed case
          or the post indexed case (both with some <#expression>) */
@@ -128,18 +124,18 @@ void single_data_transfer(instruction *instr, state *curr) {
                 preIndexBit = 0;
             }
         }
-        rn = get_register_num(instr->args[1] + 1);
-        if (is_register(instr->args[2])) {
-          offset = get_register_num(instr->args[2]);
+        rn = get_reg_num(instr->args[1] + 1);
+        if (is_reg(instr->args[2])) {
+          offset = get_reg_num(instr->args[2]);
           immBit = 1;
         } else {
-          if (check_negative(instr->args[2])) {
+          if (check_negative_imm(instr->args[2])) {
             upBit = 0;
           }
           offset = get_immediate(instr->args[2]);
         }
         if (instr->args[3]) {
-          shift(&offset, instr->args[3]);
+          shift(&offset, instr->args[3], instr->args[4]);
         }
     }
     uint32_t result = condCode | (1 << 26) | (immBit << 25) | (preIndexBit << 24)
@@ -163,7 +159,7 @@ void branch(instruction *instr, state *curr) {
 void logical_left_shift(instruction *instr, state *curr) {
     uint32_t condCode = 14 << SHIFT_COND; //shift_cond
     uint32_t opcode = MOV << 21;
-    uint32_t rd = get_register_num(instr->args[0]) & 0xF;
+    uint32_t rd = get_reg_num(instr->args[0]) & 0xF;
     uint32_t shiftNum = (get_immediate(instr->args[1]) & 0x1F) << 7;
     uint32_t result = condCode | opcode | shiftNum | (rd << 12) | rd;
     curr->decoded[curr->pc / 4] = result;

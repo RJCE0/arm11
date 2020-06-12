@@ -143,7 +143,15 @@ static dict lookuptable[] = {
 };
 
 // for function pointer array
+void convert_lsl(instruction *instr){
+    instr->args[2] = "lsl";
+    instr->args[3] = instr->args[1];
+    instr->args[1] = instr->args[0];
+    for (int i = 0; i < 3; i++) {
+      printf("args%d:%s\n", i, instr->args[i]);
+    }
 
+}
 
 int keyfromstring(char *key, instruction *instr) {
     for (int i = 0; i < NUM_OPCODE; ++i) {
@@ -163,6 +171,9 @@ int keyfromstring(char *key, instruction *instr) {
                     instr->u.condCode = (branchType) sym->mnemonic;
                     break;
                 case LSL:
+                    instr->u.opcode = MOV;
+                    convert_lsl(instr);
+                    return DPI;
                 case HALT:
                 default:
                     break;
@@ -170,56 +181,39 @@ int keyfromstring(char *key, instruction *instr) {
             return sym->type;
         }
     }
+    // if label
     return -1;
 }
 
-bool is_register(char *name) {
-    return name[0] == 'r' || name[1] == 'r';
+bool is_reg(const char *str) {
+    return *str == 'r';
 }
 
-bool check_negative(char *name){
-  while (*name) {
-    if (*name++ == '-') {
-        return true;
-    }
-  }
-  return false;
+bool check_negative_imm(const char *str){
+    return *(str + 1) == '-';
 }
 
-int get_register_num(char *name) {
-    while (*name++ != 'r') {
-    }
-    return atoi(name);
+bool check_negative_reg(const char *str){
+    return *str == '-';
 }
 
-int32_t hex_to_decimal(char hex[]) {
-    return (int32_t) strtol(hex, NULL, 0);
+int get_reg_num(const char *str) {
+    return atoi(str + 1);
 }
 
-int get_immediate(char *name) {
+int32_t hex_to_decimal(const char *hex) {
+    return strtol(hex, NULL, 0);
+}
+
+int get_immediate(char *str) {
     //"#0x24a7"
-    char *ptr = name;
-    while (*name) {
-      if (*name++ == '0' && *name == 'x') {
-        return hex_to_decimal(name - 1);
+    char *ptr = str;
+    while (*str) {
+      if (*str++ == '0' && *str == 'x') {
+        return hex_to_decimal(str - 1);
       }
     }
-    while (*ptr) {
-      if (*ptr++ == '#') {
-        return strtol(ptr, NULL, 10);
-      }
-    }
-    // should be error here
     return strtol(ptr+1, NULL, 10);
-}
-
-//think mazen might need this for get immediate (RJ)
-// you just pass in "0x245A2175" for example and it gives back the uint32_t
-// note, i assumed that the hex was in big endian.
-
-uint32_t label_to_instruction(char label[], size_t size) {
-    //
-    return 0;
 }
 
 /*
@@ -228,21 +222,9 @@ The target address might be an actual address in or it might be a label.
 first array to find the position of the label address in the second array
 */
 
-bool string_checker(const char *label, const char *str) {
-    while (*str) {
-      if (*str++ != *label++) {
-        return false;
-      }
-      if (*str == '\n') {
-        break;
-      }
-    }
-    return true;
-}
-
 bool get_label_address(state *curr, char *str, uint32_t *address) {
     for (int i = 0; i < 10; i++) {
-        if (string_checker(curr->labels[i].s, str)) {
+        if (strcmp(curr->labels[i].s, str) == 0) {
           *address = curr->labels[i].i;
           return true;
         }

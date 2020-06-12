@@ -17,9 +17,7 @@
 
 int keyfromstring(char *key, instruction *instruction);
 
-int32_t hex_to_decimal(char hex[]);
-
-uint32_t label_to_instruction(char label[], size_t size);
+int32_t hex_to_decimal(const char *hex);
 
 bool get_label_address(state *curr, char *str, uint32_t *address);
 
