@@ -9,8 +9,13 @@ the type of branch and a target address. The target address might be an actual a
 in or it might be a label, so I'll just use my function I built.
 */
 
+
+
 void shift(uint32_t *regNum, char *shiftOp) {
+    printf("shift:%s\n", shiftOp);
     uint32_t shiftType = shift_key(strtok(shiftOp, " ")) << 5;
+    printf("type:%x\n", shiftType);
+    printf("shift:%s\n", shiftOp);
     char *string;
     uint32_t shiftNum = 0;
     uint32_t regBit = 0;
@@ -90,9 +95,12 @@ void single_data_transfer(instruction *instr, state *curr) {
     uint32_t rn = 0;
     uint32_t rd = 0;
     uint32_t offset = 0;
-
     rd = get_register_num(instr->args[0]);
-
+    if (rd == 5) {
+      for (int i = 0; i < 4; i++) {
+        printf("Arg%d:%s\n", i, instr->args[i]);
+      }
+    }
     // <=expression> type (ldr)
     /* Assuming I don't need to take into account if any other instruction has
     already been stored here */
@@ -136,6 +144,9 @@ void single_data_transfer(instruction *instr, state *curr) {
             upBit = 0;
           }
           offset = get_immediate(instr->args[2]);
+        }
+        if (instr->args[3]) {
+          shift(&offset, instr->args[3]);
         }
     }
     uint32_t result = condCode | (1 << 26) | (immBit << 25) | (preIndexBit << 24)
