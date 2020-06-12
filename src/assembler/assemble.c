@@ -156,15 +156,6 @@ void branch(instruction *instr, state *curr) {
     curr->decoded[curr->pc / 4] = result;
 }
 
-void logical_left_shift(instruction *instr, state *curr) {
-    uint32_t condCode = 14 << SHIFT_COND; //shift_cond
-    uint32_t opcode = MOV << 21;
-    uint32_t rd = get_reg_num(instr->args[0]) & 0xF;
-    uint32_t shiftNum = (get_immediate(instr->args[1]) & 0x1F) << 7;
-    uint32_t result = condCode | opcode | shiftNum | (rd << 12) | rd;
-    curr->decoded[curr->pc / 4] = result;
-}
-
 void halt(instruction *instr, state *curr) {
     curr->decoded[curr->pc / 4] = 0;
 }
@@ -235,14 +226,25 @@ instruction *initalise_instruction(void){
     return instr;
 }
 
-/* to implement
+
 void free_instruction(instruction *instr){
-    for (int i = 0; i < 5; i++) {
+    /*for (int i = 0; i < 5; i++) {
+        if (!instr->args[i]) {
+          break;
+        }
         free(instr->args[i]);
-    }
+    }*/
     free(instr->args);
     free(instr);
-}*/
+}
+
+void(*func[NUM_INSTRUCTION])(instruction *instr, state *curr) = {
+    data_processing,
+    multiply,
+    single_data_transfer,
+    branch,
+    halt
+};
 
 void read_file_second(state *curr, char *inputFileName) {
     FILE *myfile;
@@ -262,8 +264,6 @@ void read_file_second(state *curr, char *inputFileName) {
             *ptrToFirstSpace = '\0';
             split_on_commas(strtok(argsInInstruction, "\n"), instr);
         }
-        void(*func[NUM_INSTRUCTION])(instruction *instr, state *curr) = {data_processing, multiply, single_data_transfer,
-                                                                 branch, logical_left_shift, halt};
         int abstractData = keyfromstring(str, instr);
         if (abstractData != -1) {
             func[abstractData](instr, curr);
@@ -273,7 +273,7 @@ void read_file_second(state *curr, char *inputFileName) {
             curr->pc += 4;
         }
     }
-    //free_instruction(instr);
+    free_instruction(instr);
 }
 
 /*
@@ -285,15 +285,15 @@ arguments separately. Those who won't need 3 arguments, initalise the others to 
 
 //add r1, r2, #0x39
 
+
+
 uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool upBit) {
     return 0;
 }
 
 uint32_t create_branch(uint8_t condCode, int32_t offset) {
-    //assuming big endian
     uint32_t middle = 10 << 24;
     uint32_t left_end = condCode << 28;
-    //idk how where im meant to put the value afterwards;
     return left_end | middle | (offset & 0xFFFFFF);
 }
 

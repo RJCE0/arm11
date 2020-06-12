@@ -43,8 +43,8 @@ typedef enum {
     MI = 1,
     SDTI = 2,
     BI = 3,
-    LSL = 4,
-    HALT = 5
+    HALT = 4,
+    LSL = 5
 } instructionType;
 
 typedef enum {
