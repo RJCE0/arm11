@@ -9,6 +9,13 @@ the type of branch and a target address. The target address might be an actual a
 in or it might be a label, so I'll just use my function I built.
 */
 
+
+void print_args(char **args){
+  for (int i = 0; i < 6; i++) {
+      printf("args%i:%s\n", i ,  args[i]);
+  }
+}
+
 void shift(uint32_t *regNum, char *shiftOp, char *offset) {
     uint32_t shiftType = shift_key(shiftOp) << 5;
     uint32_t shiftNum = 0;
@@ -101,6 +108,7 @@ void single_data_transfer(instruction *instr, state *curr) {
     /* Assuming I don't need to take into account if any other instruction has
     already been stored here */
     if (*instr->args[1] == '=') {
+
         uint32_t expression = get_immediate(instr->args[1]);
         if (expression <= 0xFF) {
             instr->u.opcode = MOV;
@@ -111,7 +119,12 @@ void single_data_transfer(instruction *instr, state *curr) {
         } else {
             offset = curr->lastAddress - curr->pc - 8;
             rn = 0xF;
+            printf("in sdt\n");
+            print_args(instr->args);
+            printf("expr %x\n", expression);
+            printf("index %d\n", curr->lastAddress/4);
             curr->decoded[curr->lastAddress/4] = expression;
+
             curr->lastAddress += 4;
         }
     }
@@ -119,7 +132,7 @@ void single_data_transfer(instruction *instr, state *curr) {
     // only other case with only two arguments
     // TODO: assuming any set args can never be zero?
     // else if (*(instr->args[1] == '[' && args[2] == 0)) {
-    else if (single_bracket(instr->args[1]) && (instr->args[2][0] == '\0')) {
+    else if (strcmp(instr->args[2], "0000") == 0) {
         // +1 to ignore first square bracket in string
 				printf("%d:%c work pls\n", instr->args[2][0],instr->args[2][0]);
         rn = get_reg_num(instr->args[1] + 1);
@@ -147,6 +160,7 @@ void single_data_transfer(instruction *instr, state *curr) {
           shift(&offset, instr->args[3], instr->args[4]);
         }
     }
+
     uint32_t result = condCode | (1 << 26) | (immBit << 25) | (preIndexBit << 24)
             | (upBit << 23) | (instr->u.loadBit << 20) | (rn << 16) | (rd << 12) | offset;
     curr->decoded[curr->pc / 4] = result;
@@ -168,6 +182,8 @@ void branch(instruction *instr, state *curr) {
 void halt(instruction *instr, state *curr) {
     curr->decoded[curr->pc / 4] = 0;
 }
+
+
 
 void read_file_first(firstFile *firstRead, char *inputFileName) {
     FILE *file;
@@ -207,16 +223,23 @@ void split_on_commas(char *input, instruction *instr) {
         count++;
 				printf("%d lemme see\n", count);
 				if (!pch) {
+          strcpy(instr->args[count], "0000");
 					break;
 				}
+        printf("%s come on\n", pch);
+        printf("%d wys\n", count);
+        for (int i = 0; i < 6; i++) {
+            printf("args%i:%s\n",i,  instr->args[i]);
+        }
         strcpy(instr->args[count], pch);
+        printf("error here?\n");
         printf("args%d:%s\n", count, instr->args[count]);
     }
 }
 
 state *initalise_state(firstFile *firstRead){
     state *curr = (state *) malloc(sizeof(state));
-    curr->decoded= (uint32_t *) malloc(10 * sizeof(uint32_t));
+    curr->decoded= (uint32_t *) malloc(20 * sizeof(uint32_t));
     curr->labels = firstRead->labels;
     curr->lastAddress = firstRead->lines * 4;
 		curr->pc = 0;
@@ -236,7 +259,7 @@ void free_state(state *curr){
 instruction *initalise_instruction(void){
     instruction *instr = (instruction *) malloc(sizeof(instruction));
     instr->args = (char **) calloc(5, sizeof(char *));
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
         instr->args[i] = (char *) calloc(20, sizeof(char));
     }
     return instr;
@@ -244,7 +267,7 @@ instruction *initalise_instruction(void){
 
 
 void free_instruction(instruction *instr){
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
         free(instr->args[i]);
     }
     free(instr->args);
@@ -275,7 +298,11 @@ void read_file_second(state *curr, char *inputFileName) {
         if (ptrToFirstSpace) {
             argsInInstruction = ptrToFirstSpace + 1;
             *ptrToFirstSpace = '\0';
+            printf("check\n");
             split_on_commas(strtok(argsInInstruction, "\n"), instr);
+        }
+        for (int i = 0; i < 6; i++) {
+            printf("args%i:%s\n",i,  instr->args[i]);
         }
         int abstractData = keyfromstring(str, instr);
         if (abstractData != -1) {

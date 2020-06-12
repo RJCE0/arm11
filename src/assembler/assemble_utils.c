@@ -201,9 +201,9 @@ int32_t hex_to_decimal(const char *hex) {
     return strtol(hex, NULL, 0);
 }
 
-int get_immediate(char *str) {
+int get_immediate(const char *str) {
     //"#0x24a7"
-    char *ptr = str;
+    const char *ptr = str;
     while (*str) {
       if (*str++ == '0' && *str == 'x') {
         return hex_to_decimal(str - 1);
