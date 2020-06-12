@@ -212,6 +212,9 @@ state *initalise_state(firstFile *firstRead){
 }
 
 void free_state(state *curr){
+    for (int i = 0; i < 10; i++) {
+        free(curr->labels[i].s);
+    }
     free(curr->labels);
     free(curr->decoded);
     free(curr);
@@ -219,9 +222,9 @@ void free_state(state *curr){
 
 instruction *initalise_instruction(void){
     instruction *instr = (instruction *) malloc(sizeof(instruction));
-    instr->args = (char **) malloc(5 * sizeof(char *));
-    for (int i = 0; i < 5; ++i) {
-        instr->args[i] = (char *) malloc(20 * sizeof(char));
+    instr->args = (char **) calloc(5, sizeof(char *));
+    for (int i = 0; i < 5; i++) {
+        instr->args[i] = (char *) calloc(20, sizeof(char));
     }
     return instr;
 }
@@ -229,9 +232,6 @@ instruction *initalise_instruction(void){
 
 void free_instruction(instruction *instr){
     /*for (int i = 0; i < 5; i++) {
-        if (!instr->args[i]) {
-          break;
-        }
         free(instr->args[i]);
     }*/
     free(instr->args);
@@ -304,6 +304,10 @@ firstFile *initalise_first_file(void){
         firstRead->labels[i].s = calloc(10, sizeof(char));
     }
     return firstRead;
+}
+
+void free_first_file(firstFile *firstRead){
+    free(firstRead);
 }
 
 int main(int argc, char **argv) {
