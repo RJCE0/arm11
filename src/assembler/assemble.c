@@ -200,6 +200,9 @@ void split_on_commas(char *input, instruction *instr) {
     int count = 0;
     char *pch = strtok(input, ", ");
 		strcpy(instr->args[count], pch);
+		for (int i = instr->argSize - 1; i > 0; i--) {
+			free(instr->args[i]);
+		}
     while (pch != NULL) {
         pch = strtok(NULL, ", ");
         count++;
@@ -207,11 +210,6 @@ void split_on_commas(char *input, instruction *instr) {
 					instr->argSize = count;
 					printf("%d exiting\n", count);
 					break;
-				}
-				if (count == 1 && count + 1 < instr->argSize) {
-					for (int i = instr->argSize - 1; i > count; i--) {
-						free(instr->args[i]);
-					}
 				}
 				instr->args = (char **) realloc(instr->args, (count + 1) * sizeof(char *));
 				instr->args[count] = (char *) malloc(20 * sizeof(char));
@@ -247,8 +245,7 @@ instruction *initalise_instruction(void){
 
 
 void free_instruction(instruction *instr){
-	free(instr->args[0]);
-    for (int i = 1; i < instr->argSize; i++) {
+    for (int i = 0; i < instr->argSize; i++) {
         free(instr->args[i]);
     }
     free(instr->args);
