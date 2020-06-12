@@ -147,14 +147,7 @@ void branch(instruction *instr, state *curr) {
     int32_t offset;
     uint32_t address;
     if (get_label_address(curr, instr->args[0], &address)) {
-      printf("%d address\n", address);
-      printf("%d pc\n", curr->pc);
         offset = address - curr->pc - 8;
-        /*if (offset & 0x80000000) {
-          offset += 8;
-        } else {
-          offset -= 8;
-        }*/
     } else {
         offset = hex_to_decimal(instr->args[0]) - curr->pc - 8;
     }
@@ -199,10 +192,6 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
     }
     fclose(myfile);
     firstRead->lines = line - labelCount;
-    printf("%s label\n", firstRead->labels[0].s);
-    printf("%d label int\n", firstRead->labels[0].i);
-    printf("%s label\n", firstRead->labels[1].s);
-    printf("%d label int\n", firstRead->labels[1].i);
 }
 
 void split_on_commas(char *input, instruction *instr) {
@@ -210,7 +199,7 @@ void split_on_commas(char *input, instruction *instr) {
     char *pch = strtok(input, ",");
     instr->args[count] = pch;
     while (pch != NULL) {
-        pch = strtok(NULL, ", ");
+        pch = strtok(NULL, ",");
         count++;
         instr->args[count] = pch;
     }
@@ -276,12 +265,8 @@ void read_file_second(state *curr, char *inputFileName) {
             if (!curr->decoded[curr->pc / 4]) {
                 break;
             }
-            printf("%x last decoded\n", curr->decoded[curr->pc / 4]);
             curr->pc += 4;
         }
-        printf("%s current line\n", str);
-
-
     }
     //free_instruction(instr);
 }
@@ -303,7 +288,6 @@ uint32_t create_branch(uint8_t condCode, int32_t offset) {
     //assuming big endian
     uint32_t middle = 10 << 24;
     uint32_t left_end = condCode << 28;
-    printf("%x\n", offset);
     //idk how where im meant to put the value afterwards;
     return left_end | middle | (offset & 0xFFFFFF);
 }

@@ -230,20 +230,25 @@ The target address might be an actual address in or it might be a label.
  For this reason, I can made a function to loop through the
 first array to find the position of the label address in the second array
 */
-bool get_label_address(state *curr, char *str, uint32_t *address) {
-    while (curr->labels) {
-        while (*curr->labels->s && *str) {
-            if (*str++ != *curr->labels->s++) {
-              break;
-            }
-            if (!*curr->labels->s) {
-              *address = curr->labels->i;
-              return true;
-            }
-        }
-        curr->labels++;
+
+bool string_checker(const char *label, const char *str) {
+    while (*str) {
+      if (*str++ != *label++) {
+        return false;
+      }
+      if (*str == '\n') {
+        break;
+      }
     }
-    printf("Wasn't a label");
+    return true;
+}
+
+bool get_label_address(state *curr, char *str, uint32_t *address) {
+    for (int i = 0; i < 10; i++) {
+        if (string_checker(curr->labels[i].s, str)) {
+          *address = curr->labels[i].i;
+          return true;
+        }
+    }
     return false;
-    // (RJ) need to check this works
 }
