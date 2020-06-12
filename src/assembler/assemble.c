@@ -156,7 +156,7 @@ void branch(instruction *instr, state *curr) {
         offset = hex_to_decimal(instr->args[0]) - curr->pc - 8;
     }
     offset >>= 2;
-    uint32_t result = create_branch(instr->u.condCode, offset);
+    uint32_t result = instr->u.condCode << 28 | 10 << 24 | (offset & 0xFFFFFF);
     curr->decoded[curr->pc / 4] = result;
 }
 
@@ -300,18 +300,6 @@ arguments separately. Those who won't need 3 arguments, initalise the others to 
 */
 
 //add r1, r2, #0x39
-
-
-
-uint32_t create_single_data_transfer(bool immediateBit, bool prePostIndBit, bool upBit) {
-    return 0;
-}
-
-uint32_t create_branch(uint8_t condCode, int32_t offset) {
-    uint32_t middle = 10 << 24;
-    uint32_t left_end = condCode << 28;
-    return left_end | middle | (offset & 0xFFFFFF);
-}
 
 firstFile *initalise_first_file(void){
     firstFile *firstRead = (firstFile *) malloc(sizeof(firstFile));
