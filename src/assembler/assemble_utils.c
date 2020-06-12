@@ -146,6 +146,10 @@ static dict lookuptable[] = {
 
 // for function pointer array
 void convert_lsl(instruction *instr){
+		instr->args = (char **) realloc(instr->args, 4 * sizeof(char *));
+		instr->args[2] = (char *) malloc(20 * sizeof(char));
+		instr->args[3] = (char *) malloc(20 * sizeof(char));
+		instr->argSize = 4;
     strcpy(instr->args[2], "lsl");
     strcpy(instr->args[3], instr->args[1]);
     strcpy(instr->args[1], instr->args[0]);

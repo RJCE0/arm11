@@ -10,11 +10,7 @@ in or it might be a label, so I'll just use my function I built.
 */
 
 
-void print_args(char **args){
-  for (int i = 0; i < 6; i++) {
-      printf("args%i:%s\n", i ,  args[i]);
-  }
-}
+
 
 void shift(uint32_t *regNum, char *shiftOp, char *offset) {
     uint32_t shiftType = shift_key(shiftOp) << 5;
@@ -29,10 +25,10 @@ void shift(uint32_t *regNum, char *shiftOp, char *offset) {
     *regNum |= shiftNum | shiftType | regBit;
 }
 
-void operand2_checker(char **args, uint32_t *operand2, uint32_t *immediate) {
+void operand2_checker(char **args, uint32_t *operand2, uint32_t *immediate, int size) {
     if (is_reg(args[0])) {
         *operand2 = get_reg_num(args[0]) & 0xF;
-        if (args[1]) {
+        if (size >= 2) {
             shift(operand2, args[1], args[2]);
         }
     } else {
@@ -57,15 +53,15 @@ void data_processing(instruction *instr, state *curr) {
     uint32_t operand2;
     if (instr->u.opcode == 13) {
         rd = get_reg_num(instr->args[0]) << 12;
-        operand2_checker(instr->args + 1, &operand2, &immediate);
+        operand2_checker(instr->args + 1, &operand2, &immediate, instr->argSize - 1);
     } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)) {
         rn = get_reg_num(instr->args[0]) << 16;
         setBit = 1 << 20;
-        operand2_checker(instr->args + 1, &operand2, &immediate);
+        operand2_checker(instr->args + 1, &operand2, &immediate, instr->argSize - 1);
     } else {
         rd = get_reg_num(instr->args[0]) << 12;
         rn = get_reg_num(instr->args[1]) << 16;
-        operand2_checker(instr->args + 2, &operand2, &immediate);
+        operand2_checker(instr->args + 2, &operand2, &immediate, instr->argSize - 2);
     }
     uint32_t result = condCode | immediate | opcode | setBit | rn | rd | operand2;
     curr->decoded[curr->pc / 4] = result;
@@ -84,15 +80,6 @@ void multiply(instruction *instr, state *curr) {
     uint32_t rs = get_reg_num(instr->args[2]) << 8;
     fullInstr = condition_code | accBit | rd | rn | rs | constant | rm;
     curr->decoded[curr->pc / 4] = fullInstr;
-}
-
-bool single_bracket(const char *str){
-		while (*str) {
-				if (*str++ == ']') {
-					return true;
-				}
-		}
-		return false;
 }
 
 void single_data_transfer(instruction *instr, state *curr) {
@@ -119,10 +106,6 @@ void single_data_transfer(instruction *instr, state *curr) {
         } else {
             offset = curr->lastAddress - curr->pc - 8;
             rn = 0xF;
-            printf("in sdt\n");
-            print_args(instr->args);
-            printf("expr %x\n", expression);
-            printf("index %d\n", curr->lastAddress/4);
             curr->decoded[curr->lastAddress/4] = expression;
             curr->lastAddress += 4;
 						curr->decoded = (uint32_t *) realloc(curr->decoded, (curr->lastAddress/4 + 1) * sizeof(uint32_t));
@@ -132,11 +115,9 @@ void single_data_transfer(instruction *instr, state *curr) {
     // only other case with only two arguments
     // TODO: assuming any set args can never be zero?
     // else if (*(instr->args[1] == '[' && args[2] == 0)) {
-    else if (strcmp(instr->args[2], "0000") == 0) {
+    else if (instr->argSize == 2) {
         // +1 to ignore first square bracket in string
-				printf("%d:%c work pls\n", instr->args[2][0],instr->args[2][0]);
         rn = get_reg_num(instr->args[1] + 1);
-				printf("check the [case]\n");
     } else {
         /* this will compare to check whether this is the pre-indexed case
          or the post indexed case (both with some <#expression>) */
@@ -156,7 +137,7 @@ void single_data_transfer(instruction *instr, state *curr) {
           }
           offset = get_immediate(instr->args[2]);
         }
-        if (instr->args[3]) {
+        if (instr->argSize > 3) {
           shift(&offset, instr->args[3], instr->args[4]);
         }
     }
@@ -219,23 +200,22 @@ void split_on_commas(char *input, instruction *instr) {
     int count = 0;
     char *pch = strtok(input, ", ");
 		strcpy(instr->args[count], pch);
-    printf("args%d:%s\n", count, instr->args[count]);
     while (pch != NULL) {
         pch = strtok(NULL, ", ");
         count++;
-				printf("%d lemme see\n", count);
 				if (!pch) {
-          strcpy(instr->args[count], "0000");
+					instr->argSize = count;
+					printf("%d exiting\n", count);
 					break;
 				}
-        printf("%s come on\n", pch);
-        printf("%d wys\n", count);
-        for (int i = 0; i < 6; i++) {
-            printf("args%i:%s\n",i,  instr->args[i]);
-        }
+				if (count == 1 && count + 1 < instr->argSize) {
+					for (int i = instr->argSize - 1; i > count; i--) {
+						free(instr->args[i]);
+					}
+				}
+				instr->args = (char **) realloc(instr->args, (count + 1) * sizeof(char *));
+				instr->args[count] = (char *) malloc(20 * sizeof(char));
         strcpy(instr->args[count], pch);
-        printf("error here?\n");
-        printf("args%d:%s\n", count, instr->args[count]);
     }
 }
 
@@ -259,16 +239,16 @@ void free_state(state *curr, int size){
 
 instruction *initalise_instruction(void){
     instruction *instr = (instruction *) malloc(sizeof(instruction));
-    instr->args = (char **) calloc(6, sizeof(char *));
-    for (int i = 0; i < 6; i++) {
-        instr->args[i] = (char *) calloc(20, sizeof(char));
-    }
+    instr->args = (char **) malloc(sizeof(char *));
+    instr->args[0] = (char *) calloc(20, sizeof(char));
+		instr->argSize = 1;
     return instr;
 }
 
 
 void free_instruction(instruction *instr){
-    for (int i = 0; i < 6; i++) {
+	free(instr->args[0]);
+    for (int i = 1; i < instr->argSize; i++) {
         free(instr->args[i]);
     }
     free(instr->args);
@@ -301,9 +281,6 @@ void read_file_second(state *curr, char *inputFileName) {
             *ptrToFirstSpace = '\0';
             printf("check\n");
             split_on_commas(strtok(argsInInstruction, "\n"), instr);
-        }
-        for (int i = 0; i < 6; i++) {
-            printf("args%i:%s\n",i,  instr->args[i]);
         }
         int abstractData = keyfromstring(str, instr);
         if (abstractData != -1) {
