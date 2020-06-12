@@ -144,9 +144,9 @@ static dict lookuptable[] = {
 
 // for function pointer array
 void convert_lsl(instruction *instr){
-    instr->args[2] = strdup("lsl");
-    instr->args[3] = strdup(instr->args[1]);
-    instr->args[1] = strdup(instr->args[0]);
+    strcpy(instr->args[2], "lsl");
+    strcpy(instr->args[3], instr->args[1]);
+    strcpy(instr->args[1], instr->args[0]);
 }
 
 int keyfromstring(char *key, instruction *instr) {
