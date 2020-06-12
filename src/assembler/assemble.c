@@ -188,7 +188,10 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
             // to implement realloc
             //labels = realloc(labels, (labelCount + 2) * sizeof(label));
         }
-        line++;
+        if (str[0] != '\n') {
+          line++;
+        }
+
     }
     fclose(myfile);
     firstRead->lines = line - labelCount;
