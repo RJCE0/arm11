@@ -26,7 +26,6 @@ void operand2_checker(char **args, uint32_t *operand2, uint32_t *immediate) {
     if (is_reg(args[0])) {
         *operand2 = get_reg_num(args[0]) & 0xF;
         if (args[1]) {
-          printf("%s\n", args[1]);
             shift(operand2, args[1], args[2]);
         }
     } else {
@@ -161,16 +160,16 @@ void halt(instruction *instr, state *curr) {
 }
 
 void read_file_first(firstFile *firstRead, char *inputFileName) {
-    FILE *myfile;
-    myfile = fopen(inputFileName, "r");
-    if (myfile == NULL) {
+    FILE *file;
+    file = fopen(inputFileName, "r");
+    if (file == NULL) {
         printf("file not found, exiting...\n");
         return;
     }
     int line = 0;
     int labelCount = 0;
     char str[511];
-    while (fgets(str, 511, myfile)) {
+    while (fgets(str, 511, file)) {
         if (str[strlen(str) - 2] == ':') {
             str[strlen(str) - 2] = '\0';
             strcpy(firstRead->labels[labelCount].s, str);
@@ -184,7 +183,7 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
         }
 
     }
-    fclose(myfile);
+    fclose(file);
     firstRead->lines = line - labelCount;
 }
 
@@ -207,6 +206,7 @@ state *initalise_state(firstFile *firstRead){
     curr->labels = (labelInfo *) calloc(10, sizeof(labelInfo));
     curr->labels = firstRead->labels;
     curr->lastAddress = firstRead->lines * 4;
+		curr->pc = 0;
     free(firstRead);
     return curr;
 }
@@ -247,16 +247,16 @@ void(*func[NUM_INSTRUCTION])(instruction *instr, state *curr) = {
 };
 
 void read_file_second(state *curr, char *inputFileName) {
-    FILE *myfile;
-    myfile = fopen(inputFileName, "r");
-    if (myfile == NULL) {
+    FILE *file;
+    file = fopen(inputFileName, "r");
+    if (file == NULL) {
         printf("file not found, exiting...\n");
         return;
     }
     instruction *instr = initalise_instruction();
     // need counter in first read
     char str[511];
-    while (fgets(str, 511, myfile)) {
+    while (fgets(str, 511, file)) {
         char *argsInInstruction;
         char *ptrToFirstSpace = strchr(str, ' ');
         if (ptrToFirstSpace) {
@@ -273,6 +273,7 @@ void read_file_second(state *curr, char *inputFileName) {
             curr->pc += 4;
         }
     }
+		fclose(file);
     free_instruction(instr);
 }
 
@@ -301,7 +302,7 @@ firstFile *initalise_first_file(void){
     firstFile *firstRead = (firstFile *) malloc(sizeof(firstFile));
     firstRead->labels = (labelInfo *) calloc(10, sizeof(labelInfo));
     for (int i = 0; i < 10; i++) {
-        firstRead->labels[i].s = calloc(10, sizeof(char));
+        firstRead->labels[i].s = (char *) calloc(10, sizeof(char));
     }
     return firstRead;
 }
