@@ -79,6 +79,14 @@ void multiply(instruction *instr, state *curr) {
     curr->decoded[curr->pc / 4] = fullInstr;
 }
 
+bool single_bracket(const char *str){
+		while (*str) {
+				if (*str++ == ']') {
+					return true;
+				}
+		}
+		return false;
+}
 
 void single_data_transfer(instruction *instr, state *curr) {
     const uint32_t condCode = 14 << SHIFT_COND;
@@ -111,8 +119,9 @@ void single_data_transfer(instruction *instr, state *curr) {
     // only other case with only two arguments
     // TODO: assuming any set args can never be zero?
     // else if (*(instr->args[1] == '[' && args[2] == 0)) {
-    else if (!instr->args[2]) {
+    else if (single_bracket(instr->args[1]) && (instr->args[2][0] == '\0')) {
         // +1 to ignore first square bracket in string
+				printf("%d:%c work pls\n", instr->args[2][0],instr->args[2][0]);
         rn = get_reg_num(instr->args[1] + 1);
 				printf("check the [case]\n");
     } else {

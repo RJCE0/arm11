@@ -147,10 +147,6 @@ void convert_lsl(instruction *instr){
     instr->args[2] = strdup("lsl");
     instr->args[3] = strdup(instr->args[1]);
     instr->args[1] = strdup(instr->args[0]);
-    for (int i = 0; i < 3; i++) {
-      printf("args%d:%s\n", i, instr->args[i]);
-    }
-
 }
 
 int keyfromstring(char *key, instruction *instr) {
