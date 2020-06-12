@@ -31,8 +31,6 @@ static shiftDict lookup[] = {
 int shift_key(char *key) {
   for (int i = 0; i < 4  ; ++i) {
       shiftDict *sym = &lookup[i];
-      printf("--%s--\n", sym->key);
-      printf("--%s--\n", key);
       if (strcmp(sym->key, key) == 0){
           return sym->type;
       }
@@ -181,11 +179,8 @@ bool is_register(char *name) {
 
 bool check_negative(char *name){
   while (*name) {
-    if (*name++ == '#') {
-      if (*name == '-') {
+    if (*name++ == '-') {
         return true;
-      }
-      break;
     }
   }
   return false;

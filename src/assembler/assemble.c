@@ -9,8 +9,6 @@ the type of branch and a target address. The target address might be an actual a
 in or it might be a label, so I'll just use my function I built.
 */
 
-
-
 void shift(uint32_t *regNum, char *shiftOp) {
     printf("shift:%s\n", shiftOp);
     uint32_t shiftType = shift_key(strtok(shiftOp, " ")) << 5;
@@ -29,7 +27,7 @@ void shift(uint32_t *regNum, char *shiftOp) {
     *regNum |= shiftNum | shiftType | regBit;
 }
 
-void reg_checker(char **args, uint32_t *operand2, uint32_t *immediate) {
+void operand2_checker(char **args, uint32_t *operand2, uint32_t *immediate) {
     if (is_register(args[0])) {
         *operand2 = get_register_num(args[0]) & 0xF;
         if (args[1]) {
@@ -57,15 +55,15 @@ void data_processing(instruction *instr, state *curr) {
     uint32_t operand2;
     if (instr->u.opcode == 13) {
         rd = get_register_num(instr->args[0]) << 12;
-        reg_checker(instr->args + 1, &operand2, &immediate);
+        operand2_checker(instr->args + 1, &operand2, &immediate);
     } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)) {
         rn = get_register_num(instr->args[0]) << 16;
         setBit = 1 << 20;
-        reg_checker(instr->args + 1, &operand2, &immediate);
+        operand2_checker(instr->args + 1, &operand2, &immediate);
     } else {
         rd = get_register_num(instr->args[0]) << 12;
         rn = get_register_num(instr->args[1]) << 16;
-        reg_checker(instr->args + 2, &operand2, &immediate);
+        operand2_checker(instr->args + 2, &operand2, &immediate);
     }
     uint32_t result = condCode | immediate | opcode | setBit | rn | rd | operand2;
     curr->decoded[curr->pc / 4] = result;
@@ -96,11 +94,6 @@ void single_data_transfer(instruction *instr, state *curr) {
     uint32_t rd = 0;
     uint32_t offset = 0;
     rd = get_register_num(instr->args[0]);
-    if (rd == 5) {
-      for (int i = 0; i < 4; i++) {
-        printf("Arg%d:%s\n", i, instr->args[i]);
-      }
-    }
     // <=expression> type (ldr)
     /* Assuming I don't need to take into account if any other instruction has
     already been stored here */
@@ -210,12 +203,14 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
 
 void split_on_commas(char *input, instruction *instr) {
     int count = 0;
-    char *pch = strtok(input, ",");
+    char *pch = strtok(input, ", ");
     instr->args[count] = pch;
+    printf("args%d:%s\n", count, instr->args[count]);
     while (pch != NULL) {
-        pch = strtok(NULL, ",");
+        pch = strtok(NULL, ", ");
         count++;
         instr->args[count] = pch;
+        printf("args%d:%s\n", count, instr->args[count]);
     }
 }
 
@@ -269,7 +264,7 @@ void read_file_second(state *curr, char *inputFileName) {
         if (ptrToFirstSpace) {
             argsInInstruction = ptrToFirstSpace + 1;
             *ptrToFirstSpace = '\0';
-            split_on_commas(argsInInstruction, instr);
+            split_on_commas(strtok(argsInInstruction, "\n"), instr);
         }
         void(*func[NUM_INSTRUCTION])(instruction *instr, state *curr) = {data_processing, multiply, single_data_transfer,
                                                                  branch, logical_left_shift, halt};
