@@ -25,7 +25,7 @@ typedef struct {
 } shiftDict;
 
 static shiftDict lookup[] = {
-   {"LSL", LSLA}, {"LSR", LSR}, {"ASR", ASR}, {"ROR", ROR}
+   {"lsl", LSLA}, {"lsr", LSR}, {"asr", ASR}, {"ror", ROR}
 };
 
 int shift_key(char *key) {
@@ -43,8 +43,8 @@ typedef enum {
     MI = 1,
     SDTI = 2,
     BI = 3,
-    LSL = 4,
-    HALT = 5
+    HALT = 4,
+    LSL = 5
 } instructionType;
 
 typedef enum {
@@ -81,11 +81,14 @@ typedef enum {
 } branchType;
 
 typedef struct {
-    char **labels;
+    char *s;
+    uint32_t i;
+} labelInfo;
+
+typedef struct {
+    labelInfo *labels;
     int lines;
-    int numLabels;
-    uint32_t *labelNextInstr;
-    int pc;
+		int labelCount;
 } firstFile;
 
 typedef struct {
@@ -94,14 +97,12 @@ typedef struct {
     int mnemonic;
 } dict;
 
-/*
 typedef struct {
-    char **labels;
+    uint32_t *decoded;
+    int lastAddress;
     int pc;
-    int numLabels;
-    uint32_t *labelNextInstr;
-} branchState;
-*/
+    labelInfo *labels;
+} state;
 
 typedef struct {
     union {
@@ -111,8 +112,10 @@ typedef struct {
         branchType condCode;
     } u;
     char **args;
-    firstFile *state;
+		int argSize;
 } instruction;
+
+
 
 static dict lookuptable[] = {
         {"add",   DPI,  ADD},
@@ -142,7 +145,15 @@ static dict lookuptable[] = {
 };
 
 // for function pointer array
-
+void convert_lsl(instruction *instr){
+		instr->args = (char **) realloc(instr->args, 4 * sizeof(char *));
+		instr->args[2] = (char *) malloc(20 * sizeof(char));
+		instr->args[3] = (char *) malloc(20 * sizeof(char));
+		instr->argSize = 4;
+    strcpy(instr->args[2], "lsl");
+    strcpy(instr->args[3], instr->args[1]);
+    strcpy(instr->args[1], instr->args[0]);
+}
 
 int keyfromstring(char *key, instruction *instr) {
     for (int i = 0; i < NUM_OPCODE; ++i) {
@@ -162,6 +173,9 @@ int keyfromstring(char *key, instruction *instr) {
                     instr->u.condCode = (branchType) sym->mnemonic;
                     break;
                 case LSL:
+                    instr->u.opcode = MOV;
+                    convert_lsl(instr);
+                    return DPI;
                 case HALT:
                 default:
                     break;
@@ -169,44 +183,39 @@ int keyfromstring(char *key, instruction *instr) {
             return sym->type;
         }
     }
-    //  to change
-    fprintf(stderr, "Instruction not supported by assembler\n");
-    return 0;
+    // if label
+    return -1;
 }
 
-bool is_register(char *name) {
-    return name[0] == 'r';
+bool is_reg(const char *str) {
+    return *str == 'r';
 }
 
-int get_register_num(char *name) {
-    // name[0] = '';
-    return atoi(name + 1);
+bool check_negative_imm(const char *str){
+    return *(str + 1) == '-';
 }
 
-int32_t hex_to_decimal(char hex[]) {
-    printf("%s\n", hex);
-    return (int32_t) strtol(hex, NULL, 0);
+bool check_negative_reg(const char *str){
+    return *str == '-';
 }
 
-int get_immediate(char *name) {
+int get_reg_num(const char *str) {
+    return atoi(str + 1);
+}
+
+int32_t hex_to_decimal(const char *hex) {
+    return strtol(hex, NULL, 0);
+}
+
+int get_immediate(const char *str) {
     //"#0x24a7"
-
-    if (name[1] == '0' && name[2] == 'x') {
-        return hex_to_decimal(name + 1);
+    const char *ptr = str;
+    while (*str) {
+      if (*str++ == '0' && *str == 'x') {
+        return hex_to_decimal(str - 1);
+      }
     }
-    printf("%s\n", name + 1);
-    uint32_t result = strtol(name+1, NULL, 10);
-    printf("%x\n", result);
-    return result;
-}
-
-//think mazen might need this for get immediate (RJ)
-// you just pass in "0x245A2175" for example and it gives back the uint32_t
-// note, i assumed that the hex was in big endian.
-
-uint32_t label_to_instruction(char label[], size_t size) {
-    //
-    return 0;
+    return strtol(ptr+1, NULL, 10);
 }
 
 /*
@@ -214,15 +223,13 @@ The target address might be an actual address in or it might be a label.
  For this reason, I can made a function to loop through the
 first array to find the position of the label address in the second array
 */
-uint32_t get_label_address(firstFile *state, char *str, bool *check) {
-    bool checked = true;
-    for (int i = 0; i < state->numLabels; i++) {
-        if (strcmp(str, state->labels[i]) == 0) {
-            check = &checked;
-            return state->labelNextInstr[i];
+
+bool get_label_address(state *curr, char *str, uint32_t *address) {
+    for (int i = 0; i < 10; i++) {
+        if (strcmp(curr->labels[i].s, str) == 0) {
+          *address = curr->labels[i].i;
+          return true;
         }
     }
-    printf("Wasn't a label");
-    return 0;
-    // (RJ) need to check this works
+    return false;
 }

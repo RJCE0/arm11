@@ -17,11 +17,9 @@
 
 int keyfromstring(char *key, instruction *instruction);
 
-int32_t hex_to_decimal(char hex[]);
+int32_t hex_to_decimal(const char *hex);
 
-uint32_t label_to_instruction(char label[], size_t size);
-
-uint32_t get_label_address(firstFile *state, char *str, bool *check);
+bool get_label_address(state *curr, char *str, uint32_t *address);
 
 uint32_t create_branch(uint8_t condCode, int32_t offset);
 
