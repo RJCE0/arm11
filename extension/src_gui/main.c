@@ -1,6 +1,7 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "multiplechoice.c"
 
 typedef struct {
     GtkWidget *stack;
@@ -37,6 +38,7 @@ void open_blm_site() {
     system("firefox www.blacklivesmatter.com");
 }
 
+/*
 void set_question(char *question, char *answerA, char *answerB, char *answerC, char *answerD, data *myData) {
     gtk_label_set_text((GtkLabel *) myData->questionLabel, question);
 
@@ -53,6 +55,23 @@ void set_question(char *question, char *answerA, char *answerB, char *answerC, c
     gtk_button_set_label((GtkButton *) myData->answerB, answerB);
     gtk_button_set_label((GtkButton *) myData->answerC, answerC);
     gtk_button_set_label((GtkButton *) myData->answerD, answerD);
+
+}
+*/
+
+void set_question(quest *question, data *myData) {
+    gtk_label_set_text((GtkLabel *) myData->questionLabel, question->que);
+
+    if (question->answerNum <= 3) {
+        gtk_widget_set_sensitive(myData->answerD, false);
+				if (question->answerNum == 2) {
+					gtk_widget_set_sensitive(myData->answerC, false);
+				}
+    }
+    gtk_button_set_label((GtkButton *) myData->answerA, question->answers[0]);
+    gtk_button_set_label((GtkButton *) myData->answerB, question->answers[1]);
+    gtk_button_set_label((GtkButton *) myData->answerC, question->answers[2]);
+    gtk_button_set_label((GtkButton *) myData->answerD, question->answers[3]);
 
 }
 
@@ -77,7 +96,9 @@ int main(int argc, char *argv[])
     myData->answerC = GTK_WIDGET(gtk_builder_get_object(builder, "answer_c_button"));
     myData->answerD = GTK_WIDGET(gtk_builder_get_object(builder, "answer_d_button"));
 
-    set_question("Ze Question", "London", "Paris", "Brussels", 0, myData);
+		quest *curr = initalise_questions();
+
+    set_question(curr, myData);
 
     g_object_unref(builder);
 
