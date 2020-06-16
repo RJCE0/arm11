@@ -321,6 +321,6 @@ int main(int argc, char **argv) {
     fwrite(curr->decoded, sizeof(uint32_t), curr->lastAddress/4, binFile);
     fclose(binFile);
     free_state(curr, firstRead->labelCount);
-		free(firstRead);
+	free(firstRead);
     return 0;
 }
