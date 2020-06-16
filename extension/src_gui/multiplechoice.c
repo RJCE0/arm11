@@ -37,6 +37,9 @@ bool check_question(const char *str){
 
 node *create_node(char *str){
   quest *value = (quest *) malloc(sizeof(quest));
+  if (!value) {
+    perror("Error while creating node...");
+  }
   value->que = (char *) malloc(100 * sizeof(char));
   strcpy(value->que, str);
   value->answerNum = 0;

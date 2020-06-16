@@ -155,14 +155,9 @@ void branch(instruction *instr, state *curr) {
     } else {
         offset = hex_to_decimal(instr->args[0]) - curr->pc - 8;
     }
-<<<<<<< HEAD
-    offset >>= 2; 
-    return (instr->u.condCode << 28 | 10 << 24 | (offset & 0xFFFFFF));
-=======
     offset >>= 2;
     uint32_t result = instr->u.condCode << 28 | 10 << 24 | (offset & 0xFFFFFF);
     curr->decoded[curr->pc / 4] = result;
->>>>>>> abfeb85ee306ec5209115c761d207cb4222afe40
 }
 
 void halt(instruction *instr, state *curr) {
