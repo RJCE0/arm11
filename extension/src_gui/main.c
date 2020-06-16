@@ -34,10 +34,10 @@ void go_to_about_us(GtkWidget *whatver, data *myData) {
 
 void go_to_correct_answer(GtkWidget *whatever, data *myData) {
     static int score = 0;
-    char str_count[10] = {0};
+    char str_count[30] = {0};
     score++;
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "correct_answer_page");
-    sprintf(str_count, "Your score is now %d!", score);
+    //sprintf(str_count, "Your score is now %d!", score);
 }
 
 void open_blm_site(void) {
@@ -79,30 +79,36 @@ void set_question(quest *question, data *myData) {
 					gtk_widget_set_sensitive(myData->answerC, false);
 				}
     }
-
-    GtkButton *aButton = gtk_button_set_label((GtkButton *) myData->answerA, question->answers[0]);
-    GtkButton *bButton = gtk_button_set_label((GtkButton *) myData->answerB, question->answers[1]);
-    GtkButton *cButton = gtk_button_set_label((GtkButton *) myData->answerC, question->answers[2]);
-    GtkButton *dButton = gtk_button_set_label((GtkButton *) myData->answerD, question->answers[3]);
-    g_signal_connect(myData->answerA, "clicked", &go_to_correct_answer, myData);
+    void (*correct_ptr) (GtkWidget *, data) = &go_to_correct_answer;
+    gtk_button_set_label((GtkButton *) myData->answerA, question->answers[0]);
+    gtk_button_set_label((GtkButton *) myData->answerB, question->answers[1]);
+    gtk_button_set_label((GtkButton *) myData->answerC, question->answers[2]);
+    gtk_button_set_label((GtkButton *) myData->answerD, question->answers[3]);
+    g_signal_connect(myData->answerA, "clicked", correct_ptr, myData);
     g_signal_connect(myData->answerB, "clicked", &go_to_wrong_answer,myData);
     g_signal_connect(myData->answerC, "clicked", &go_to_wrong_answer,myData);
     g_signal_connect(myData->answerD, "clicked", &go_to_wrong_answer,myData);
 
 }
 
-void check_answer(GtkButton *button, GtkButton *answer_button, data myData) {
-    const char *userAnswer = gtk_button_get_label(button);
+void check_answer(GtkButton *button, GtkButton *answer_button, data *myData) {
+    const char *user_answer = gtk_button_get_label(button);
     const char *answer = gtk_button_get_label(answer_button);
     if (strcmp(user_answer, answer)) {
-        go_to_correct_answer();
+        go_to_correct_answer(button, myData);
     } else {
-        go_to_wrong_answer();
+        go_to_wrong_answer(button, myData);
     }
 } 
 
-char *get_label(GtkButton *button) {
+const char *get_label(GtkButton *button) {
     return gtk_button_get_label(button);
+}
+
+void advance(GtkButton *button, data *myData, quest *question) {
+    //Moves to next question.
+    set_question(question, myData);
+    go_to_question_page(button, myData);
 }
 
 int main(int argc, char *argv[])
@@ -127,7 +133,7 @@ int main(int argc, char *argv[])
     myData->answerC = GTK_WIDGET(gtk_builder_get_object(builder, "answer_c_button"));
     myData->answerD = GTK_WIDGET(gtk_builder_get_object(builder, "answer_d_button"));
 
-	static quest *curr = initalise_questions();
+	quest *curr = initalise_questions();
     set_question(curr, myData);
 
     g_object_unref(builder);

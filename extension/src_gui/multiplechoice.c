@@ -44,11 +44,12 @@ node *create_node(char *str){
   strcpy(value->que, str);
   value->answerNum = 0;
   value->answers = (char **) malloc(1 * sizeof(char *));
-  node *new = (node *) malloc(sizeof(node));
-  new->next = NULL;
-  new->prev = NULL;
-  new->u.question = value;
-  return new;
+  node *new_node = (node *) malloc(sizeof(node));
+  new_node->next = NULL;
+  new_node->prev = NULL;
+  new_node->u.question = value;
+  return new_node;
+  
 }
 
 /*
@@ -131,6 +132,16 @@ quest *initalise_questions(void){
     curr = curr->prev;
   }
 	return curr->u.question;
+}
+
+quest *get_left_as_question(node *curr){
+  remove_current(curr);
+  return curr->prev->u.question;
+}
+
+quest *get_right_as_question(node *curr){
+  remove_current(curr);
+  return curr->next->u.question;
 }
 
 /*
