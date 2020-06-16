@@ -92,7 +92,7 @@ void set_question(quest *question, data *myData) {
 }
 
 void check_answer(GtkButton *button, GtkButton *answer_button, data myData) {
-    const char *user_answer = gtk_button_get_label(button);
+    const char *userAnswer = gtk_button_get_label(button);
     const char *answer = gtk_button_get_label(answer_button);
     if (strcmp(user_answer, answer)) {
         go_to_correct_answer();
