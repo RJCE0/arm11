@@ -6,14 +6,16 @@
 typedef struct {
     GtkWidget *stack;
     GtkWidget *questionLabel;
+    GtkWidget *scoreLabel;
     GtkWidget *answerA;
     GtkWidget *answerB;
     GtkWidget *answerC;
     GtkWidget *answerD;
+
 } data;
 
 // called when window is closed
-void on_window_main_destroy()
+void on_window_main_destroy(void)
 {
     gtk_main_quit();
 }
@@ -34,8 +36,12 @@ void go_to_correct_answer(GtkWidget *whatever, data *myData) {
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "correct_answer_page");
 }
 
-void open_blm_site() {
-    system("firefox www.blacklivesmatter.com");
+void open_blm_site(void) {
+    system("www.blacklivesmatter.com");
+}
+
+void go_to_wrong_answer(GtkWidget *widget, data *myData) {
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "wrong_answer_page");
 }
 
 /*
@@ -59,6 +65,10 @@ void set_question(char *question, char *answerA, char *answerB, char *answerC, c
 }
 */
 
+void advance(Gtk) {
+
+}
+
 void set_question(quest *question, data *myData) {
     gtk_label_set_text((GtkLabel *) myData->questionLabel, question->que);
 
@@ -73,6 +83,16 @@ void set_question(quest *question, data *myData) {
     gtk_button_set_label((GtkButton *) myData->answerC, question->answers[2]);
     gtk_button_set_label((GtkButton *) myData->answerD, question->answers[3]);
 
+}
+
+void check_answer(GtkButton *button, GtkButton *answer_button, data myData) {
+    const char *user_answer = gtk_button_get_label(button);
+    const char *answer = gtk_button_get_label(answer_button);
+    if (strcmp(user_answer, answer_button)) {
+        go_to_correct_answer();
+    } else {
+        go_to_wrong_answer();
+    }
 }
 
 int main(int argc, char *argv[])
