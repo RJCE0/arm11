@@ -186,9 +186,6 @@
               </packing>
             </child>
             <child>
-              <placeholder/>
-            </child>
-            <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -231,7 +228,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
               </object>
               <packing>
                 <property name="name">about_us_page</property>
-                <property name="position">3</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -278,6 +275,35 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <placeholder/>
                 </child>
+              </object>
+              <packing>
+                <property name="name">page4</property>
+                <property name="title" translatable="yes">page4</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="picture_quiz_page">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
                 <child>
                   <placeholder/>
                 </child>
@@ -289,10 +315,13 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 </child>
               </object>
               <packing>
-                <property name="name">page4</property>
-                <property name="title" translatable="yes">page4</property>
+                <property name="name">page5</property>
+                <property name="title" translatable="yes">page0</property>
                 <property name="position">4</property>
               </packing>
+            </child>
+            <child>
+              <placeholder/>
             </child>
             <child>
               <placeholder/>
