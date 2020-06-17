@@ -1,16 +1,4 @@
-#include "assemble_utils.h"
-
-// [Function_A, Function_B, ...]
-// [0x00012, 0x00000128]
-
-/* (RJ) branch bit explained for myself:
-so for branching, when i see a branch condition it will be made up of two components
-the type of branch and a target address. The target address might be an actual address
-in or it might be a label, so I'll just use my function I built.
-*/
-
-
-
+#include "assemble.h"
 
 void shift(uint32_t *regNum, char *shiftOp, char *offset) {
     uint32_t shiftType = shift_key(shiftOp) << 5;
@@ -32,295 +20,239 @@ void operand2_checker(char **args, uint32_t *operand2, uint32_t *immediate, int 
             shift(operand2, args[1], args[2]);
         }
     } else {
-        *immediate = 1 << 25;
+        *immediate = IMM_BIT;
         uint32_t imm = get_immediate(args[0]);
         uint32_t rotate = 0;
+		// opposite of rotate right so its a rotate left
         while (imm & 0xFFFFFF00) {
-          imm = imm << 2 | imm >> 30;
-          rotate += 1;
+            imm = imm << 2 | imm >> 30;
+            rotate += 1;
         }
         *operand2 = rotate << 8 | imm;
     }
 }
 
 void data_processing(instruction *instr, state *curr) {
-    uint32_t condCode = 14 << SHIFT_COND; //shift_cond
     uint32_t immediate = 0;
     uint32_t opcode = instr->u.opcode << 21;
     uint32_t setBit = 0;
     uint32_t rn = 0;
     uint32_t rd = 0;
     uint32_t operand2;
+    int argOffset;
+    // to make code more readable
+    char **args = instr->args;
+    // for mov case
     if (instr->u.opcode == 13) {
-        rd = get_reg_num(instr->args[0]) << 12;
-        operand2_checker(instr->args + 1, &operand2, &immediate, instr->argSize - 1);
+        rd = get_reg_num(args[0]) << 12;
+        argOffset = 1;
+    // for tst, teq and cmp
     } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)) {
-        rn = get_reg_num(instr->args[0]) << 16;
-        setBit = 1 << 20;
-        operand2_checker(instr->args + 1, &operand2, &immediate, instr->argSize - 1);
+        rn = get_reg_num(args[0]) << 16;
+        setBit = DPI_S_BIT;
+        argOffset = 1;
+    // all other cases
     } else {
-        rd = get_reg_num(instr->args[0]) << 12;
-        rn = get_reg_num(instr->args[1]) << 16;
-        operand2_checker(instr->args + 2, &operand2, &immediate, instr->argSize - 2);
+        rd = get_reg_num(args[0]) << 12;
+        rn = get_reg_num(args[1]) << 16;
+        argOffset = 2;
     }
-    uint32_t result = condCode | immediate | opcode | setBit | rn | rd | operand2;
-    curr->decoded[curr->pc / 4] = result;
+    operand2_checker(args + argOffset, &operand2, &immediate,
+        instr->argSize - argOffset);
+    uint32_t result = AL_COND | immediate | opcode | setBit | rn | rd |
+    operand2;
+	set_instruction(curr->decoded, curr->pc, result);
 }
 
 
 void multiply(instruction *instr, state *curr) {
-    uint32_t fullInstr;
-    uint32_t condition_code = MULTIPLY_CONDITION_CODE << SHIFT_COND;
+    // to make code more readable
+    char **args = instr->args;
     uint32_t accBit = instr->u.accBit << 21;
-    uint32_t rd = get_reg_num(instr->args[0]) << 16;
-    uint32_t rn = (instr->u.accBit) ? get_reg_num(instr->args[3]) << 12 : 0;
-    uint32_t rm = get_reg_num(instr->args[1]);
-    // do you need shift?
-    uint32_t constant = MULITPLY_BITS_4_THROUGH_7 << 4;
-    uint32_t rs = get_reg_num(instr->args[2]) << 8;
-    fullInstr = condition_code | accBit | rd | rn | rs | constant | rm;
-    curr->decoded[curr->pc / 4] = fullInstr;
+    uint32_t rd = get_reg_num(args[0]) << 16;
+    uint32_t rn = (instr->u.accBit) ? get_reg_num(args[3]) << 12 : 0;
+    uint32_t rm = get_reg_num(args[1]);
+    uint32_t rs = get_reg_num(args[2]) << 8;
+    uint32_t result = AL_COND | accBit | rd | rn | rs | MULTIPLY_CONST | rm;
+	set_instruction(curr->decoded, curr->pc, result);
 }
 
 void single_data_transfer(instruction *instr, state *curr) {
-    const uint32_t condCode = 14 << SHIFT_COND;
     uint32_t immBit = 0;
-    uint32_t preIndexBit = 1;
-    uint32_t upBit = 1;
+    uint32_t loadBit = instr->u.loadBit << 20;
+    uint32_t preIndexBit = SDT_P_BIT;
+    uint32_t upBit = SDT_U_BIT;
     uint32_t rn = 0;
-    uint32_t rd = 0;
     uint32_t offset = 0;
-    rd = get_reg_num(instr->args[0]);
+    int negOffset = 0;
+    // to make code more readable
+    char **args = instr->args;
+    uint32_t rd = get_reg_num(args[0]) << 12;
     // <=expression> type (ldr)
-    /* Assuming I don't need to take into account if any other instruction has
-    already been stored here */
     if (*instr->args[1] == '=') {
-
-        uint32_t expression = get_immediate(instr->args[1]);
+        uint32_t expression = get_immediate(args[1]);
+        // if less than 0xFF then converted to MOV
         if (expression <= 0xFF) {
             instr->u.opcode = MOV;
             // unnecessary but to avoid bugs
-            *instr->args[1] = '#';
+            *args[1] = '#';
             data_processing(instr, curr);
             return;
         } else {
-            offset = curr->lastAddress - curr->pc - 8;
-            rn = 0xF;
-            curr->decoded[curr->lastAddress/4] = expression;
-            curr->lastAddress += 4;
-						curr->decoded = (uint32_t *) realloc(curr->decoded, (curr->lastAddress/4 + 1) * sizeof(uint32_t));
+            offset = (curr->lastInstr * 4) - curr->pc - 8;
+            rn = 0xF << 16;
+            // appended to end of decoded instructions array
+            curr->decoded = store_exp(curr->decoded, &curr->lastInstr,
+                expression);
         }
     }
     // [Rn] case
     // only other case with only two arguments
-    // TODO: assuming any set args can never be zero?
-    // else if (*(instr->args[1] == '[' && args[2] == 0)) {
     else if (instr->argSize == 2) {
         // +1 to ignore first square bracket in string
-        rn = get_reg_num(instr->args[1] + 1);
+        rn = get_reg_num(args[1] + 1) << 16;
     } else {
-        /* this will compare to check whether this is the pre-indexed case
-         or the post indexed case (both with some <#expression>) */
-        char *tempPtr = instr->args[1];
-        while (*tempPtr) {
-            if (*tempPtr++ == ']') {
-                preIndexBit = 0;
+        // checks whether this is the pre-indexed case or
+        // post based on trailing ']'
+		check_pre_index(args[1], &preIndexBit);
+        rn = get_reg_num(args[1] + 1) << 16;
+        // checks whether reg or immediate
+        if (is_reg(args[2])) {
+            immBit = IMM_BIT;
+            if (check_negative_reg(args[2])) {
+                upBit = 0;
+                negOffset = 1;
             }
-        }
-        rn = get_reg_num(instr->args[1] + 1);
-        if (is_reg(instr->args[2])) {
-          offset = get_reg_num(instr->args[2]);
-          immBit = 1;
+            offset = get_reg_num(args[2] + negOffset);
         } else {
-          if (check_negative_imm(instr->args[2])) {
-            upBit = 0;
-          }
-          offset = get_immediate(instr->args[2]);
+            if (check_negative_imm(args[2])) {
+                upBit = 0;
+                negOffset = 1;
+            }
+            offset = get_immediate(args[2] + negOffset);
         }
+        // if more than 3 args then it must be a shift
         if (instr->argSize > 3) {
-          shift(&offset, instr->args[3], instr->args[4]);
+            shift(&offset, args[3], args[4]);
         }
     }
 
-    uint32_t result = condCode | (1 << 26) | (immBit << 25) | (preIndexBit << 24)
-            | (upBit << 23) | (instr->u.loadBit << 20) | (rn << 16) | (rd << 12) | offset;
-    curr->decoded[curr->pc / 4] = result;
+    uint32_t result = AL_COND | SDT_CONST | immBit | preIndexBit | upBit |
+        loadBit | rn | rd  | offset;
+    set_instruction(curr->decoded, curr->pc, result);
 }
 
 void branch(instruction *instr, state *curr) {
     int32_t offset;
     uint32_t address;
-    if (get_label_address(curr, instr->args[0], &address)) {
-        offset = address - curr->pc - 8;
+    // to make code more readable
+    char **args = instr->args;
+    if (is_imm(args[0])) {
+        offset = get_immediate(args[0]) - curr->pc - 8;
     } else {
-        offset = hex_to_decimal(instr->args[0]) - curr->pc - 8;
+        address = get_label_address(curr->labels, args[0], curr->labelCount);
+        offset = address - curr->pc - 8;
     }
     offset >>= 2;
-    uint32_t result = instr->u.condCode << 28 | 10 << 24 | (offset & 0xFFFFFF);
-    curr->decoded[curr->pc / 4] = result;
+    offset &= 0xFFFFFF;
+    uint32_t result = instr->u.condCode << SHIFT_COND | BRANCH_CONST | offset;
+    set_instruction(curr->decoded, curr->pc, result);
 }
 
 void halt(instruction *instr, state *curr) {
-    curr->decoded[curr->pc / 4] = 0;
+    set_instruction(curr->decoded, curr->pc, 0);
 }
-
-
 
 void read_file_first(firstFile *firstRead, char *inputFileName) {
     FILE *file;
     file = fopen(inputFileName, "r");
-    if (file == NULL) {
-        printf("file not found, exiting...\n");
+    if (!file) {
+        perror("File not found:");
+		exit(EXIT_FAILURE);
         return;
     }
     int line = 0;
     int labelCount = 0;
-    char str[511];
-    while (fgets(str, 511, file)) {
+    char str[MAX_LINE];
+    while (fgets(str, MAX_LINE, file)) {
         if (str[strlen(str) - 2] == ':') {
             str[strlen(str) - 2] = '\0';
-						firstRead->labels = (labelInfo *) realloc(firstRead->labels, (labelCount + 1) * sizeof(labelInfo));
-						firstRead->labels[labelCount].s = (char *) malloc(10 * sizeof(char));
+			firstRead->labels = realloc_labels(firstRead->labels, labelCount);
             strcpy(firstRead->labels[labelCount].s, str);
             firstRead->labels[labelCount].i = (line - labelCount) * 4;
             labelCount++;
-            // to implement realloc
         }
-        if (str[0] != '\n') {
+        if (*str != '\n') {
           line++;
         }
 
     }
     fclose(file);
     firstRead->lines = line - labelCount;
-		firstRead->labelCount = labelCount;
+	firstRead->labelCount = labelCount;
 }
-
-void split_on_commas(char *input, instruction *instr) {
-    int count = 0;
-    char *pch = strtok(input, ", ");
-		strcpy(instr->args[count], pch);
-		for (int i = instr->argSize - 1; i > 0; i--) {
-			free(instr->args[i]);
-		}
-    while (pch != NULL) {
-        pch = strtok(NULL, ", ");
-        count++;
-				if (!pch) {
-					instr->argSize = count;
-					printf("%d exiting\n", count);
-					break;
-				}
-				instr->args = (char **) realloc(instr->args, (count + 1) * sizeof(char *));
-				instr->args[count] = (char *) malloc(20 * sizeof(char));
-        strcpy(instr->args[count], pch);
-    }
-}
-
-state *initalise_state(firstFile *firstRead){
-    state *curr = (state *) malloc(sizeof(state));
-    curr->labels = firstRead->labels;
-    curr->lastAddress = firstRead->lines * 4;
-		curr->pc = 0;
-		curr->decoded = (uint32_t *) malloc((curr->lastAddress/4 + 1) * sizeof(uint32_t));
-    return curr;
-}
-
-void free_state(state *curr, int size){
-    for (int i = 0; i < size; i++) {
-        free(curr->labels[i].s);
-    }
-    free(curr->labels);
-    free(curr->decoded);
-    free(curr);
-}
-
-instruction *initalise_instruction(void){
-    instruction *instr = (instruction *) malloc(sizeof(instruction));
-    instr->args = (char **) malloc(sizeof(char *));
-    instr->args[0] = (char *) calloc(20, sizeof(char));
-		instr->argSize = 1;
-    return instr;
-}
-
-
-void free_instruction(instruction *instr){
-    for (int i = 0; i < instr->argSize; i++) {
-        free(instr->args[i]);
-    }
-    free(instr->args);
-    free(instr);
-}
-
-void(*func[NUM_INSTRUCTION])(instruction *instr, state *curr) = {
-    data_processing,
-    multiply,
-    single_data_transfer,
-    branch,
-    halt
-};
 
 void read_file_second(state *curr, char *inputFileName) {
     FILE *file;
     file = fopen(inputFileName, "r");
-    if (file == NULL) {
-        printf("file not found, exiting...\n");
-        return;
+    if (!file) {
+        perror("File not found:");
+		exit(EXIT_FAILURE);
     }
     instruction *instr = initalise_instruction();
-    // need counter in first read
-    char str[511];
-    while (fgets(str, 511, file)) {
-        char *argsInInstruction;
-        char *ptrToFirstSpace = strchr(str, ' ');
-        if (ptrToFirstSpace) {
-            argsInInstruction = ptrToFirstSpace + 1;
-            *ptrToFirstSpace = '\0';
-            printf("check\n");
-            split_on_commas(strtok(argsInInstruction, "\n"), instr);
+    char str[MAX_LINE];
+    char *argsInInstruction;
+	char *ptrToFirstSpace;
+    while (fgets(str, MAX_LINE, file)) {
+        ptrToFirstSpace = strchr(str, ' ');
+		// will skip instruction if label as that is accounted for in branch
+		// and first read
+        if (!ptrToFirstSpace) {
+            continue;
         }
-        int abstractData = keyfromstring(str, instr);
-        if (abstractData != -1) {
-            func[abstractData](instr, curr);
-            if (!curr->decoded[curr->pc / 4]) {
-                break;
-            }
-            curr->pc += 4;
+        argsInInstruction = ptrToFirstSpace + 1;
+        *ptrToFirstSpace = '\0';
+        split_on_commas(strtok(argsInInstruction, "\n"), instr);
+        int abstractData = mnemonic_key(str, instr);
+        if (abstractData == -1) {
+            fprintf(stderr, "Unsupported instruction\n");
+            exit(EXIT_FAILURE);
         }
+        abstract_type[abstractData](instr, curr);
+        if (!curr->decoded[curr->pc / 4]) {
+		    break;
+		}
+		curr->pc += 4;
     }
-		fclose(file);
+    fclose(file);
     free_instruction(instr);
 }
 
-/*
-Need a function that will split the arguments, on commas. We will be taking in
-the full line on the fscanf but won't be able to differentiate between arguments.
-it would be best to store these in a struct so we can access each part of the
-arguments separately. Those who won't need 3 arguments, initalise the others to null.
-*/
-
-//add r1, r2, #0x39
-
-firstFile *initalise_first_file(void){
-    firstFile *firstRead = (firstFile *) malloc(sizeof(firstFile));
-    firstRead->labels = (labelInfo *) malloc(sizeof(labelInfo));
-    return firstRead;
+void write_file(state *curr, char *fileName){
+	FILE *binFile;
+	binFile = fopen(fileName, "wb");
+    if (!binFile) {
+        perror("File not found:");
+		exit(EXIT_FAILURE);
+    }
+	fwrite(curr->decoded, sizeof(uint32_t), curr->lastInstr, binFile);
+	fclose(binFile);
 }
 
 int main(int argc, char **argv) {
     if (argc != 3) {
-        fprintf(stderr, "Program does not have correct number of arguments.");
+        fprintf(stderr, "Program does not have correct number of arguments.\n");
         exit(EXIT_FAILURE);
     }
     firstFile *firstRead = initalise_first_file();
     read_file_first(firstRead, argv[1]);
+
     state *curr = initalise_state(firstRead);
     read_file_second(curr, argv[1]);
-    FILE *binFile;
-    binFile = fopen(argv[2], "wb");
-    fwrite(curr->decoded, sizeof(uint32_t), curr->lastAddress/4, binFile);
-    fclose(binFile);
+
+    write_file(curr, argv[2]);
+
     free_state(curr, firstRead->labelCount);
-	free(firstRead);
+    free(firstRead);
     return 0;
 }

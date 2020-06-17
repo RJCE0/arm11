@@ -13,7 +13,7 @@ emulate: emulate.o
 assemble: assemble.o
 	$(CC) assemble.o -o assemble
 
-assemble.o: assembler/assemble.c assembler/assemble_utils.c assembler/assemble_utils.h
+assemble.o: assembler/assemble.c assembler/assemble.h assembler/utils/constants.h assembler/utils/helpers.c assembler/utils/memory_alloc.c assembler/utils/structs.h assembler/utils/dictionaries.c
 	$(CC) $(CFLAGS) -c assembler/assemble.c
 
 
