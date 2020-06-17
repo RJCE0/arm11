@@ -55,7 +55,6 @@ void remove_stop_words(questionBreakdown *breakdown) {
         exit(EXIT_FAILURE);
     }
     char str[20];
-    int count = 0;
     for (int i = 0; i < breakdown->totalWords; ++i) {
         if (!breakdown->wordList[i]) {
             --i;
