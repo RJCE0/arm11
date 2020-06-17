@@ -14,8 +14,8 @@ A:Friday
 A:Tuesday
 Q:What is the weather like today?
 A:Rain
-A:Sunny 
+A:Sunny
 Q:Why does strcat not work properly in C programming?
 A:YES
-B:NO
-C:MAYBE
+A:NO
+A:MAYBE

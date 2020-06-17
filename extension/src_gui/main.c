@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include "multiplechoice.c"
 #include "generatetags.c"
+#include <stdio.h>
+#include <time.h>
 
 typedef struct {
     GtkWidget *stack;
@@ -60,10 +62,47 @@ void open_blm_site(void) {
     system("www.blacklivesmatter.com");
 }
 
+GCallback check_answer(int i){
+    if (i == 0) {
+        return (GCallback) &go_to_correct_answer;
+    }
+    return (GCallback) &go_to_wrong_answer;
+}
+
+int *size_check(int size){
+    static int array[4];
+    if (size == 4){
+       static int array[4];
+       //return array;
+    } else if (size == 3){
+       static int array[3];
+       //return array;
+    } else {
+       static int array[2];
+       //return array;
+    }
+    return array;
+}
+
+
+int *randomise_questions(int array[], int size){
+    int randArr[size];
+    for (int i = 0; i < size; i++) {
+        randArr[i] = i;
+    }
+    srand(time(0));
+    for (int i = 0; i < size; i++) {
+            int r = i + rand() % (size - i);
+            array[i] = randArr[r];
+            randArr[r] = randArr[i];
+    }
+    return array;
+}
+
 void set_question(data *myData) {
     quest *question = myData->curNode->u.question;
     gtk_label_set_text((GtkLabel *) myData->questionLabel, question->que);
-
+    int *random = randomise_questions(size_check(question->answerNum), question->answerNum);
     if (question->answerNum <= 3) {
         gtk_widget_set_sensitive(myData->answerD, false);
 		if (question->answerNum == 2) {
@@ -75,15 +114,15 @@ void set_question(data *myData) {
         gtk_widget_set_sensitive(myData->answerD, true);
     }
     // void (*correct_ptr) (GtkWidget *, data) = &go_to_correct_answer;
-    gtk_button_set_label((GtkButton *) myData->answerA, question->answers[0]);
-    gtk_button_set_label((GtkButton *) myData->answerB, question->answers[1]);
+    gtk_button_set_label((GtkButton *) myData->answerA, question->answers[random[0]]);
+    gtk_button_set_label((GtkButton *) myData->answerB, question->answers[random[1]]);
 
     if (question->answerNum >= 3) {
-        gtk_button_set_label((GtkButton *) myData->answerC, question->answers[2]);
-        g_signal_connect(myData->answerC, "clicked", &go_to_wrong_answer,myData);
+        gtk_button_set_label((GtkButton *) myData->answerC, question->answers[random[2]]);
+        g_signal_connect(myData->answerC, "clicked", check_answer(random[2]),myData);
         if (question->answerNum == 4) {
-            gtk_button_set_label((GtkButton *) myData->answerD, question->answers[3]);
-            g_signal_connect(myData->answerD, "clicked", &go_to_wrong_answer,myData);
+            gtk_button_set_label((GtkButton *) myData->answerD, question->answers[random[3]]);
+            g_signal_connect(myData->answerD, "clicked", check_answer(random[3]),myData);
         } else {
             gtk_button_set_label((GtkButton *) myData->answerD, "");
         }
@@ -91,8 +130,8 @@ void set_question(data *myData) {
         gtk_button_set_label((GtkButton *) myData->answerC, "");
         gtk_button_set_label((GtkButton *) myData->answerD, "");
     }
-    g_signal_connect(myData->answerA, "clicked", &go_to_correct_answer, myData);
-    g_signal_connect(myData->answerB, "clicked", &go_to_wrong_answer,myData);
+    g_signal_connect(myData->answerA, "clicked", check_answer(random[0]), myData);
+    g_signal_connect(myData->answerB, "clicked", check_answer(random[1]),myData);
 
     char *str = get_tags(question->que);
     gtk_label_set_text((GtkLabel *) myData->tagsLabel, str);
@@ -125,14 +164,14 @@ void advance_right_question(GtkButton *button, data *myData, quest *question) {
     //Moves to harder next question.
     myData->curNode = get_right(myData->curNode);
     set_question(myData);
-    go_to_question_page(button, myData);
+    go_to_question_page((GtkWidget *) button, myData);
 }
 
 void advance_left_question(GtkButton *button, data *myData, quest *question) {
     //Move to easier next question.
     myData->curNode = get_left(myData->curNode);
     set_question(myData);
-    go_to_question_page(button, myData);
+    go_to_question_page((GtkWidget *) button, myData);
 }
 
 int main(int argc, char *argv[]) {
