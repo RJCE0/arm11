@@ -23,6 +23,8 @@ void on_window_main_destroy(void) {
     gtk_main_quit();
 }
 
+//yo reece ngl i cant see the image struct looool
+
 void go_to_home(GtkWidget *whatever, data *myData) {
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "home_page");
 }
@@ -56,13 +58,6 @@ void go_to_wrong_answer(GtkWidget *widget, data *myData) {
 
 void open_blm_site(void) {
     system("www.blacklivesmatter.com");
-}
-
-
-void begin_quiz(GtkWidget *widget, data *myData) {
-    myData->curNode = initialise_questions();
-    set_question(myData);
-    go_to_question_page(widget, myData);
 }
 
 void set_question(data *myData) {
@@ -103,6 +98,15 @@ void set_question(data *myData) {
     gtk_label_set_text((GtkLabel *) myData->tagsLabel, str);
 }
 
+
+void begin_quiz(GtkWidget *widget, data *myData) {
+    myData->curNode = initialise_questions();
+    set_question(myData);
+    go_to_question_page(widget, myData);
+}
+
+
+
 // void check_answer(GtkButton *button, GtkButton *answer_button, data *myData) {
 //     const char *user_answer = gtk_button_get_label(button);
 //     const char *answer = gtk_button_get_label(answer_button);
@@ -133,6 +137,7 @@ void advance_left_question(GtkButton *button, data *myData, quest *question) {
 
 int main(int argc, char *argv[]) {
     data *myData = malloc (sizeof(myData));
+
 
     GtkBuilder      *builder;
     GtkWidget       *window;
