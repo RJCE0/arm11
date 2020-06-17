@@ -50,18 +50,23 @@ char *int_to_string(int i) {
 }
 
 void go_to_correct_answer(GtkWidget *whatever, data *myData) {
-    myData->quizScore += 1;
-    gtk_label_set_text((GtkLabel *) myData->scoreLabelFromRight, int_to_string(myData->quizScore));
+    char *str = malloc(100*sizeof(char));
+    strcpy(str, "Congratulations on getting the correct answer: ");
+    strcat(str, myData->curNode->u.question->answers[0]);
+    gtk_label_set_text((GtkLabel *) myData->scoreLabelFromRight, str);
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "correct_answer_page");
 }
 
 void go_to_wrong_answer(GtkWidget *widget, data *myData) {
-    gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, int_to_string(myData->quizScore));
+    char *str = malloc(100*sizeof(char));
+    strcpy(str, "Correct answer is: ");
+    strcat(str, myData->curNode->u.question->answers[0]);
+    gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "wrong_answer_page");
 }
 
 void open_blm_site(void) {
-    system("www.blacklivesmatter.com");
+    gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/", GDK_CURRENT_TIME, NULL);
 }
 
 GCallback check_answer(int i){
@@ -71,32 +76,18 @@ GCallback check_answer(int i){
     return (GCallback) &go_to_wrong_answer;
 }
 
-int *size_check(int size){
-    static int array[4];
-    if (size == 4){
-       static int array[4];
-       //return array;
-    } else if (size == 3){
-       static int array[3];
-       //return array;
-    } else {
-       static int array[2];
-       //return array;
-    }
-    return array;
-}
-
-
-int *randomise_questions(int array[], int size){
+int *randomise_questions(int size){
     int randArr[size];
+    static int* array;
+    array = malloc(size * sizeof(int));
     for (int i = 0; i < size; i++) {
         randArr[i] = i;
     }
     srand(time(0));
     for (int i = 0; i < size; i++) {
-            int r = i + rand() % (size - i);
-            array[i] = randArr[r];
-            randArr[r] = randArr[i];
+        int r = i + rand() % (size - i);
+        array[i] = randArr[r];
+        randArr[r] = randArr[i];
     }
     return array;
 }
@@ -104,7 +95,7 @@ int *randomise_questions(int array[], int size){
 void set_question(data *myData) {
     quest *question = myData->curNode->u.question;
     gtk_label_set_text((GtkLabel *) myData->questionLabel, question->que);
-    int *random = randomise_questions(size_check(question->answerNum), question->answerNum);
+    int *random = randomise_questions(question->answerNum);
     if (question->answerNum <= 3) {
         gtk_widget_set_sensitive(myData->answerD, false);
 		if (question->answerNum == 2) {
@@ -151,25 +142,16 @@ void begin_quiz(GtkWidget *widget, data *myData) {
 }
 
 
-
-// void check_answer(GtkButton *button, GtkButton *answer_button, data *myData) {
-//     const char *user_answer = gtk_button_get_label(button);
-//     const char *answer = gtk_button_get_label(answer_button);
-//     if (strcmp(user_answer, answer)) {
-//         go_to_correct_answer(button, myData);
-//     } else {
-//         go_to_wrong_answer(button, myData);
-//     }
-// }
-
 const char *get_label(GtkButton *button) {
     return gtk_button_get_label(button);
 }
 
 void advance_right_question(GtkButton *button, data *myData, quest *question) {
     //Moves to harder next question.
+    myData->quizScore += 1;
     myData->currentQuestion += 1;
     if (myData->currentQuestion == myData->maxQuestions) {
+        printf("%d score\n", myData->quizScore);
         go_to_about_us((GtkWidget *) button, myData);
         return;
     }
@@ -182,6 +164,7 @@ void advance_left_question(GtkButton *button, data *myData, quest *question) {
     //Move to easier next question.
     myData->currentQuestion += 1;
     if (myData->currentQuestion == myData->maxQuestions) {
+        printf("%d score\n", myData->quizScore);
         go_to_about_us((GtkWidget *) button, myData);
         return;
     }
