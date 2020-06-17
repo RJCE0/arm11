@@ -4,7 +4,12 @@
 #include <stdbool.h>
 
 typedef struct {
-  int pixel;
+  //int pixel;
+  char *q;
+  unsigned char *qImage;
+  unsigned char *qAnsImage;
+  bool guesses[9];
+  bool ans[9];
 } image;
 
 typedef struct {
@@ -163,4 +168,5 @@ int main(int argc, char **argv) {
   print_answers(curr->prev->u.question);
   return 0;
 }
+
 */

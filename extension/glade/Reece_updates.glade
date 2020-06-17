@@ -36,7 +36,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <signal name="clicked" handler="begin_quiz" swapped="no"/>
+                    <signal name="clicked" handler="go_to_question_page" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -173,19 +173,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="tags_label">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">center</property>
-                    <property name="valign">center</property>
-                    <property name="hexpand">True</property>
-                    <property name="vexpand">True</property>
-                    <property name="justify">center</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">1</property>
-                  </packing>
+                  <placeholder/>
                 </child>
                 <child>
                   <placeholder/>
@@ -198,7 +186,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="about_us_page">
+              <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
@@ -269,7 +257,6 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <signal name="clicked" handler="advance_right_question" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -277,15 +264,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="current_score_label_correct">
-                    <property name="name">current_score_label_correct</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">1</property>
-                  </packing>
+                  <placeholder/>
                 </child>
                 <child>
                   <placeholder/>
@@ -298,117 +277,9 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 </child>
               </object>
               <packing>
-                <property name="name">correct_answer_page</property>
+                <property name="name">page4</property>
                 <property name="title" translatable="yes">page4</property>
                 <property name="position">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid" id="picture_quiz_page">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-              </object>
-              <packing>
-                <property name="name">picture_quiz_page</property>
-                <property name="title" translatable="yes">page0</property>
-                <property name="position">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid" id="wrong_answer_page">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="row_homogeneous">True</property>
-                <property name="column_homogeneous">True</property>
-                <child>
-                  <object class="GtkLabel" id="wrong_answer_label">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Wrong Answer!</property>
-                    <attributes>
-                      <attribute name="foreground" value="#cccc00000000"/>
-                    </attributes>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="continue_button">
-                    <property name="label" translatable="yes">Continue</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <signal name="clicked" handler="advance_left_question" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="current_score_label_wrong">
-                    <property name="name">current_score_label_wrong</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">label</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-              </object>
-              <packing>
-                <property name="name">wrong_answer_page</property>
-                <property name="title" translatable="yes">page0</property>
-                <property name="position">5</property>
               </packing>
             </child>
             <child>
@@ -608,7 +479,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
               <packing>
                 <property name="name">PicQ1</property>
                 <property name="title" translatable="yes">PicQ1</property>
-                <property name="position">6</property>
+                <property name="position">4</property>
               </packing>
             </child>
             <child>
@@ -677,7 +548,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
               <packing>
                 <property name="name">PicQ1Ans</property>
                 <property name="title" translatable="yes">PicQ1Ans</property>
-                <property name="position">7</property>
+                <property name="position">5</property>
               </packing>
             </child>
             <child>
@@ -877,7 +748,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
               <packing>
                 <property name="name">PicQ2</property>
                 <property name="title" translatable="yes">PicQ2</property>
-                <property name="position">8</property>
+                <property name="position">6</property>
               </packing>
             </child>
             <child>
@@ -945,7 +816,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
               <packing>
                 <property name="name">PicQ2Ans</property>
                 <property name="title" translatable="yes">PicQ2Ans</property>
-                <property name="position">9</property>
+                <property name="position">7</property>
               </packing>
             </child>
           </object>
