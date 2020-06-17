@@ -11,8 +11,22 @@ typedef struct {
     GtkWidget *answerB;
     GtkWidget *answerC;
     GtkWidget *answerD;
-
+    tickBoxes *t;
 } data;
+
+typedef struct{
+    GtkWidget *tickBox1;
+    GtkWidget *tickBox2;
+    GtkWidget *tickBox3;
+    GtkWidget *tickBox4;
+    GtkWidget *tickBox5;
+    GtkWidget *tickBox6;
+    GtkWidget *tickBox7;
+    GtkWidget *tickBox8;
+    GtkWidget *tickBox9;
+} tickBoxes;
+
+
 
 // called when window is closed
 void on_window_main_destroy(void)
@@ -38,6 +52,23 @@ void go_to_correct_answer(GtkWidget *whatever, data *myData) {
     score++;
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "correct_answer_page");
     //sprintf(str_count, "Your score is now %d!", score);
+}
+
+void go_to_picQ1(GtkWidget *whatever, data *myData) {
+    gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ1");
+    gtk_stack_set_visible_child_name (
+}
+
+void go_to_picQ1Ans(GtkWidget *whatever, data *myData) {
+    gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ1Ans");
+}
+
+void go_to_picQ2(GtkWidget *whatever, data *myData) {
+    gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ2");
+}
+
+void go_to_picQ2Ans(GtkWidget *whatever, data *myData) {
+    gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ2Ans");
 }
 
 void open_blm_site(void) {
@@ -68,6 +99,11 @@ void set_question(char *question, char *answerA, char *answerB, char *answerC, c
 
 }
 */
+
+void show_pic_question(image *img, data *myData){
+
+
+}
 
 
 void set_question(quest *question, data *myData) {
