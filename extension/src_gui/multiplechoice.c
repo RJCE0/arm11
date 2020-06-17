@@ -106,16 +106,15 @@ node *read_file(char *fileName, int *questionNum){
   char str[511];
   while (fgets(str, 511, file)) {
       if (check_question(str)) {
-        node *value = create_node(strtok(str, "Q:"));
+        node *value = create_node(str + 2);
         linked_question(curr, value);
         curr = value;
         *questionNum += 1;
       } else {
-        add_answers(curr->u.question, strtok(str, "A:"));      }
+        add_answers(curr->u.question, str + 2);      }
       line++;
   }
   fclose(file);
-  printf("Lines-%d\n", line);
   return curr;
 }
 
@@ -125,13 +124,14 @@ void print_answers(quest *curr){
   }
 }
 
-node *initialise_questions(void){
+node *initialise_questions(int *maxQuestions){
   int questionNum = 0;
   node *curr = read_file("src_gui/testfile.txt", &questionNum);
   for (int i = 0; i < questionNum/2; i++) {
     curr = curr->prev;
   }
-    return curr;
+  *maxQuestions = questionNum/2 + questionNum % 2;
+  return curr;
 }
 
 quest *get_left_as_question(node *curr){

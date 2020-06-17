@@ -18,6 +18,8 @@ typedef struct {
     GtkWidget *answerD;
     node *curNode;
     int quizScore;
+    int maxQuestions;
+    int currentQuestion;
 } data;
 
 // called when window is closed
@@ -111,9 +113,10 @@ void set_question(data *myData) {
             gtk_widget_set_sensitive(myData->answerC, true);
         }
     } else {
+        gtk_widget_set_sensitive(myData->answerC, true);
         gtk_widget_set_sensitive(myData->answerD, true);
     }
-    // void (*correct_ptr) (GtkWidget *, data) = &go_to_correct_answer;
+
     gtk_button_set_label((GtkButton *) myData->answerA, question->answers[random[0]]);
     gtk_button_set_label((GtkButton *) myData->answerB, question->answers[random[1]]);
 
@@ -131,7 +134,7 @@ void set_question(data *myData) {
         gtk_button_set_label((GtkButton *) myData->answerD, "");
     }
     g_signal_connect(myData->answerA, "clicked", check_answer(random[0]), myData);
-    g_signal_connect(myData->answerB, "clicked", check_answer(random[1]),myData);
+    g_signal_connect(myData->answerB, "clicked", check_answer(random[1]), myData);
 
     char *str = get_tags(question->que);
     gtk_label_set_text((GtkLabel *) myData->tagsLabel, str);
@@ -139,7 +142,10 @@ void set_question(data *myData) {
 
 
 void begin_quiz(GtkWidget *widget, data *myData) {
-    myData->curNode = initialise_questions();
+    int maxQuestions;
+    myData->curNode = initialise_questions(&maxQuestions);
+    myData->maxQuestions = maxQuestions;
+    myData->currentQuestion = 0;
     set_question(myData);
     go_to_question_page(widget, myData);
 }
@@ -162,6 +168,11 @@ const char *get_label(GtkButton *button) {
 
 void advance_right_question(GtkButton *button, data *myData, quest *question) {
     //Moves to harder next question.
+    myData->currentQuestion += 1;
+    if (myData->currentQuestion == myData->maxQuestions) {
+        go_to_about_us((GtkWidget *) button, myData);
+        return;
+    }
     myData->curNode = get_right(myData->curNode);
     set_question(myData);
     go_to_question_page((GtkWidget *) button, myData);
@@ -169,6 +180,11 @@ void advance_right_question(GtkButton *button, data *myData, quest *question) {
 
 void advance_left_question(GtkButton *button, data *myData, quest *question) {
     //Move to easier next question.
+    myData->currentQuestion += 1;
+    if (myData->currentQuestion == myData->maxQuestions) {
+        go_to_about_us((GtkWidget *) button, myData);
+        return;
+    }
     myData->curNode = get_left(myData->curNode);
     set_question(myData);
     go_to_question_page((GtkWidget *) button, myData);
@@ -203,6 +219,7 @@ int main(int argc, char *argv[]) {
 
     gtk_widget_show(window);
     gtk_main();
+    printf("finished\n");
 
     return 0;
 }
