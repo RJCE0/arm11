@@ -115,13 +115,18 @@ void open_blm_site(void) {
 }
 
 void go_to_correct_answer(GtkWidget *whatever, data *myData) {
-    myData->quizScore += 1;
-    gtk_label_set_text((GtkLabel *) myData->scoreLabelFromRight, int_to_string(myData->quizScore));
+    char *str = malloc(100*sizeof(char));
+    strcpy(str, "Congratulations on getting the correct answer: ");
+    strcat(str, myData->curNode->u.question->answers[0]);
+    gtk_label_set_text((GtkLabel *) myData->scoreLabelFromRight, str);
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "correct_answer_page");
 }
 
 void go_to_wrong_answer(GtkWidget *widget, data *myData) {
-    gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, int_to_string(myData->quizScore));
+    char *str = malloc(100*sizeof(char));
+    strcpy(str, "Correct answer is: ");
+    strcat(str, myData->curNode->u.question->answers[0]);
+    gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "wrong_answer_page");
 }
 
@@ -136,7 +141,7 @@ void begin_quiz(GtkWidget *widget, data *myData) {
 }
 
 void open_blm_site(void) {
-    system("www.blacklivesmatter.com");
+    gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/", GDK_CURRENT_TIME, NULL);
 }
 
 GCallback check_answer(int i){
@@ -146,32 +151,18 @@ GCallback check_answer(int i){
     return (GCallback) &go_to_wrong_answer;
 }
 
-int *size_check(int size){
-    static int array[4];
-    if (size == 4){
-       static int array[4];
-       //return array;
-    } else if (size == 3){
-       static int array[3];
-       //return array;
-    } else {
-       static int array[2];
-       //return array;
-    }
-    return array;
-}
-
-
-int *randomise_questions(int array[], int size){
+int *randomise_questions(int size){
     int randArr[size];
+    static int* array;
+    array = malloc(size * sizeof(int));
     for (int i = 0; i < size; i++) {
         randArr[i] = i;
     }
     srand(time(0));
     for (int i = 0; i < size; i++) {
-            int r = i + rand() % (size - i);
-            array[i] = randArr[r];
-            randArr[r] = randArr[i];
+        int r = i + rand() % (size - i);
+        array[i] = randArr[r];
+        randArr[r] = randArr[i];
     }
     return array;
 }
@@ -179,7 +170,7 @@ int *randomise_questions(int array[], int size){
 void set_question(data *myData) {
     quest *question = myData->curNode->u.question;
     gtk_label_set_text((GtkLabel *) myData->questionLabel, question->que);
-    int *random = randomise_questions(size_check(question->answerNum), question->answerNum);
+    int *random = randomise_questions(question->answerNum);
     if (question->answerNum <= 3) {
         gtk_widget_set_sensitive(myData->answerD, false);
 		if (question->answerNum == 2) {
@@ -188,9 +179,10 @@ void set_question(data *myData) {
             gtk_widget_set_sensitive(myData->answerC, true);
         }
     } else {
+        gtk_widget_set_sensitive(myData->answerC, true);
         gtk_widget_set_sensitive(myData->answerD, true);
     }
-    // void (*correct_ptr) (GtkWidget *, data) = &go_to_correct_answer;
+
     gtk_button_set_label((GtkButton *) myData->answerA, question->answers[random[0]]);
     gtk_button_set_label((GtkButton *) myData->answerB, question->answers[random[1]]);
 
@@ -208,7 +200,7 @@ void set_question(data *myData) {
         gtk_button_set_label((GtkButton *) myData->answerD, "");
     }
     g_signal_connect(myData->answerA, "clicked", check_answer(random[0]), myData);
-    g_signal_connect(myData->answerB, "clicked", check_answer(random[1]),myData);
+    g_signal_connect(myData->answerB, "clicked", check_answer(random[1]), myData);
 
     char *str = get_tags(question->que);
     gtk_label_set_text((GtkLabel *) myData->tagsLabel, str);
@@ -216,22 +208,14 @@ void set_question(data *myData) {
 
 
 void begin_quiz(GtkWidget *widget, data *myData) {
-    myData->curNode = initialise_questions();
+    int maxQuestions;
+    myData->curNode = initialise_questions(&maxQuestions);
+    myData->maxQuestions = maxQuestions;
+    myData->currentQuestion = 0;
     set_question(myData);
     go_to_question_page(widget, myData);
 }
 
-
-
-// void check_answer(GtkButton *button, GtkButton *answer_button, data *myData) {
-//     const char *user_answer = gtk_button_get_label(button);
-//     const char *answer = gtk_button_get_label(answer_button);
-//     if (strcmp(user_answer, answer)) {
-//         go_to_correct_answer(button, myData);
-//     } else {
-//         go_to_wrong_answer(button, myData);
-//     }
-// }
 
 const char *get_label(GtkButton *button) {
     return gtk_button_get_label(button);
@@ -330,6 +314,7 @@ int main(int argc, char *argv[]) {
 
     gtk_widget_show(window);
     gtk_main();
+    printf("finished\n");
 
     return 0;
 }
