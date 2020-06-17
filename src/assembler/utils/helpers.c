@@ -8,15 +8,15 @@ bool is_reg(const char *str) {
     return *str == 'r';
 }
 
-bool is_imm(const char *str){
+bool is_imm(const char *str) {
     return *str == '#';
 }
 
-bool check_negative_imm(const char *str){
+bool check_negative_imm(const char *str) {
     return *(str + 1) == '-';
 }
 
-bool check_negative_reg(const char *str){
+bool check_negative_reg(const char *str) {
     return *str == '-';
 }
 
@@ -33,18 +33,18 @@ int get_immediate(const char *str) {
     return strtol(str + 1, NULL, base);
 }
 
-void check_pre_index(const char *str, uint32_t *preIndexBit){
+void check_pre_index(const char *str, uint32_t *preIndexBit) {
     while (*str) {
         if (*str++ == ']') {
             *preIndexBit = 0;
         }
-	}
+    }
 }
 
 uint32_t get_label_address(labelInfo *labels, char *str, int size) {
     for (int i = 0; i < size; i++) {
         if (strcmp(labels[i].s, str) == 0) {
-          return labels[i].i;
+            return labels[i].i;
         }
     }
     fprintf(stderr, "Labels does not exist.\n");
@@ -58,11 +58,11 @@ void split_on_commas(char *str, instruction *instr) {
     while (word) {
         strcpy(instr->args[count], word);
         count++;
-		word = strtok(NULL, ", ");
+        word = strtok(NULL, ", ");
     }
-	instr->argSize = count;
+    instr->argSize = count;
 }
 
-void set_instruction(uint32_t *decoded, int pc, uint32_t result){
-	decoded[pc/4] = result;
+void set_instruction(uint32_t *decoded, int pc, uint32_t result) {
+    decoded[pc / 4] = result;
 }

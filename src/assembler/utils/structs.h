@@ -12,7 +12,7 @@ typedef struct {
 typedef struct {
     labelInfo *labels;
     int lines;
-	int labelCount;
+    int labelCount;
 } firstFile;
 
 typedef struct {
@@ -37,7 +37,7 @@ typedef struct {
         branchType condCode;
     } u;
     char **args;
-	int argSize;
+    int argSize;
 } instruction;
 
 typedef struct {

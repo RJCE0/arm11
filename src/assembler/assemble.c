@@ -23,7 +23,7 @@ void operand2_checker(char **args, uint32_t *operand2, uint32_t *immediate, int 
         *immediate = IMM_BIT;
         uint32_t imm = get_immediate(args[0]);
         uint32_t rotate = 0;
-		// opposite of rotate right so its a rotate left
+        // opposite of rotate right so its a rotate left
         while (imm & 0xFFFFFF00) {
             imm = imm << 2 | imm >> 30;
             rotate += 1;
@@ -46,22 +46,22 @@ void data_processing(instruction *instr, state *curr) {
     if (instr->u.opcode == 13) {
         rd = get_reg_num(args[0]) << 12;
         argOffset = 1;
-    // for tst, teq and cmp
+        // for tst, teq and cmp
     } else if ((instr->u.opcode <= 10) && (instr->u.opcode >= 8)) {
         rn = get_reg_num(args[0]) << 16;
         setBit = DPI_S_BIT;
         argOffset = 1;
-    // all other cases
+        // all other cases
     } else {
         rd = get_reg_num(args[0]) << 12;
         rn = get_reg_num(args[1]) << 16;
         argOffset = 2;
     }
     operand2_checker(args + argOffset, &operand2, &immediate,
-        instr->argSize - argOffset);
+                     instr->argSize - argOffset);
     uint32_t result = AL_COND | immediate | opcode | setBit | rn | rd |
-    operand2;
-	set_instruction(curr->decoded, curr->pc, result);
+                      operand2;
+    set_instruction(curr->decoded, curr->pc, result);
 }
 
 
@@ -74,7 +74,7 @@ void multiply(instruction *instr, state *curr) {
     uint32_t rm = get_reg_num(args[1]);
     uint32_t rs = get_reg_num(args[2]) << 8;
     uint32_t result = AL_COND | accBit | rd | rn | rs | MULTIPLY_CONST | rm;
-	set_instruction(curr->decoded, curr->pc, result);
+    set_instruction(curr->decoded, curr->pc, result);
 }
 
 void single_data_transfer(instruction *instr, state *curr) {
@@ -103,18 +103,18 @@ void single_data_transfer(instruction *instr, state *curr) {
             rn = 0xF << 16;
             // appended to end of decoded instructions array
             curr->decoded = store_exp(curr->decoded, &curr->lastInstr,
-                expression);
+                                      expression);
         }
     }
-    // [Rn] case
-    // only other case with only two arguments
+        // [Rn] case
+        // only other case with only two arguments
     else if (instr->argSize == 2) {
         // +1 to ignore first square bracket in string
         rn = get_reg_num(args[1] + 1) << 16;
     } else {
         // checks whether this is the pre-indexed case or
         // post based on trailing ']'
-		check_pre_index(args[1], &preIndexBit);
+        check_pre_index(args[1], &preIndexBit);
         rn = get_reg_num(args[1] + 1) << 16;
         // checks whether reg or immediate
         if (is_reg(args[2])) {
@@ -138,7 +138,7 @@ void single_data_transfer(instruction *instr, state *curr) {
     }
 
     uint32_t result = AL_COND | SDT_CONST | immBit | preIndexBit | upBit |
-        loadBit | rn | rd  | offset;
+                      loadBit | rn | rd | offset;
     set_instruction(curr->decoded, curr->pc, result);
 }
 
@@ -168,7 +168,7 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
     file = fopen(inputFileName, "r");
     if (!file) {
         perror("File not found:");
-		exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
         return;
     }
     int line = 0;
@@ -177,19 +177,19 @@ void read_file_first(firstFile *firstRead, char *inputFileName) {
     while (fgets(str, MAX_LINE, file)) {
         if (str[strlen(str) - 2] == ':') {
             str[strlen(str) - 2] = '\0';
-			firstRead->labels = realloc_labels(firstRead->labels, labelCount);
+            firstRead->labels = realloc_labels(firstRead->labels, labelCount);
             strcpy(firstRead->labels[labelCount].s, str);
             firstRead->labels[labelCount].i = (line - labelCount) * 4;
             labelCount++;
         }
         if (*str != '\n') {
-          line++;
+            line++;
         }
 
     }
     fclose(file);
     firstRead->lines = line - labelCount;
-	firstRead->labelCount = labelCount;
+    firstRead->labelCount = labelCount;
 }
 
 void read_file_second(state *curr, char *inputFileName) {
@@ -197,16 +197,16 @@ void read_file_second(state *curr, char *inputFileName) {
     file = fopen(inputFileName, "r");
     if (!file) {
         perror("File not found:");
-		exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
     instruction *instr = initalise_instruction();
     char str[MAX_LINE];
     char *argsInInstruction;
-	char *ptrToFirstSpace;
+    char *ptrToFirstSpace;
     while (fgets(str, MAX_LINE, file)) {
         ptrToFirstSpace = strchr(str, ' ');
-		// will skip instruction if label as that is accounted for in branch
-		// and first read
+        // will skip instruction if label as that is accounted for in branch
+        // and first read
         if (!ptrToFirstSpace) {
             continue;
         }
@@ -220,23 +220,23 @@ void read_file_second(state *curr, char *inputFileName) {
         }
         abstract_type[abstractData](instr, curr);
         if (!curr->decoded[curr->pc / 4]) {
-		    break;
-		}
-		curr->pc += 4;
+            break;
+        }
+        curr->pc += 4;
     }
     fclose(file);
     free_instruction(instr);
 }
 
-void write_file(state *curr, char *fileName){
-	FILE *binFile;
-	binFile = fopen(fileName, "wb");
+void write_file(state *curr, char *fileName) {
+    FILE *binFile;
+    binFile = fopen(fileName, "wb");
     if (!binFile) {
         perror("File not found:");
-		exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
-	fwrite(curr->decoded, sizeof(uint32_t), curr->lastInstr, binFile);
-	fclose(binFile);
+    fwrite(curr->decoded, sizeof(uint32_t), curr->lastInstr, binFile);
+    fclose(binFile);
 }
 
 int main(int argc, char **argv) {
