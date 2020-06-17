@@ -308,6 +308,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="decrement_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">120</property>
@@ -340,6 +341,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">350</property>
@@ -355,6 +357,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">580</property>
@@ -370,6 +373,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="decrement_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">120</property>
@@ -385,6 +389,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">120</property>
@@ -400,6 +405,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="decrement_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">350</property>
@@ -415,6 +421,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">580</property>
@@ -430,6 +437,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="decrement_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">350</property>
@@ -445,16 +453,32 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">580</property>
                     <property name="y">390</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkButton" id="submit_button">
+                    <property name="label" translatable="yes">submit</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">0</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="go_to_picQ1Ans" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">700</property>
+                    <property name="y">400</property>
+                  </packing>
+                </child>
               </object>
               <packing>
-                <property name="name">page0</property>
-                <property name="title" translatable="yes">page0</property>
+                <property name="name">PicQ1</property>
+                <property name="title" translatable="yes">PicQ1</property>
                 <property name="position">4</property>
               </packing>
             </child>
@@ -476,21 +500,6 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">1.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">330</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkLabel">
                     <property name="width_request">100</property>
                     <property name="height_request">27</property>
@@ -508,129 +517,37 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">2.</property>
+                  <object class="GtkButton" id="Continue_button">
+                    <property name="label" translatable="yes">Continue</property>
                     <property name="width_request">50</property>
-                    <property name="height_request">30</property>
+                    <property name="height_request">0</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="go_to_picQ2" swapped="no"/>
                   </object>
                   <packing>
-                    <property name="x">350</property>
-                    <property name="y">330</property>
+                    <property name="x">670</property>
+                    <property name="y">400</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">3.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
+                  <object class="GtkLabel" id="Score1">
+                    <property name="width_request">100</property>
+                    <property name="height_request">80</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">label</property>
                   </object>
                   <packing>
-                    <property name="x">580</property>
-                    <property name="y">330</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">4.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">7.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">390</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">5.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">350</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">6.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">580</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">8.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">350</property>
-                    <property name="y">390</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">9.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">580</property>
-                    <property name="y">390</property>
+                    <property name="x">320</property>
+                    <property name="y">370</property>
                   </packing>
                 </child>
               </object>
               <packing>
-                <property name="name">page1</property>
-                <property name="title" translatable="yes">page1</property>
+                <property name="name">PicQ1Ans</property>
+                <property name="title" translatable="yes">PicQ1Ans</property>
                 <property name="position">5</property>
               </packing>
             </child>
@@ -652,21 +569,6 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">1.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">330</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkLabel">
                     <property name="width_request">100</property>
                     <property name="height_request">27</property>
@@ -684,112 +586,22 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">2.</property>
+                  <object class="GtkButton" id="submit_button2">
+                    <property name="label" translatable="yes">submit</property>
                     <property name="width_request">50</property>
-                    <property name="height_request">30</property>
+                    <property name="height_request">0</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="go_to_picQ2Ans" swapped="no"/>
                   </object>
                   <packing>
-                    <property name="x">350</property>
-                    <property name="y">330</property>
+                    <property name="x">700</property>
+                    <property name="y">400</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">3.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">580</property>
-                    <property name="y">330</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">4.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">7.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">390</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">5.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">350</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">6.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">580</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">8.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">350</property>
-                    <property name="y">390</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
+                  <object class="GtkCheckButton" id="2ndCheck9">
                     <property name="label" translatable="yes">9.</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
@@ -797,16 +609,145 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">580</property>
                     <property name="y">390</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkCheckButton" id="2ndCheck6">
+                    <property name="label" translatable="yes">6.</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">580</property>
+                    <property name="y">360</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="2ndCheck3">
+                    <property name="label" translatable="yes">3.</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">580</property>
+                    <property name="y">330</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="2ndCheck8">
+                    <property name="label" translatable="yes">8.</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">350</property>
+                    <property name="y">390</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="2ndCheck5">
+                    <property name="label" translatable="yes">5.</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">350</property>
+                    <property name="y">360</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="2ndCheck2">
+                    <property name="label" translatable="yes">2.</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">350</property>
+                    <property name="y">330</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="2ndCheck7">
+                    <property name="label" translatable="yes">7.</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">120</property>
+                    <property name="y">390</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="2ndCheck4">
+                    <property name="label" translatable="yes">4.</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">120</property>
+                    <property name="y">360</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="2ndCheck1">
+                    <property name="label" translatable="yes">1.</property>
+                    <property name="width_request">50</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="increment_score" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="x">120</property>
+                    <property name="y">330</property>
+                  </packing>
+                </child>
               </object>
               <packing>
-                <property name="name">page3</property>
-                <property name="title" translatable="yes">page3</property>
+                <property name="name">PicQ2</property>
+                <property name="title" translatable="yes">PicQ2</property>
                 <property name="position">6</property>
               </packing>
             </child>
@@ -828,21 +769,6 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">1.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">330</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkLabel">
                     <property name="width_request">100</property>
                     <property name="height_request">27</property>
@@ -860,137 +786,38 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">2.</property>
+                  <object class="GtkButton" id="Continue_button2">
+                    <property name="label" translatable="yes">Continue</property>
                     <property name="width_request">50</property>
-                    <property name="height_request">30</property>
+                    <property name="height_request">0</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
+                    <property name="receives_default">True</property>
                   </object>
                   <packing>
-                    <property name="x">350</property>
-                    <property name="y">330</property>
+                    <property name="x">670</property>
+                    <property name="y">400</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">3.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
+                  <object class="GtkLabel" id="Score">
+                    <property name="width_request">100</property>
+                    <property name="height_request">80</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">label</property>
                   </object>
                   <packing>
-                    <property name="x">580</property>
-                    <property name="y">330</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">4.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">7.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">120</property>
-                    <property name="y">390</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">5.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">350</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">6.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">580</property>
-                    <property name="y">360</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">8.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">350</property>
-                    <property name="y">390</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton">
-                    <property name="label" translatable="yes">9.</property>
-                    <property name="width_request">50</property>
-                    <property name="height_request">30</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="x">580</property>
-                    <property name="y">390</property>
+                    <property name="x">320</property>
+                    <property name="y">370</property>
                   </packing>
                 </child>
               </object>
               <packing>
-                <property name="name">page5</property>
-                <property name="title" translatable="yes">page5</property>
+                <property name="name">PicQ2Ans</property>
+                <property name="title" translatable="yes">PicQ2Ans</property>
                 <property name="position">7</property>
               </packing>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
             </child>
           </object>
           <packing>

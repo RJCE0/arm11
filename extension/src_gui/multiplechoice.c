@@ -4,7 +4,12 @@
 #include <stdbool.h>
 
 typedef struct {
-  int pixel;
+  //int pixel;
+  char *q;
+  unsigned char *qImage;
+  unsigned char *qAnsImage;
+  bool guesses[9];
+  bool ans[9];
 } image;
 
 typedef struct {
@@ -125,13 +130,14 @@ void print_answers(quest *curr){
   }
 }
 
-node *initialise_questions(void){
+node *initialise_questions(int *maxQuestions){
   int questionNum = 0;
   node *curr = read_file("src_gui/testfile.txt", &questionNum);
   for (int i = 0; i < questionNum/2; i++) {
     curr = curr->prev;
   }
-    return curr;
+  *maxQuestions = questionNum/2;
+  return curr;
 }
 
 quest *get_left_as_question(node *curr){
@@ -163,4 +169,5 @@ int main(int argc, char **argv) {
   print_answers(curr->prev->u.question);
   return 0;
 }
+
 */
