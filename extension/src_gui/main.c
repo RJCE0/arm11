@@ -31,7 +31,7 @@ typedef struct {
     GtkWidget *picQ1;
     GtkWidget *picQ1Ans;
     GtkWidget *picQ2;
-    GtkWidget *picQ2Ans;    
+    GtkWidget *picQ2Ans;
     tickBoxes *q1Boxes;
     tickBoxes *q2Boxes;
     node *curNode;
@@ -40,26 +40,9 @@ typedef struct {
     int currentQuestion;
 } data;
 
-/*typedef struct {
-    GtkWidget *stack;
-    GtkWidget *questionLabel;
-    GtkWidget *scoreLabelFromWrong;
-    GtkWidget *scoreLabelFromRight;
-    GtkWidget *tagsLabel;
-    GtkWidget *answerA;
-    GtkWidget *answerB;
-    GtkWidget *answerC;
-    GtkWidget *answerD;
-    node *curNode;
-    int quizScore;
-    int maxQuestions;
-    int currentQuestion;
-} data;
-*/
-
 
 void decrement_score(GtkWidget *tickbox, data *myData) {
-    myData->quizScore = ((myData->quizScore - 1) <= 0) ? 0 : (myData->quizScore)--; 
+    myData->quizScore = ((myData->quizScore - 1) <= 0) ? 0 : (myData->quizScore)--;
 }
 
 void increment_score(GtkWidget *tickbox, data *myData) {
@@ -71,8 +54,6 @@ void increment_score(GtkWidget *tickbox, data *myData) {
 void on_window_main_destroy(void) {
     gtk_main_quit();
 }
-
-//yo reece ngl i cant see the image struct looool
 
 void go_to_home(GtkWidget *whatever, data *myData) {
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "home_page");
@@ -110,10 +91,6 @@ void go_to_picQ2Ans(GtkWidget *whatever, data *myData) {
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ2Ans");
 }
 
-void open_blm_site(void) {
-    system("www.blacklivesmatter.com");
-}
-
 void go_to_correct_answer(GtkWidget *whatever, data *myData) {
     char *str = malloc(100*sizeof(char));
     strcpy(str, "Congratulations on getting the correct answer: ");
@@ -128,16 +105,6 @@ void go_to_wrong_answer(GtkWidget *widget, data *myData) {
     strcat(str, myData->curNode->u.question->answers[0]);
     gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "wrong_answer_page");
-}
-
-
-void begin_quiz(GtkWidget *widget, data *myData) {
-    int maxQuestions;
-    myData->curNode = initialise_questions(&maxQuestions);
-    myData->maxQuestions = maxQuestions;
-    myData->currentQuestion = 0;
-    set_question(myData);
-    go_to_question_page(widget, myData);
 }
 
 void open_blm_site(void) {
@@ -223,6 +190,7 @@ const char *get_label(GtkButton *button) {
 
 void advance_right_question(GtkButton *button, data *myData, quest *question) {
     //Moves to harder next question.
+    myData->quizScore += 1;
     myData->currentQuestion += 1;
     if (myData->currentQuestion == myData->maxQuestions) {
         go_to_picQ1((GtkWidget *) button, myData);
@@ -274,7 +242,7 @@ void q2_initialise_tickboxes(tickBoxes *t, GtkBuilder *builder) {
 }
 
 int main(int argc, char *argv[]) {
-    
+
 
     GtkBuilder      *builder;
     GtkWidget       *window;

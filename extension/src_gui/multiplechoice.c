@@ -49,26 +49,13 @@ node *create_node(char *str){
   strcpy(value->que, str);
   value->answerNum = 0;
   value->answers = (char **) malloc(1 * sizeof(char *));
-  node *new_node = (node *) malloc(sizeof(node));
-  new_node->next = NULL;
-  new_node->prev = NULL;
-  new_node->u.question = value;
-  return new_node;
+  node *newNode = (node *) malloc(sizeof(node));
+  newNode->next = NULL;
+  newNode->prev = NULL;
+  newNode->u.question = value;
+  return newNode;
 
 }
-
-/*
-quest *create_question(char *str){
-  quest *value = (quest *) malloc(sizeof(quest));
-  value->que = (char *) malloc(100 * sizeof(char));
-  strcpy(value->que, str);
-  value->answerNum = 0;
-  value->next = NULL;
-  value->prev = NULL;
-  value->answers = (char **) malloc(1 * sizeof(char *));
-  return value;
-}
-*/
 
 void linked_question(node *curr, node *next){
   next->prev = curr;
@@ -125,7 +112,7 @@ node *read_file(char *fileName, int *questionNum){
 
 void print_answers(quest *curr){
   for (int i = 0; i < curr->answerNum; i++) {
-    printf("Answer%d:%s", i+1, curr->answers[i]);
+    printf("Answer%d:%s", i + 1, curr->answers[i]);
   }
 }
 
@@ -137,16 +124,6 @@ node *initialise_questions(int *maxQuestions){
   }
   *maxQuestions = questionNum/2 + questionNum % 2;
   return curr;
-}
-
-quest *get_left_as_question(node *curr){
-  remove_current(curr);
-  return curr->prev->u.question;
-}
-
-quest *get_right_as_question(node *curr){
-  remove_current(curr);
-  return curr->next->u.question;
 }
 
 /*
