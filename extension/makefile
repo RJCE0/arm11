@@ -18,14 +18,14 @@ GTKLIB=`pkg-config --cflags --libs gtk+-3.0`
 
 # linker
 LD=gcc
-LDFLAGS=$(PTHREAD) $(GTKLIB) #-export-dynamic
+LDFLAGS=$(PTHREAD) $(GTKLIB) -export-dynamic
 
 OBJS=    main.o
 
 all: $(OBJS)
 	$(LD) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-main.o: src_gui/main.c src_gui/multiplechoice.c
+main.o: src_gui/main.c src_gui/multiplechoice.c src_gui/generatetags.c
 	$(CC) -c $(CCFLAGS) src_gui/main.c $(GTKLIB) -o main.o
 
 clean:

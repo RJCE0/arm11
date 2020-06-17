@@ -3,7 +3,7 @@ A:Jaimi
 A:Reece
 A:Tyrell
 A:Mazen
-Q:How old are you?
+Q:Dr. Martin Luther King, Jr.'s work during the Civil Rights Movement of the 1950s and 1960s?
 A:10
 A:12
 A:14
@@ -12,3 +12,10 @@ Q:What is the day today?
 A:Monday
 A:Friday
 A:Tuesday
+Q:What is the weather like today?
+A:Rain
+A:Sunny 
+Q:Why does strcat not work properly in C programming?
+A:YES
+B:NO
+C:MAYBE

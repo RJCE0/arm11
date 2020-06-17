@@ -49,7 +49,7 @@ node *create_node(char *str){
   new_node->prev = NULL;
   new_node->u.question = value;
   return new_node;
-  
+
 }
 
 /*
@@ -125,13 +125,13 @@ void print_answers(quest *curr){
   }
 }
 
-quest *initalise_questions(void){
-	int questionNum = 0;
+node *initialise_questions(void){
+  int questionNum = 0;
   node *curr = read_file("src_gui/testfile.txt", &questionNum);
   for (int i = 0; i < questionNum/2; i++) {
     curr = curr->prev;
   }
-	return curr->u.question;
+    return curr;
 }
 
 quest *get_left_as_question(node *curr){
