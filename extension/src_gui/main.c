@@ -267,13 +267,6 @@ void set_question(data *myData) {
     gtk_label_set_text((GtkLabel *) myData->tagsLabel, str);
 }
 
-void begin_add_quiz(GtkButton *button, data *myData) {
-    gtk_widget_set_sensitive(myData->finishAddingQuizButton, false);
-    myData->numAddedQuestions = 0;
-    myData->addedQuestions = malloc (sizeof(questionToAdd *));
-    go_to_add_quiz_page(button, myData);
-    allocate_new_question(myData);
-}
 
 void allocate_new_question(data *myData) {
     myData->addedQuestions = (questionToAdd **) realloc (myData->addedQuestions,
@@ -285,6 +278,16 @@ void allocate_new_question(data *myData) {
     myData->addedQuestions[myData->numAddedQuestions]->newAnswerCStr = malloc (500 * sizeof(char));
     myData->addedQuestions[myData->numAddedQuestions]->newAnswerDStr = malloc (500 * sizeof(char));
 }
+
+void begin_add_quiz(GtkButton *button, data *myData) {
+    gtk_widget_set_sensitive(myData->finishAddingQuizButton, false);
+    myData->numAddedQuestions = 0;
+    myData->addedQuestions = malloc (sizeof(questionToAdd *));
+    go_to_add_quiz_page(button, myData);
+    allocate_new_question(myData);
+}
+
+
 
 void free_new_question(questionToAdd *question) {
     free(question->newQuestionStr);
