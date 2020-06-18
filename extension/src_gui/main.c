@@ -168,11 +168,6 @@ void go_to_wrong_answer(GtkWidget *widget, data *myData) {
                                      "wrong_answer_page");
 }
 
-void open_blm_site(void) {
-    gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/",
-                           GDK_CURRENT_TIME, NULL);
-}
-
 GCallback check_answer(int i) {
     if (i == 0) {
         return (GCallback) & go_to_correct_answer;
@@ -243,15 +238,45 @@ void set_question(data *myData) {
     gtk_label_set_text((GtkLabel *) myData->tagsLabel, str);
 }
 
+const char *get_label(GtkWidget *button) {
+    return gtk_button_get_label((GtkButton *) button);
+}
 
 void begin_quiz(GtkWidget *widget, data *myData) {
     int maxQuestions;
-    myData->curNode = initialise_questions(&maxQuestions);
+    char *fileName = get_label(widget);
+    myData->curNode = initialise_questions(&maxQuestions, fileName);
     myData->maxQuestions = maxQuestions;
     myData->currentQuestion = 0;
     myData->quizScore = 0;
     set_question(myData);
     go_to_question_page(widget, myData);
+}
+
+void quiz_selector(GtkWidget *whatever, data *myData){
+    if (gtk_stack_get_child_by_name((GtkStack *) myData->stack, "quiz_selector")) {
+        gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "quiz_selector");
+        return;
+    }
+    int size;
+    char **labels = get_all_files(&size);
+    for (int i = 0; i < size; i++) {
+        printf("%s\n", labels[i]);
+    }
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *header = gtk_label_new ("Pick a Quiz");
+    gtk_widget_show(header);
+    gtk_box_pack_start((GtkBox *) box, header, FALSE, TRUE, 20);
+    for (int i = 0; i < size; i++) {
+        GtkWidget *button = gtk_button_new_with_label (labels[i]);
+        gtk_box_pack_start((GtkBox *) box, button, TRUE, TRUE, 0);
+        gtk_widget_show(button);
+        g_signal_connect(button, "clicked", (GCallback) &begin_quiz, myData);
+    }
+    gtk_stack_add_named((GtkStack *) myData->stack, box, "quiz_selector");
+    gtk_widget_show(box);
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
+                                     "quiz_selector");
 }
 
 void reset_checkboxes(GtkToggleButton *togglebutton, data *myData, GtkBuilder *builder){
@@ -261,8 +286,10 @@ void reset_checkboxes(GtkToggleButton *togglebutton, data *myData, GtkBuilder *b
     }
 }
 
-const char *get_label(GtkButton *button) {
-    return gtk_button_get_label(button);
+void open_blm_site(GtkWidget *whatever, data *myData) {
+    quiz_selector(whatever, myData);
+    //gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/",
+    //                       GDK_CURRENT_TIME, NULL);
 }
 
 void advance_right_question(GtkButton *button, data *myData, quest *question) {
@@ -319,7 +346,7 @@ void q2_initialise_tickboxes(tickBoxes *t, GtkBuilder *builder) {
 }
 
 void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
-    open_blm_site();
+    open_blm_site(button, myData);
     on_window_main_destroy();
 }
 

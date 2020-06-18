@@ -105,9 +105,13 @@ void print_answers(quest *curr){
   }
 }
 
-node *initialise_questions(int *maxQuestions){
+node *initialise_questions(int *maxQuestions, char *fileName){
   int questionNum = 0;
-  node *curr = read_file("src_gui/testfile.txt", &questionNum);
+  char *directory = (char *) malloc(50*sizeof(char));
+  strcpy(directory, "src_gui/quizzes/");
+  strcat(directory, fileName);
+  printf("file:%s\n", directory);
+  node *curr = read_file(directory, &questionNum);
   for (int i = 0; i < questionNum/2; i++) {
     curr = curr->prev;
   }
@@ -115,21 +119,33 @@ node *initialise_questions(int *maxQuestions){
   return curr;
 }
 
-void get_all_files(){
+char **get_all_files(int *size){
+    char **fileNames = (char **) malloc(sizeof(char *));
     DIR *d;
+    int fileCount = 0;
 	struct dirent *dir;
-	d = opendir("quizzes");
+	d = opendir("src_gui/quizzes");
   	if (d) {
     	while ((dir = readdir(d)) != NULL) {
 			if (dir->d_type == DT_REG){
+                fileNames = (char **) realloc(fileNames, (1 + fileCount) *sizeof(char *));
+                fileNames[fileCount] = (char *) malloc(100 * sizeof(char));
+                strcpy(fileNames[fileCount], dir->d_name);
 				printf("%s\n", dir->d_name);
+                fileCount += 1;
 			}
     	}
   	closedir(d);
   	}
-  	return;
+    *size = fileCount;
+  	return fileNames;
 }
 
+/*
+int main (int argc, char **argv) {
+    get_all_files();
+}
+*/
 /*
 int main(int argc, char **argv) {
   int questionNum = 0;
