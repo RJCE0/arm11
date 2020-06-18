@@ -20,8 +20,9 @@ assemble.o: assembler/assemble.c assembler/assemble.h \
 	$(CC) $(CFLAGS) -c assembler/assemble.c
 
 
-emulate.o: emulator/emulate.c emulator/emulate.h emulator/utils/machineState.h \
-	emulator/utils/constants.h emulator/utils/instructionTypes.h
+emulate.o: emulator/emulate.c emulator/emulate.h \
+	emulator/utils/machine_state.h emulator/utils/constants.h \
+	emulator/utils/instruction_types.h
 	$(CC) $(CFLAGS) -c emulator/emulate.c
 
 clean:
