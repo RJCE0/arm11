@@ -355,6 +355,9 @@ void quiz_selector(GtkWidget *whatever, data *myData){
         printf("%s\n", labels[i]);
     }
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkWidget *header = gtk_label_new ("Pick a Quiz");
+    gtk_widget_show(header);
+    gtk_box_pack_start((GtkBox *) box, header, FALSE, TRUE, 20);
     for (int i = 0; i < size; i++) {
         GtkWidget *button = gtk_button_new_with_label (labels[i]);
         gtk_box_pack_start((GtkBox *) box, button, TRUE, TRUE, 0);
