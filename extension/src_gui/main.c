@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define MAX_CHECKBOX_ANSWERS 18
+#define MAX_CHECKBOX_ANSWERS 14
 
 typedef struct {
     GtkWidget *tickBox1;
@@ -407,13 +407,6 @@ void quiz_selector(GtkWidget *whatever, data *myData){
     gtk_widget_show(box);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
                                      "quiz_selector");
-}
-
-void reset_checkboxes(GtkToggleButton *togglebutton, data *myData, GtkBuilder *builder){
-    for(int i = 1; i <= 9; i++ ){
-        GtkWidget *widget = GTK_WIDGET(gtk_builder_get_object(builder, int_to_string(i)));
-        gtk_toggle_button_set_active (gtk_widget_get_name((GtkWidget *) int_to_string(i)), false);
-    }
 }
 
 void open_blm_site(GtkWidget *whatever, data *myData) {
