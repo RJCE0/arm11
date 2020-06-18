@@ -44,7 +44,7 @@ void read_file(machineState *state, char *filename) {
     fclose(binFile);
 }
 
-void check_register(machineState *state, uint32_t regNumber) {
+void check_valid_register(machineState *state, uint32_t regNumber) {
     if (regNumber == 13 || regNumber == 14) {
         fprintf(stderr, "Invalid register number specified, not supported or out of range. Returning NULL.");
         exit_error(state);
@@ -52,12 +52,12 @@ void check_register(machineState *state, uint32_t regNumber) {
 }
 
 uint32_t get_register(machineState *state, uint32_t regNumber) {
-    check_register(state, regNumber);
+    check_valid_register(state, regNumber);
     return state->registers[regNumber];
 }
 
 void set_register(machineState *state, uint32_t regNumber, uint32_t value) {
-    check_register(state, regNumber);
+    check_valid_register(state, regNumber);
     state->registers[regNumber] = value;
 }
 
@@ -255,7 +255,8 @@ void operand_shift_register(machineState *state, uint16_t instruction,
                 return;
             }
             uint32_t preservedSign = 0;
-            // iterates through ensuring the most significant bit is repeated for each right shift along
+            /* iterates through ensuring the most significant bit
+            is repeated for each right shift along */
             for (uint32_t i = 0; i < shiftNum; ++i) {
                 preservedSign |= signBit;
                 signBit >>= 1;
@@ -317,17 +318,20 @@ void execute_dpi(machineState *state) {
             break;
         case CMP:
         case SUB:
-            // if operand2 is less than or equal to operand1 then there won't be a borrow so carryBit = 1
+            /* if operand2 is less than or equal to operand1
+            then there won't be a borrow so carryBit = 1 */
             carryBit = operand2 <= operand1;
             result = operand1 - operand2;
             break;
         case RSB:
-            // if operand1 is less than or equal to operand2 then there won't be a borrow so carryBit = 1
+            /* if operand1 is less than or equal to operand2
+            then there won't be a borrow so carryBit = 1 */
             carryBit = operand1 <= operand2;
             result = operand2 - operand1;
             break;
         case ADD:
-            // if operand2 is bigger than the difference between uint32 max and operand 1 then there will be an overflow so carryBit = 1
+            /* if operand2 is bigger than the difference between uint32 max and
+            operand 1 then there will be an overflow so carryBit = 1 */
             carryBit = (UINT32_MAX - operand1) < operand2;
             result = operand1 + operand2;
             break;
@@ -338,12 +342,14 @@ void execute_dpi(machineState *state) {
             result = operand2;
             break;
         default:
-            // will exit as an error if it falls through switch as it should not reach this stage
+            /* will exit as an error if it falls through switch
+            as it should not reach this stage */
             fprintf(stderr, "An unknown operand has been found at PC: %0x.\n",
                     state->registers[PC_REG] - 8);
             exit_error(state);
     }
-    // to reduce code duplication in switch if opcode is not tst, teq, cmp then it will be written to register rd
+    /* to reduce code duplication in switch if opcode is
+    not tst, teq, cmp then it will be written to register rd */
     if (dpi->opcode < 8 || dpi->opcode > 10) {
         set_register(state, dpi->rd, result);
     }
@@ -423,8 +429,9 @@ void execute_sdti(machineState *state) {
         } else {
             set_word(state, rnContents, get_register(state, sdti->rd));
         }
-        // post indexing so includingoffset is written to base register
-        // don't need to call set_register function as register number has been previously checked for rnContents
+        /* post indexing so including offset is written to base register. Don't
+        need to call set_register function as register number has been
+        previously checked for rnContents */
         state->registers[sdti->rn] = includingOffset;
     }
 }
@@ -484,7 +491,8 @@ void execute_instructions(machineState *state) {
         free_state(state);
         exit(EXIT_SUCCESS);
     }
-    // checks condition flags of instruction with CPSR reg, if function returns false then instruction is ignored and not executed
+    /* checks condition flags of instruction with CPSR reg, if function
+    returns false then instruction is ignored and not executed */
     if (!check_cond(state)) {
         return;
     }
@@ -502,7 +510,8 @@ void execute_instructions(machineState *state) {
             execute_bi(state);
             break;
         default:
-            // instructions should not reach this stage unless error in fetch/decode
+            /* instructions should not reach this stage unless error
+            in fetch/decode */
             fprintf(stderr,
                     "An unknown instruction type has been found at PC: 0x%x and the program will terminate.",
                     state->registers[PC_REG]);
@@ -511,19 +520,23 @@ void execute_instructions(machineState *state) {
 }
 
 void fetch(machineState *state) {
-    // fetches instruction from memory based on PC and makes bool true so next cycle it will decode
+    /* fetches instruction from memory based on PC and
+    makes bool true so next cycle it will decode */
     state->fetched = get_word(state, state->registers[PC_REG]);
     state->fetchedInstr = true;
 }
 
 void pipeline(machineState *state) {
-    // will repeat fetch decode execute cycle until ZERO instruction or invalid instruction
+    /* will repeat fetch decode execute cycle until
+    ZERO instruction or invalid instruction */
     while (true) {
-        // first checks whether there has been a decoded instruction in previous cycle before executing
+        /* first checks whether there has been a decoded instruction
+        in previous cycle before executing */
         if (state->instructionAfterDecode->type != NULL_INSTR) {
             execute_instructions(state);
         }
-        // first checks whether there has been a fetched instruction in previous cycle before decoding
+        /* first checks whether there has been a fetched instruction
+        in previous cycle before decoding */
         if (state->fetchedInstr) {
             decode(state);
         }

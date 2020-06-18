@@ -205,8 +205,8 @@ void read_file_second(state *curr, char *inputFileName) {
     char *ptrToFirstSpace;
     while (fgets(str, MAX_LINE, file)) {
         ptrToFirstSpace = strchr(str, ' ');
-        // will skip instruction if label as that is accounted for in branch
-        // and first read
+        /* will skip instruction if label as that is accounted for in branch
+        and first read */
         if (!ptrToFirstSpace) {
             continue;
         }

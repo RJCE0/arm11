@@ -13,11 +13,15 @@ emulate: emulate.o
 assemble: assemble.o
 	$(CC) assemble.o -o assemble
 
-assemble.o: assembler/assemble.c assembler/assemble.h assembler/utils/constants.h assembler/utils/helpers.c assembler/utils/memory_alloc.c assembler/utils/structs.h assembler/utils/dictionaries.c
+assemble.o: assembler/assemble.c assembler/assemble.h \
+	assembler/utils/constants.h assembler/utils/helpers.c \
+	assembler/utils/memory_alloc.c assembler/utils/structs.h \
+	assembler/utils/dictionaries.c
 	$(CC) $(CFLAGS) -c assembler/assemble.c
 
 
-emulate.o: emulator/emulate.c emulator/emulate.h emulator/machineState.h emulator/constants.h emulator/instructionTypes.h
+emulate.o: emulator/emulate.c emulator/emulate.h emulator/utils/machineState.h \
+	emulator/utils/constants.h emulator/utils/instructionTypes.h
 	$(CC) $(CFLAGS) -c emulator/emulate.c
 
 clean:

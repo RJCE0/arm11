@@ -1,6 +1,6 @@
 #include <stdbool.h>
-#include "machineState.h"
-#include "constants.h"
+#include "utils/machineState.h"
+#include "utils/constants.h"
 #include <stdint.h>
 
 #ifndef ARM11_37_EMULATE_H
@@ -31,7 +31,8 @@ void print_system_state(machineState *state);
 
 void exit_error(machineState *state);
 
-void operand_shift_register(machineState *state, uint16_t instruction, bool *carryBit, uint32_t *operand2);
+void operand_shift_register(machineState *state, uint16_t instruction,
+                                bool *carryBit, uint32_t *operand2);
 
 void decode_dpi(dataProcessingInstruction *dpi, uint32_t instruction);
 
