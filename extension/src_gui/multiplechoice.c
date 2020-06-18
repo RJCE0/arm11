@@ -5,15 +5,6 @@
 #include <dirent.h>
 
 typedef struct {
-  //int pixel;
-  char *q;
-  unsigned char *qImage;
-  unsigned char *qAnsImage;
-  bool guesses[9];
-  bool ans[9];
-} image;
-
-typedef struct {
     char *que;
     char **answers;
     int answerNum;
@@ -24,10 +15,7 @@ typedef struct linked node;
 struct linked {
   node *next;
   node *prev;
-  union {
-    quest *question;
-    image *im;
-  } u;
+  quest *question;
 };
 
 
@@ -53,7 +41,7 @@ node *create_node(char *str){
   node *newNode = (node *) malloc(sizeof(node));
   newNode->next = NULL;
   newNode->prev = NULL;
-  newNode->u.question = value;
+  newNode->question = value;
   return newNode;
 
 }
@@ -104,7 +92,7 @@ node *read_file(char *fileName, int *questionNum){
         curr = value;
         *questionNum += 1;
       } else {
-        add_answers(curr->u.question, str + 2);      }
+        add_answers(curr->question, str + 2);      }
       line++;
   }
   fclose(file);
@@ -165,16 +153,16 @@ int main(int argc, char **argv) {
   for (int i = 0; i < questionNum/2; i++) {
     curr = curr->prev;
   }
-  printf("Question b4-%s", curr->u.question->que);
-  printf("Next question after-%s", curr->next->u.question->que);
+  printf("Question b4-%s", curr->question->que);
+  printf("Next question after-%s", curr->next->question->que);
   curr = get_right(curr);
-  printf("Question after-%s", curr->u.question->que);
-  print_answers(curr->u.question);
+  printf("Question after-%s", curr->question->que);
+  print_answers(curr->question);
   if (!curr->next) {
     printf("next is null\n");
   }
-  printf("Prev question-%s", curr->prev->u.question->que);
-  print_answers(curr->prev->u.question);
+  printf("Prev question-%s", curr->prev->question->que);
+  print_answers(curr->prev->question);
   return 0;
 }
 
