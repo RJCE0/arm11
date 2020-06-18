@@ -38,6 +38,7 @@ typedef struct {
     int quizScore;
     int maxQuestions;
     int currentQuestion;
+    char *guesses[9];
 } data;
 
 
@@ -106,6 +107,19 @@ void go_to_wrong_answer(GtkWidget *widget, data *myData) {
     gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "wrong_answer_page");
 }
+
+void check_box1q1(GtkWidget *widget, data *myData, int i) {
+    char checker;
+    if (gtk_toggle_button_get_active(widget)) {
+        checker = 't';
+	}
+    else{
+        checker = 'f';
+    }
+    myData->guesses[i] = checker;
+}
+
+
 
 void open_blm_site(void) {
     gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/", GDK_CURRENT_TIME, NULL);
