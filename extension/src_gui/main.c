@@ -132,7 +132,7 @@ char *int_to_string(int i) {
 }
 
 void go_to_final_screen(GtkWidget *widget, data *myData) {
-    char *str = malloc(100 * sizeof(char));
+    char *str = malloc(511 * sizeof(char));
     if (!str) {
         fprintf(stderr,
         "A memory allocation error has occured while printing out final string. Exiting...\n");
@@ -152,12 +152,15 @@ void go_to_picQ1(GtkWidget *whatever, data *myData) {
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ1");
 }
 
-void go_to_picQ1Ans(GtkWidget *whatever, data *myData) {
+void go_to_picQ1Ans(GtkWidget *widget, data *myData) {
+    /*GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_LAYOUT);
+    gtk_widget_destroy(prev);*/
     int score1 = check_im_score(myData->guesses, myData->imAns1);
     myData->quizScore += score1;
     gtk_label_set_text((GtkLabel *) myData->imScore1, int_to_string(score1));
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ1Ans");
 }
+
 
 void go_to_picQ2(GtkWidget *whatever, data *myData) {
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ2");
@@ -381,6 +384,9 @@ const char *get_label(GtkWidget *button) {
 }
 
 void begin_quiz(GtkWidget *widget, data *myData) {
+    GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
+
     int maxQuestions;
     char *fileName = get_label(widget);
     myData->curNode = initialise_questions(&maxQuestions, fileName);
