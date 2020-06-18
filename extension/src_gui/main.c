@@ -41,6 +41,7 @@ typedef struct {
     int *guesses;
     int *imAns1;
     int imAns2[9];
+    GtkWidget *finalScoreLabel;
 } data;
 
 
@@ -67,6 +68,7 @@ int check_im_score(int *guesses, int *imAnswers){
     if (score < 0) {
         score = 0;
     }
+
     return score;
 }
 
@@ -203,13 +205,26 @@ char *int_to_string(int i) {
     return score;
 }
 
+void go_to_final_screen(GtkWidget *widget, data *myData) {
+    char *str = malloc(100 * sizeof(char));
+    if (!str) {
+        fprintf(stderr, "A memory allocation error has occured while printing out final string. Exiting...\n");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(str, "Well done on finishing the quiz! Your final score was: ");
+    strcat(str, int_to_string(myData->quizScore));
+    gtk_label_set_text((GtkLabel *) myData->finalScoreLabel, str);
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "final_screen");
+}
+
 void go_to_picQ1(GtkWidget *whatever, data *myData) {
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ1");
 }
 
 void go_to_picQ1Ans(GtkWidget *whatever, data *myData) {
     int score1 = check_im_score(myData->guesses, myData->imAns1);
-    printf("score: %d\n", score1);
+    
+    myData->quizScore += score;
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ1Ans");
 }
 
@@ -237,7 +252,7 @@ void go_to_wrong_answer(GtkWidget *widget, data *myData) {
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "wrong_answer_page");
 }
 
-void check_box1q1(GtkWidget *widget, data *myData, int i) {
+/*void check_box1q1(GtkWidget *widget, data *myData, int i) {
     char checker;
     if (gtk_toggle_button_get_active(widget)) {
         checker = 't';
@@ -248,7 +263,7 @@ void check_box1q1(GtkWidget *widget, data *myData, int i) {
     myData->guesses[i] = checker;
 }
 
-
+*/
 
 void open_blm_site(void) {
     gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/", GDK_CURRENT_TIME, NULL);
@@ -384,6 +399,12 @@ void q2_initialise_tickboxes(tickBoxes *t, GtkBuilder *builder) {
     }
 }
 
+void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
+    printf("%s", "We out here maneeeeeee");
+    //This function will open the Black Lives Matter webpage, before quitting the application.
+    open_blm_site();
+    on_window_main_destroy();
+}
 int main(int argc, char *argv[]) {
 
 
@@ -422,6 +443,7 @@ int main(int argc, char *argv[]) {
     int comeon[] = {0,1,1,0,0,1,1,0,1};
     myData->imAns1 = comeon;
     myData->guesses = calloc(9, sizeof(int));
+    myData->finalScoreLabel = GTK_WIDGET(gtk_builder_get_object(builder,"final_score"));
 
     g_object_unref(builder);
 
