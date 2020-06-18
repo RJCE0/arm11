@@ -34,7 +34,7 @@ node *create_node(char *str){
   if (!value) {
     perror("Error while creating node...");
   }
-  value->que = (char *) malloc(100 * sizeof(char));
+  value->que = (char *) malloc(511 * sizeof(char));
   strcpy(value->que, str);
   value->answerNum = 0;
   value->answers = (char **) malloc(1 * sizeof(char *));
@@ -56,7 +56,10 @@ void linked_question(node *curr, node *next){
 
 void add_answers(quest *curr, char *ans){
   curr->answers = (char **) realloc(curr->answers, (curr->answerNum + 1) * sizeof(char *));
-  curr->answers[curr->answerNum] = (char *) malloc(100 * sizeof(char));
+  curr->answers[curr->answerNum] = (char *) malloc(511 * sizeof(char));
+  if (!curr->answers[curr->answerNum]) {
+      perror("unable to allocate");
+  }
   strcpy(curr->answers[curr->answerNum], ans);
   curr->answerNum += 1;
 }
@@ -66,14 +69,50 @@ void remove_current(node *curr){
   curr->next->prev = curr->prev;
 }
 
+void free_quest(quest *q){
+    for (int i = 0; i < q->answerNum; i++) {
+        free(q->answers[i]);
+    }
+    free(q->answers);
+    free(q->que);
+    free(q);
+}
+
 node *get_left(node *curr){
   remove_current(curr);
-  return curr->prev;
+  node *result = curr->prev;
+  free_quest(curr->question);
+  free(curr);
+  return result;
 }
 
 node *get_right(node *curr){
   remove_current(curr);
-  return curr->next;
+  node *result = curr->next;
+  free_quest(curr->question);
+  free(curr);
+  return result;
+}
+
+void free_nodes(node *curr){
+    node *vamos = curr;
+    node *last;
+    while (vamos->next) {
+        last = vamos;
+        vamos = last->next;
+        vamos->prev = last->prev;
+        free_quest(last->question);
+        free(last);
+    }
+    while (vamos->prev){
+        last = vamos;
+        vamos = last->prev;
+        vamos->next = last->next;
+        free_quest(last->question);
+        free(last);
+    }
+    free_quest(vamos->question);
+    free(vamos);
 }
 
 node *read_file(char *fileName, int *questionNum){
@@ -112,6 +151,7 @@ node *initialise_questions(int *maxQuestions, char *fileName){
   strcat(directory, fileName);
   printf("file:%s\n", directory);
   node *curr = read_file(directory, &questionNum);
+  free(directory);
   for (int i = 0; i < questionNum/2; i++) {
     curr = curr->prev;
   }

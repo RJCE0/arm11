@@ -10,6 +10,15 @@ typedef struct {
     int totalTags;
 } questionBreakdown;
 
+void free_question_breakdown(questionBreakdown *breakdown){
+    for (int i = 0; i < breakdown->totalWords; i++) {
+        if (breakdown->wordList[i]) {
+            free(breakdown->wordList[i]);
+        }
+    }
+    free(breakdown->wordList);
+}
+
 void split_on_spaces(questionBreakdown *breakdown) {
     int count = 0;
     char *word = strtok(breakdown->sentence, " ");
@@ -81,6 +90,7 @@ void lowercase_all(questionBreakdown *breakdown) {
     }
 }
 
+/*
 void print_tags(questionBreakdown *breakdown) {
     int count = 1;
     for (int i = 0; i < breakdown->totalWords; ++i) {
@@ -91,31 +101,30 @@ void print_tags(questionBreakdown *breakdown) {
     }
     printf("\n");
 }
+*/
 
 char *generate_tags_string(questionBreakdown *breakdown) {
     int count = 1;
     char *strStart = "Automatically generated tags: ";
-    char *tags = malloc (strlen(strStart));
+    char *tags = (char *) malloc(511 * sizeof(char));
     tags = strcpy(tags, strStart);
     for (int i = 0; i < breakdown->totalWords; ++i) {
         if (*breakdown->wordList[i]) {
-            tags = (char *) realloc (tags, strlen(tags) + strlen(breakdown->wordList[i]) + 3);
             tags = strcat(tags, breakdown->wordList[i]);
             tags = strcat(tags, ", ");
             count++;
         }
     }
-    print_tags(breakdown);
+    free_question_breakdown(breakdown);
+    //print_tags(breakdown);
     return tags;
 }
 
 char *get_tags(char *sentence) {
-    questionBreakdown *breakdown = malloc(sizeof(breakdown));
-    breakdown->sentence = malloc(1000 * sizeof(char));
+    questionBreakdown *breakdown = (questionBreakdown *) malloc(sizeof(*breakdown));
+    breakdown->sentence = sentence;
     breakdown->wordList = malloc(sizeof(char *));
-    breakdown->wordList[0] = malloc(20 * sizeof(char));
     // printf("--%s--", sentence);
-    strcpy(breakdown->sentence, sentence);
     split_on_spaces(breakdown);
     lowercase_all(breakdown);
     remove_non_alphanumeric(breakdown);

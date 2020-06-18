@@ -143,6 +143,7 @@ void go_to_final_screen(GtkWidget *widget, data *myData) {
     strcat(str, " / ");
     strcat(str, int_to_string(myData->maxQuestions + MAX_CHECKBOX_ANSWERS));
     gtk_label_set_text((GtkLabel *) myData->finalScoreLabel, str);
+    free(str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
                                      "final_screen");
 }
@@ -170,7 +171,7 @@ void go_to_picQ2Ans(GtkWidget *whatever, data *myData) {
 }
 
 void go_to_correct_answer(GtkWidget *whatever, data *myData) {
-    char *str = malloc(100 * sizeof(char));
+    char *str = malloc(511 * sizeof(char));
     if (!str) {
         fprintf(stderr,
                 "An error has occured while printing the correct answer. Exiting...");
@@ -179,12 +180,13 @@ void go_to_correct_answer(GtkWidget *whatever, data *myData) {
     strcpy(str, "Congratulations on getting the correct answer: ");
     strcat(str, myData->curNode->question->answers[0]);
     gtk_label_set_text((GtkLabel *) myData->scoreLabelFromRight, str);
+    free(str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
                                      "correct_answer_page");
 }
 
 void go_to_wrong_answer(GtkWidget *widget, data *myData) {
-    char *str = malloc(100 * sizeof(char));
+    char *str = malloc(511 * sizeof(char));
     if (!str) {
         fprintf(stderr,
          "An error has occured while printing the answer you got wrong. Exiting...");
@@ -193,6 +195,7 @@ void go_to_wrong_answer(GtkWidget *widget, data *myData) {
     strcpy(str, "Correct answer is: ");
     strcat(str, myData->curNode->question->answers[0]);
     gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, str);
+    free(str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
                                      "wrong_answer_page");
 }
@@ -263,8 +266,10 @@ void set_question(data *myData) {
     g_signal_connect(myData->answerB, "clicked", check_answer(random[1]),
                      myData);
 
+    free(random);
     char *str = get_tags(question->que);
     gtk_label_set_text((GtkLabel *) myData->tagsLabel, str);
+    free(str);
 }
 
 
@@ -279,7 +284,7 @@ void allocate_new_question(data *myData) {
     myData->addedQuestions[myData->numAddedQuestions]->newAnswerDStr = malloc (500 * sizeof(char));
 }
 
-void begin_add_quiz(GtkButton *button, data *myData) {
+void begin_add_quiz(GtkWidget *button, data *myData) {
     gtk_widget_set_sensitive(myData->finishAddingQuizButton, false);
     myData->numAddedQuestions = 0;
     myData->addedQuestions = malloc (sizeof(questionToAdd *));
@@ -323,17 +328,17 @@ void add_question(GtkButton *button, data *myData) {
                         gtk_entry_get_text((GtkEntry *) myData->newAnswerD));
         }
     }
-    gtk_entry_set_text((GtkLabel *) myData->newQuestion, "");
-    gtk_entry_set_text((GtkLabel *) myData->newAnswerA, "");
-    gtk_entry_set_text((GtkLabel *) myData->newAnswerB, "");
-    gtk_entry_set_text((GtkLabel *) myData->newAnswerC, "");
-    gtk_entry_set_text((GtkLabel *) myData->newAnswerD, "");
+    gtk_entry_set_text((GtkEntry *) myData->newQuestion, "");
+    gtk_entry_set_text((GtkEntry *) myData->newAnswerA, "");
+    gtk_entry_set_text((GtkEntry *) myData->newAnswerB, "");
+    gtk_entry_set_text((GtkEntry *) myData->newAnswerC, "");
+    gtk_entry_set_text((GtkEntry *) myData->newAnswerD, "");
     gtk_label_set_text((GtkLabel *) myData->errorAddingQuestionLabel, "Added!");
     myData->numAddedQuestions++;
     gtk_widget_set_sensitive(myData->finishAddingQuizButton, true);
 }
 
-void finish_quiz_build(GtkButton *button, data *myData) {
+void finish_quiz_build(GtkWidget *button, data *myData) {
     FILE *newQuizFile;
     char *nameOfNewQuiz = gtk_entry_get_text((GtkEntry *) myData->nameOfQuizEntry);
     char *directoryName = "src_gui/quizzes/";
@@ -393,9 +398,6 @@ void quiz_selector(GtkWidget *whatever, data *myData){
     }
     int size;
     char **labels = get_all_files(&size);
-    for (int i = 0; i < size; i++) {
-        printf("%s\n", labels[i]);
-    }
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *header = gtk_label_new ("Pick a Quiz");
     gtk_widget_show(header);
@@ -405,7 +407,9 @@ void quiz_selector(GtkWidget *whatever, data *myData){
         gtk_box_pack_start((GtkBox *) box, button, TRUE, TRUE, 0);
         gtk_widget_show(button);
         g_signal_connect(button, "clicked", (GCallback) &begin_quiz, myData);
+        free(labels[i]);
     }
+    free(labels);
     gtk_stack_add_named((GtkStack *) myData->stack, box, "quiz_selector");
     gtk_widget_show(box);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
@@ -421,7 +425,10 @@ void advance_right_question(GtkButton *button, data *myData, quest *question) {
     //Moves to harder next question.
     myData->quizScore += 1;
     myData->currentQuestion += 1;
+    printf("Max:%d\n", myData->maxQuestions);
+    printf("Current:%d\n", myData->currentQuestion);
     if (myData->currentQuestion == myData->maxQuestions) {
+        free_nodes(myData->curNode);
         go_to_picQ1((GtkWidget *) button, myData);
         return;
     }
@@ -433,7 +440,10 @@ void advance_right_question(GtkButton *button, data *myData, quest *question) {
 void advance_left_question(GtkButton *button, data *myData, quest *question) {
     //Move to easier next question.
     myData->currentQuestion += 1;
+    printf("Max:%d\n", myData->maxQuestions);
+    printf("Current:%d\n", myData->currentQuestion);
     if (myData->currentQuestion == myData->maxQuestions) {
+        free_nodes(myData->curNode);
         go_to_picQ1((GtkWidget *) button, myData);
         return;
     }
@@ -473,6 +483,50 @@ void q2_initialise_tickboxes(tickBoxes *t, GtkBuilder *builder) {
 void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
     open_blm_site(button, myData);
     on_window_main_destroy();
+}
+
+void free_tickboxes(tickBoxes *tb){
+    free(tb->tickBox1);
+    free(tb->tickBox2);
+    free(tb->tickBox3);
+    free(tb->tickBox4);
+    free(tb->tickBox5);
+    free(tb->tickBox6);
+    free(tb->tickBox7);
+    free(tb->tickBox8);
+    free(tb->tickBox9);
+}
+
+void free_all(data *d){
+    free(d->stack);
+    free(d->questionLabel);
+    free(d->scoreLabelFromWrong);
+    free(d->scoreLabelFromRight);
+    free(d->tagsLabel);
+    free(d->answerA);
+    free(d->answerB);
+    free(d->answerC);
+    free(d->answerD);
+    free(d->picQ1);
+    free(d->picQ1Ans);
+    free(d->picQ2);
+    free(d->picQ2Ans);
+    free_tickboxes(d->q1Boxes);
+    free_tickboxes(d->q2Boxes);
+    free(d->guesses);
+    free(d->imAns1);
+    free(d->imAns2);
+    free(d->finalScoreLabel);
+    free(d->imScore1);
+    free(d->imScore2);
+    free(d->finishAddingQuizButton);
+    free(d->newQuestion);
+    free(d->newAnswerA);
+    free(d->newAnswerB);
+    free(d->newAnswerC);
+    free(d->newAnswerD);
+    free(d->errorAddingQuestionLabel);
+    free(d->nameOfQuizEntry);
 }
 
 int main(int argc, char *argv[]) {
