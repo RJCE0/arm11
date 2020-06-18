@@ -1,3 +1,6 @@
+#ifndef INSTRUCTION_TYPES
+#define INSTRUCTION_TYPES
+
 typedef struct {
     instructionOpcode opcode: 4;
     uint16_t operand2: 12;
@@ -43,3 +46,5 @@ typedef struct {
         branchInstruction bi;
     } u;
 } decodedInstruction;
+
+#endif
