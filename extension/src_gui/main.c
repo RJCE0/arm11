@@ -40,18 +40,11 @@ typedef struct {
     int currentQuestion;
     int *guesses;
     int *imAns1;
-    int imAns2[9];
+    int *imAns2;
     GtkWidget *finalScoreLabel;
+    GtkWidget *imScore1;
+    GtkWidget *imScore2;
 } data;
-
-
-void decrement_score(GtkWidget *tickbox, data *myData) {
-    myData->quizScore = ((myData->quizScore - 1) <= 0) ? 0 : (myData->quizScore)--;
-}
-
-void increment_score(GtkWidget *tickbox, data *myData) {
-    (myData->quizScore)++;
-}
 
 int check_im_score(int *guesses, int *imAnswers){
     int score = 0;
@@ -68,7 +61,6 @@ int check_im_score(int *guesses, int *imAnswers){
     if (score < 0) {
         score = 0;
     }
-
     return score;
 }
 
@@ -76,6 +68,7 @@ void on_1_toggled(GtkToggleButton *togglebutton, data *myData)
 {
 	if (gtk_toggle_button_get_active(togglebutton)) {
         myData->guesses[0] = 1;
+        g_print("%s\n", gtk_widget_get_name(GTK_WIDGET(togglebutton)));
 		g_print("Option 1 is Checked\n");
 	}
 	else {
@@ -213,6 +206,8 @@ void go_to_final_screen(GtkWidget *widget, data *myData) {
     }
     strcpy(str, "Well done on finishing the quiz! Your final score was: ");
     strcat(str, int_to_string(myData->quizScore));
+    strcat(str, " / ");
+    strcat(str, int_to_string(myData->maxQuestions + 18));
     gtk_label_set_text((GtkLabel *) myData->finalScoreLabel, str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "final_screen");
 }
@@ -223,8 +218,8 @@ void go_to_picQ1(GtkWidget *whatever, data *myData) {
 
 void go_to_picQ1Ans(GtkWidget *whatever, data *myData) {
     int score1 = check_im_score(myData->guesses, myData->imAns1);
-    
-    myData->quizScore += score;
+    myData->quizScore += score1;
+    gtk_label_set_text((GtkLabel *) myData->imScore1, int_to_string(score1));
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ1Ans");
 }
 
@@ -233,6 +228,9 @@ void go_to_picQ2(GtkWidget *whatever, data *myData) {
 }
 
 void go_to_picQ2Ans(GtkWidget *whatever, data *myData) {
+    int score2 = check_im_score(myData->guesses, myData->imAns2);
+    myData->quizScore += score2;
+    gtk_label_set_text((GtkLabel *) myData->imScore2, int_to_string(score2));
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ2Ans");
 }
 
@@ -440,8 +438,12 @@ int main(int argc, char *argv[]) {
     myData->picQ2Ans = GTK_WIDGET(gtk_builder_get_object(builder,"PicQ2Ans"));
     myData->q1Boxes = boxes;
     myData->q2Boxes = q2boxes;
-    int comeon[] = {0,1,1,0,0,1,1,0,1};
-    myData->imAns1 = comeon;
+    myData->imScore1 = GTK_WIDGET(gtk_builder_get_object(builder, "score1"));
+    myData->imScore2 = GTK_WIDGET(gtk_builder_get_object(builder, "score2"));
+    int temp1[] = {0,1,1,0,0,1,1,0,1};
+    myData->imAns1 = temp1;
+    int temp2[] = {1,1,1,1,1,1,1,1,1};
+    myData->imAns2 = temp2;
     myData->guesses = calloc(9, sizeof(int));
     myData->finalScoreLabel = GTK_WIDGET(gtk_builder_get_object(builder,"final_score"));
 
