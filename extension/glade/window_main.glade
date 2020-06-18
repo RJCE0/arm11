@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.36.0 -->
+<!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkWindow" id="window_main">
@@ -9,6 +9,9 @@
     <property name="default_width">440</property>
     <property name="default_height">250</property>
     <signal name="destroy" handler="on_window_main_destroy" swapped="no"/>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkGrid">
         <property name="visible">True</property>
@@ -708,7 +711,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_9_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">580</property>
@@ -718,13 +721,14 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <object class="GtkCheckButton" id="2ndCheck6">
                     <property name="label" translatable="yes">6.</property>
+                    <property name="name">6</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_6_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">580</property>
@@ -734,13 +738,14 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <object class="GtkCheckButton" id="2ndCheck3">
                     <property name="label" translatable="yes">3.</property>
+                    <property name="name">3</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_3_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">580</property>
@@ -750,13 +755,14 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <object class="GtkCheckButton" id="2ndCheck8">
                     <property name="label" translatable="yes">8.</property>
+                    <property name="name">8</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_8_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">350</property>
@@ -766,13 +772,14 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <object class="GtkCheckButton" id="2ndCheck5">
                     <property name="label" translatable="yes">5.</property>
+                    <property name="name">5</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_5_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">350</property>
@@ -782,13 +789,14 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <object class="GtkCheckButton" id="2ndCheck2">
                     <property name="label" translatable="yes">2.</property>
+                    <property name="name">2</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_2_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">350</property>
@@ -798,13 +806,14 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <object class="GtkCheckButton" id="2ndCheck7">
                     <property name="label" translatable="yes">7.</property>
+                    <property name="name">7</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_7_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">120</property>
@@ -814,13 +823,14 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <object class="GtkCheckButton" id="2ndCheck4">
                     <property name="label" translatable="yes">4.</property>
+                    <property name="name">4</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_4_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">120</property>
@@ -830,13 +840,14 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                 <child>
                   <object class="GtkCheckButton" id="2ndCheck1">
                     <property name="label" translatable="yes">1.</property>
+                    <property name="name">1</property>
                     <property name="width_request">50</property>
                     <property name="height_request">30</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_1_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbox_toggle" swapped="no"/>
                   </object>
                   <packing>
                     <property name="x">120</property>
@@ -948,6 +959,7 @@ programming language and its libraries, and shouldn't be taken to be an educatio
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <signal name="clicked" handler="go_to_home" swapped="no"/>
+                    <signal name="clicked" handler="reset_checkboxes" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -983,9 +995,6 @@ programming language and its libraries, and shouldn't be taken to be an educatio
           </packing>
         </child>
       </object>
-    </child>
-    <child type="titlebar">
-      <placeholder/>
     </child>
   </object>
 </interface>

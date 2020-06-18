@@ -83,98 +83,6 @@ int check_im_score(int *guesses, int *imAnswers) {
     return score;
 }
 
-void on_1_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[0] = 1;
-        g_print("%s\n", gtk_widget_get_name(GTK_WIDGET(togglebutton)));
-        g_print("Option 1 is Checked\n");
-    } else {
-        myData->guesses[0] = 0;
-        g_print("Option 1 is Unchecked\n");
-    }
-}
-
-void on_2_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[1] = 1;
-        g_print("Option 2 is Checked\n");
-    } else {
-        myData->guesses[1] = 0;
-        g_print("Option 2 is Unchecked\n");
-    }
-}
-
-void on_3_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[2] = 1;
-        g_print("Option 3 is Checked\n");
-    } else {
-        myData->guesses[2] = 0;
-        g_print("Option 3 is Unchecked\n");
-    }
-}
-
-void on_4_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[3] = 1;
-        g_print("Option 4 is Checked\n");
-    } else {
-        myData->guesses[3] = 0;
-        g_print("Option 4 is Unchecked\n");
-    }
-}
-
-void on_5_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[4] = 1;
-        g_print("Option 5 is Checked\n");
-    } else {
-        myData->guesses[4] = 0;
-        g_print("Option 5 is Unchecked\n");
-    }
-}
-
-void on_6_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[5] = 1;
-        g_print("Option 6 is Checked\n");
-    } else {
-        myData->guesses[5] = 0;
-        g_print("Option 6 is Unchecked\n");
-    }
-}
-
-void on_7_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[6] = 1;
-        g_print("Option 7 is Checked\n");
-    } else {
-        myData->guesses[6] = 0;
-        g_print("Option 7 is Unchecked\n");
-    }
-}
-
-void on_8_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[7] = 1;
-        g_print("Option 8 is Checked\n");
-    } else {
-        myData->guesses[7] = 0;
-        g_print("Option 8 is Unchecked\n");
-    }
-}
-
-void on_9_toggled(GtkToggleButton *togglebutton, data *myData) {
-    if (gtk_toggle_button_get_active(togglebutton)) {
-        myData->guesses[8] = 1;
-        g_print("Option 9 is Checked\n");
-    } else {
-        myData->guesses[8] = 0;
-        g_print("Option 9 is Unchecked\n");
-    }
-}
-
-
 void on_checkbox_toggle(GtkToggleButton *togglebutton, data *myData){
     int num = atoi(gtk_widget_get_name(GTK_WIDGET(togglebutton)));
     if (gtk_toggle_button_get_active(togglebutton)) {
@@ -257,7 +165,7 @@ void go_to_correct_answer(GtkWidget *whatever, data *myData) {
         exit(EXIT_FAILURE);
     }
     strcpy(str, "Congratulations on getting the correct answer: ");
-    strcat(str, myData->curNode->u.question->answers[0]);
+    strcat(str, myData->curNode->question->answers[0]);
     gtk_label_set_text((GtkLabel *) myData->scoreLabelFromRight, str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
                                      "correct_answer_page");
@@ -271,15 +179,10 @@ void go_to_wrong_answer(GtkWidget *widget, data *myData) {
         exit(EXIT_FAILURE);
     }
     strcpy(str, "Correct answer is: ");
-    strcat(str, myData->curNode->u.question->answers[0]);
+    strcat(str, myData->curNode->question->answers[0]);
     gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
                                      "wrong_answer_page");
-}
-
-void open_blm_site(void) {
-    gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/",
-                           GDK_CURRENT_TIME, NULL);
 }
 
 GCallback check_answer(int i) {
@@ -306,7 +209,7 @@ int *randomise_questions(int size) {
 }
 
 void set_question(data *myData) {
-    quest *question = myData->curNode->u.question;
+    quest *question = myData->curNode->question;
     gtk_label_set_text((GtkLabel *) myData->questionLabel, question->que);
     int *random = randomise_questions(question->answerNum);
     if (question->answerNum <= 3) {
@@ -402,19 +305,58 @@ void finish_quiz_build(GtkButton *button, data *myData) {
     myData->questionsAdded = 0;
 }
 
+const char *get_label(GtkWidget *button) {
+    return gtk_button_get_label((GtkButton *) button);
+}
 
 void begin_quiz(GtkWidget *widget, data *myData) {
     int maxQuestions;
-    myData->curNode = initialise_questions(&maxQuestions);
+    char *fileName = get_label(widget);
+    myData->curNode = initialise_questions(&maxQuestions, fileName);
     myData->maxQuestions = maxQuestions;
     myData->currentQuestion = 0;
+    myData->quizScore = 0;
     set_question(myData);
     go_to_question_page(widget, myData);
 }
 
+void quiz_selector(GtkWidget *whatever, data *myData){
+    if (gtk_stack_get_child_by_name((GtkStack *) myData->stack, "quiz_selector")) {
+        gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "quiz_selector");
+        return;
+    }
+    int size;
+    char **labels = get_all_files(&size);
+    for (int i = 0; i < size; i++) {
+        printf("%s\n", labels[i]);
+    }
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *header = gtk_label_new ("Pick a Quiz");
+    gtk_widget_show(header);
+    gtk_box_pack_start((GtkBox *) box, header, FALSE, TRUE, 20);
+    for (int i = 0; i < size; i++) {
+        GtkWidget *button = gtk_button_new_with_label (labels[i]);
+        gtk_box_pack_start((GtkBox *) box, button, TRUE, TRUE, 0);
+        gtk_widget_show(button);
+        g_signal_connect(button, "clicked", (GCallback) &begin_quiz, myData);
+    }
+    gtk_stack_add_named((GtkStack *) myData->stack, box, "quiz_selector");
+    gtk_widget_show(box);
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
+                                     "quiz_selector");
+}
 
-const char *get_label(GtkButton *button) {
-    return gtk_button_get_label(button);
+void reset_checkboxes(GtkToggleButton *togglebutton, data *myData, GtkBuilder *builder){
+    for(int i = 1; i <= 9; i++ ){
+        GtkWidget *widget = GTK_WIDGET(gtk_builder_get_object(builder, int_to_string(i)));
+        gtk_toggle_button_set_active (gtk_widget_get_name((GtkWidget *) int_to_string(i)), false);
+    }
+}
+
+void open_blm_site(GtkWidget *whatever, data *myData) {
+    quiz_selector(whatever, myData);
+    //gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/",
+    //                       GDK_CURRENT_TIME, NULL);
 }
 
 void advance_right_question(GtkButton *button, data *myData, quest *question) {
@@ -471,7 +413,7 @@ void q2_initialise_tickboxes(tickBoxes *t, GtkBuilder *builder) {
 }
 
 void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
-    open_blm_site();
+    open_blm_site(button, myData);
     on_window_main_destroy();
 }
 
