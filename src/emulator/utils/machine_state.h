@@ -1,10 +1,10 @@
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#ifndef MACHINE_STATE
+#define MACHINE_STATE
 
 #include <stdlib.h>
 #include <stdint.h>
 #include "constants.h"
-#include "instructionTypes.h"
+#include "instruction_types.h"
 
 typedef struct {
     cpsrFlags flag;
