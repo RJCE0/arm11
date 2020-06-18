@@ -20,6 +20,15 @@ typedef struct {
     GtkWidget *tickBox9;
 } tickBoxes;
 
+
+typedef struct {
+    char *question;
+    char *answerA;
+    char *answerB;
+    char *answerC;
+    char *answerD;
+} questionToAdd;
+
 typedef struct {
     GtkWidget *stack;
     GtkWidget *questionLabel;
@@ -51,19 +60,10 @@ typedef struct {
     GtkWidget *newAnswerB;
     GtkWidget *newAnswerC;
     GtkWidget *newAnswerD;
-    node *curNode;
-    int quizScore;
     int numAddedQuestions;
     questionToAdd *addedQuestions;
 } data;
 
-typedef struct {
-    char *question;
-    char *answerA;
-    char *answerB;
-    char *answerC;
-    char *answerD;
-} questionToAdd;
 
 int check_im_score(int *guesses, int *imAnswers) {
     int score = 0;
@@ -255,56 +255,56 @@ void set_question(data *myData) {
     gtk_label_set_text((GtkLabel *) myData->tagsLabel, str);
 }
 
-void add_question(GtkButton *button, data *myData) {
-    myData->numAddedQuestions++;
-    myData->questionsAdded = (questionToAdd *) realloc (myData->questionsAdded,
-                    (myData->numQuestionsAdded + 1) * sizeof(questionToAdd *));
-    myData->questionsAdded = malloc (sizeof(questionToAdd));
-    myData->addedQuestions[myData->numAddedQuestions]->question =
-                    gtk_entry_get_text((GtkEntry *) myData->newQuestion);
-    myData->addedQuestions[myData->numAddedQuestions]->answerA =
-                    gtk_entry_get_text((GtkEntry *) myData->newAnswerA);
-    myData->addedQuestions[myData->numAddedQuestions]->answerB =
-                    gtk_entry_get_text((GtkEntry *) myData->newAnswerB);
-    // possible room for error here?
-    if (gtk_entry_get_text((GtkEntry *) myData->newAnswerC)) {
-        myData->addedQuestions[myData->numAddedQuestions]->answerC =
-                        gtk_entry_get_text((GtkEntry *) myData->newAnswerC);
-    }
-    if (gtk_entry_get_text((GtkEntry *) myData->newAnswerD)) {
-        myData->addedQuestions[myData->numAddedQuestions]->answerD =
-                        gtk_entry_get_text((GtkEntry *) myData->newAnswerD);
-    }
-}
-
-void finish_quiz_build(GtkButton *button, data *myData) {
-    FILE *newQuizFile;
-    newQuizFile = fopen("someNewQuiz", "w");
-    for (int i = 0; i <= numAddedQuestions; ++i) {
-        fputs(myData->addedQuestions[i]->question, newQuizFile);
-        free(myData->addedQuestions[i]->question);
-        fputs("\n", newQuizFile);
-        fputs(myData->addedQuestions[i]->answerA, newQuizFile);
-        free(myData->addedQuestions[i]->answerA);
-        fputs("\n", newQuizFile);
-        fputs(myData->addedQuestions[i]->answerB, newQuizFile);
-        free(myData->addedQuestions[i]->answerB);
-        fputs("\n", newQuizFile);
-        if (myData->addedQuestions[i]->answerC != NULL) {
-            fputs(myData->addedQuestions[i]->answerC, newQuizFile);
-            fputs("\n", newQuizFile);
-            free(myData->addedQuestions[i]->answerC);
-        }
-        if (myData->addedQuestions[i]->answerD != NULL) {
-            fputs(myData->addedQuestions[i]->answerD, newQuizFile);
-            free(myData->addedQuestions[i]->answerD);
-            fputs("\n", newQuizFile);
-        }
-        free(myData->addedQuestions[i]);
-    }
-    myData->questionsAdded = 0;
-}
-
+// void add_question(GtkButton *button, data *myData) {
+//     myData->numAddedQuestions++;
+//     myData->questionsAdded = (questionToAdd *) realloc (myData->questionsAdded,
+//                     (myData->numQuestionsAdded + 1) * sizeof(questionToAdd *));
+//     myData->questionsAdded = malloc (sizeof(questionToAdd));
+//     myData->addedQuestions[myData->numAddedQuestions]->question =
+//                     gtk_entry_get_text((GtkEntry *) myData->newQuestion);
+//     myData->addedQuestions[myData->numAddedQuestions]->answerA =
+//                     gtk_entry_get_text((GtkEntry *) myData->newAnswerA);
+//     myData->addedQuestions[myData->numAddedQuestions]->answerB =
+//                     gtk_entry_get_text((GtkEntry *) myData->newAnswerB);
+//     // possible room for error here?
+//     if (gtk_entry_get_text((GtkEntry *) myData->newAnswerC)) {
+//         myData->addedQuestions[myData->numAddedQuestions]->answerC =
+//                         gtk_entry_get_text((GtkEntry *) myData->newAnswerC);
+//     }
+//     if (gtk_entry_get_text((GtkEntry *) myData->newAnswerD)) {
+//         myData->addedQuestions[myData->numAddedQuestions]->answerD =
+//                         gtk_entry_get_text((GtkEntry *) myData->newAnswerD);
+//     }
+// }
+//
+// void finish_quiz_build(GtkButton *button, data *myData) {
+//     FILE *newQuizFile;
+//     newQuizFile = fopen("someNewQuiz", "w");
+//     for (int i = 0; i <= numAddedQuestions; ++i) {
+//         fputs(myData->addedQuestions[i]->question, newQuizFile);
+//         free(myData->addedQuestions[i]->question);
+//         fputs("\n", newQuizFile);
+//         fputs(myData->addedQuestions[i]->answerA, newQuizFile);
+//         free(myData->addedQuestions[i]->answerA);
+//         fputs("\n", newQuizFile);
+//         fputs(myData->addedQuestions[i]->answerB, newQuizFile);
+//         free(myData->addedQuestions[i]->answerB);
+//         fputs("\n", newQuizFile);
+//         if (myData->addedQuestions[i]->answerC != NULL) {
+//             fputs(myData->addedQuestions[i]->answerC, newQuizFile);
+//             fputs("\n", newQuizFile);
+//             free(myData->addedQuestions[i]->answerC);
+//         }
+//         if (myData->addedQuestions[i]->answerD != NULL) {
+//             fputs(myData->addedQuestions[i]->answerD, newQuizFile);
+//             free(myData->addedQuestions[i]->answerD);
+//             fputs("\n", newQuizFile);
+//         }
+//         free(myData->addedQuestions[i]);
+//     }
+//     myData->questionsAdded = 0;
+// }
+//
 const char *get_label(GtkWidget *button) {
     return gtk_button_get_label((GtkButton *) button);
 }
