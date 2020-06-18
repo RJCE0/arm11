@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <dirent.h>
 
 typedef struct {
   //int pixel;
@@ -124,6 +125,21 @@ node *initialise_questions(int *maxQuestions){
   }
   *maxQuestions = questionNum/2 + questionNum % 2;
   return curr;
+}
+
+void get_all_files(){
+    DIR *d;
+	struct dirent *dir;
+	d = opendir("quizzes");
+  	if (d) {
+    	while ((dir = readdir(d)) != NULL) {
+			if (dir->d_type == DT_REG){
+				printf("%s\n", dir->d_name);
+			}
+    	}
+  	closedir(d);
+  	}
+  	return;
 }
 
 /*

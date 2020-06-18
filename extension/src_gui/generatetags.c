@@ -23,8 +23,6 @@ void split_on_spaces(questionBreakdown *breakdown) {
     breakdown->totalWords = count;
 }
 
-
-
 #define IS_NUMERICAL(x) (x > 47 && x < 58)
 #define IS_ALPHA(x) (x > 96 && x < 123)
 #define IS_DASH(x) (x == 45)

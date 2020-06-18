@@ -38,7 +38,9 @@ typedef struct {
     int quizScore;
     int maxQuestions;
     int currentQuestion;
-    char *guesses[9];
+    int *guesses;
+    int *imAns1;
+    int imAns2[9];
 } data;
 
 
@@ -50,6 +52,131 @@ void increment_score(GtkWidget *tickbox, data *myData) {
     (myData->quizScore)++;
 }
 
+int check_im_score(int *guesses, int *imAnswers){
+    int score = 0;
+    for (int i = 0; i < 9; i++) {
+        printf("guess:%d answer:%d\n", guesses[i], imAnswers[i]);
+        if (guesses[i]) {
+            if (guesses[i] == imAnswers[i]) {
+                score += 1;
+            } else {
+                score -= 1;
+            }
+        }
+    }
+    if (score < 0) {
+        score = 0;
+    }
+    return score;
+}
+
+void on_1_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[0] = 1;
+		g_print("Option 1 is Checked\n");
+	}
+	else {
+        myData->guesses[0] = 0;
+		g_print("Option 1 is Unchecked\n");
+	}
+}
+
+void on_2_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[1] = 1;
+		g_print("Option 2 is Checked\n");
+	}
+	else {
+        myData->guesses[1] = 0;
+		g_print("Option 2 is Unchecked\n");
+	}
+}
+
+void on_3_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[2] = 1;
+		g_print("Option 3 is Checked\n");
+	}
+	else {
+        myData->guesses[2] = 0;
+		g_print("Option 3 is Unchecked\n");
+	}
+}
+
+void on_4_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[3] = 1;
+		g_print("Option 4 is Checked\n");
+	}
+	else {
+        myData->guesses[3] = 0;
+		g_print("Option 4 is Unchecked\n");
+	}
+}
+
+void on_5_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[4] = 1;
+		g_print("Option 5 is Checked\n");
+	}
+	else {
+        myData->guesses[4] = 0;
+		g_print("Option 5 is Unchecked\n");
+	}
+}
+
+void on_6_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[5] = 1;
+		g_print("Option 6 is Checked\n");
+	}
+	else {
+        myData->guesses[5] = 0;
+		g_print("Option 6 is Unchecked\n");
+	}
+}
+
+void on_7_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[6] = 1;
+		g_print("Option 7 is Checked\n");
+	}
+	else {
+        myData->guesses[6] = 0;
+		g_print("Option 7 is Unchecked\n");
+	}
+}
+
+void on_8_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[7] = 1;
+		g_print("Option 8 is Checked\n");
+	}
+	else {
+        myData->guesses[7] = 0;
+		g_print("Option 8 is Unchecked\n");
+	}
+}
+
+void on_9_toggled(GtkToggleButton *togglebutton, data *myData)
+{
+	if (gtk_toggle_button_get_active(togglebutton)) {
+        myData->guesses[8] = 1;
+		g_print("Option 9 is Checked\n");
+	}
+	else {
+        myData->guesses[8] = 0;
+		g_print("Option 9 is Unchecked\n");
+	}
+}
 
 // called when window is closed
 void on_window_main_destroy(void) {
@@ -81,6 +208,8 @@ void go_to_picQ1(GtkWidget *whatever, data *myData) {
 }
 
 void go_to_picQ1Ans(GtkWidget *whatever, data *myData) {
+    int score1 = check_im_score(myData->guesses, myData->imAns1);
+    printf("score: %d\n", score1);
     gtk_stack_set_visible_child_name ((GtkStack *) myData->stack, "PicQ1Ans");
 }
 
@@ -290,7 +419,9 @@ int main(int argc, char *argv[]) {
     myData->picQ2Ans = GTK_WIDGET(gtk_builder_get_object(builder,"PicQ2Ans"));
     myData->q1Boxes = boxes;
     myData->q2Boxes = q2boxes;
-
+    int comeon[] = {0,1,1,0,0,1,1,0,1};
+    myData->imAns1 = comeon;
+    myData->guesses = calloc(9, sizeof(int));
 
     g_object_unref(builder);
 
