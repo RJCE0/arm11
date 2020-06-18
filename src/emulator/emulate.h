@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#include "utils/machineState.h"
+#include "utils/machine_state.h"
 #include <stdint.h>
 
 #ifndef ARM11_37_EMULATE_H
