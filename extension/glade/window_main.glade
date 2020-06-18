@@ -53,7 +53,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">1</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -66,7 +66,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">3</property>
                   </packing>
                 </child>
                 <child>
@@ -79,7 +79,20 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">3</property>
+                    <property name="top_attach">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="add_quiz_button">
+                    <property name="label" translatable="yes">Add New Quiz</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="begin_add_quiz" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
               </object>
@@ -1019,7 +1032,10 @@ Create a new question by filling in the boxes.</property>
                   <object class="GtkLabel" id="new_answer_a">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Answer A:</property>
+                    <property name="label" translatable="yes">Correct Answer A:</property>
+                    <attributes>
+                      <attribute name="foreground" value="#7373d2d21616"/>
+                    </attributes>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -1110,6 +1126,56 @@ Create a new question by filling in the boxes.</property>
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkButton" id="add_question_button">
+                    <property name="label" translatable="yes">Add Question</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="add_question" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">5</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="finish_adding_quiz_button">
+                    <property name="label" translatable="yes">Finish Adding Quiz</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="go_to_successful_added_quiz_page" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">6</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="error_add_question_label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">label</property>
+                    <attributes>
+                      <attribute name="foreground" value="#f5f579790000"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">0</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
                   <placeholder/>
                 </child>
                 <child>
@@ -1147,7 +1213,72 @@ Create a new question by filling in the boxes.</property>
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkGrid" id="new_quiz_successful_page">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="row_homogeneous">True</property>
+                <property name="column_homogeneous">True</property>
+                <child>
+                  <object class="GtkButton" id="back_to_home_butto">
+                    <property name="label" translatable="yes">Finish and back to home</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="go_to_home" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="quiz_add_successful">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Added Quiz Successfully! Just give it a name:</property>
+                    <attributes>
+                      <attribute name="foreground" value="#7373d2d21616"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="name_of_new_quiz_entry">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="name">new_quiz_successful_page</property>
+                <property name="title" translatable="yes">page0</property>
+                <property name="position">11</property>
+              </packing>
             </child>
             <child>
               <placeholder/>
