@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#ifndef GENERATE_TAGS
+#define GENERATE_TAGS
+
 typedef struct {
     char *sentence;
     int totalWords;
@@ -161,3 +164,5 @@ char *get_tags(char *sentence) {
 //     printf("%s", generate_tags_string(breakdown));
 //     return 0;
 // }
+
+#endif

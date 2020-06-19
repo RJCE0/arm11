@@ -1,3 +1,6 @@
+#ifndef MULTIPLE_CHOICE
+#define MULTIPLE_CHOICE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -207,3 +210,4 @@ int main(int argc, char **argv) {
 }
 
 */
+#endif

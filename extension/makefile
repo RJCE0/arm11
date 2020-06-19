@@ -25,7 +25,7 @@ OBJS=    main.o
 all: $(OBJS)
 	$(LD) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-main.o: src_gui/main.c src_gui/multiplechoice.c src_gui/generatetags.c
+main.o: src_gui/main.c src_gui/multiplechoice.c src_gui/generatetags.c src_gui/extension.h src_gui/pages.c
 	$(CC) -c $(CCFLAGS) src_gui/main.c $(GTKLIB) -o main.o
 
 clean:

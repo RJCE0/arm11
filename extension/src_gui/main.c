@@ -1,71 +1,5 @@
-#include <gtk/gtk.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include "multiplechoice.c"
-#include "generatetags.c"
-#include <stdio.h>
-#include <time.h>
-
-#define MAX_CHECKBOX_ANSWERS 14
-
-typedef struct {
-    GtkWidget *tickBox1;
-    GtkWidget *tickBox2;
-    GtkWidget *tickBox3;
-    GtkWidget *tickBox4;
-    GtkWidget *tickBox5;
-    GtkWidget *tickBox6;
-    GtkWidget *tickBox7;
-    GtkWidget *tickBox8;
-    GtkWidget *tickBox9;
-} tickBoxes;
-
-
-typedef struct {
-    char *newQuestionStr;
-    char *newAnswerAStr;
-    char *newAnswerBStr;
-    char *newAnswerCStr;
-    char *newAnswerDStr;
-} questionToAdd;
-
-typedef struct {
-    GtkWidget *stack;
-    GtkWidget *questionLabel;
-    GtkWidget *scoreLabelFromWrong;
-    GtkWidget *scoreLabelFromRight;
-    GtkWidget *tagsLabel;
-    GtkWidget *answerA;
-    GtkWidget *answerB;
-    GtkWidget *answerC;
-    GtkWidget *answerD;
-    GtkWidget *picQ1;
-    GtkWidget *picQ1Ans;
-    GtkWidget *picQ2;
-    GtkWidget *picQ2Ans;
-    tickBoxes *q1Boxes;
-    tickBoxes *q2Boxes;
-    node *curNode;
-    int quizScore;
-    int maxQuestions;
-    int currentQuestion;
-    int *guesses;
-    int *imAns1;
-    int *imAns2;
-    GtkWidget *finalScoreLabel;
-    GtkWidget *imScore1;
-    GtkWidget *imScore2;
-    GtkWidget *finishAddingQuizButton;
-    GtkWidget *newQuestion;
-    GtkWidget *newAnswerA;
-    GtkWidget *newAnswerB;
-    GtkWidget *newAnswerC;
-    GtkWidget *newAnswerD;
-    GtkWidget *errorAddingQuestionLabel;
-    GtkWidget *nameOfQuizEntry;
-    int numAddedQuestions;
-    questionToAdd **addedQuestions;
-} data;
+#include "extension.h"
+#include "pages.c"
 
 int check_im_score(int *guesses, int *imAnswers) {
     int score = 0;
@@ -85,9 +19,13 @@ int check_im_score(int *guesses, int *imAnswers) {
     return score;
 }
 
-void on_checkbox_toggle(GtkToggleButton *togglebutton, data *myData){
-    int num = atoi(gtk_widget_get_name(GTK_WIDGET(togglebutton)));
-    if (gtk_toggle_button_get_active(togglebutton)) {
+const char *get_label(GtkWidget *button) {
+    return gtk_button_get_label((GtkButton *) button);
+}
+
+void on_checkbox_toggle(GtkWidget *togglebutton, data *myData){
+    int num = atoi(get_label(togglebutton));
+    if (gtk_toggle_button_get_active((GtkToggleButton *) togglebutton)) {
         myData->guesses[num - 1] = 1;
         g_print("Option %d is Checked\n", num);
     }
@@ -132,6 +70,8 @@ char *int_to_string(int i) {
 }
 
 void go_to_final_screen(GtkWidget *widget, data *myData) {
+    GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
     char *str = malloc(511 * sizeof(char));
     if (!str) {
         fprintf(stderr,
@@ -148,29 +88,33 @@ void go_to_final_screen(GtkWidget *widget, data *myData) {
                                      "final_screen");
 }
 
-void go_to_picQ1(GtkWidget *whatever, data *myData) {
-    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ1");
-}
-
 void go_to_picQ1Ans(GtkWidget *widget, data *myData) {
-    /*GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_LAYOUT);
-    gtk_widget_destroy(prev);*/
-    int score1 = check_im_score(myData->guesses, myData->imAns1);
+    GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
+    int score1 = check_im_score(myData->guesses, myData->images[1].answer);
     myData->quizScore += score1;
-    gtk_label_set_text((GtkLabel *) myData->imScore1, int_to_string(score1));
-    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ1Ans");
+    create_im_answer(0, score1, myData);
+    /*gtk_label_set_text((GtkLabel *) myData->imScore1, int_to_string(score1));
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ1Ans");*/
 }
 
-
-void go_to_picQ2(GtkWidget *whatever, data *myData) {
-    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ2");
-}
-
-void go_to_picQ2Ans(GtkWidget *whatever, data *myData) {
-    int score2 = check_im_score(myData->guesses, myData->imAns2);
+void go_to_picQ2Ans(GtkWidget *widget, data *myData) {
+    GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
+    int score2 = check_im_score(myData->guesses, myData->images[1].answer);
     myData->quizScore += score2;
-    gtk_label_set_text((GtkLabel *) myData->imScore2, int_to_string(score2));
-    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ2Ans");
+    create_im_answer(1, score2, myData);
+}
+
+void go_to_picQ1(GtkWidget *whatever, data *myData) {
+    create_image(0, myData);
+}
+
+
+void go_to_picQ2(GtkWidget *widget, data *myData) {
+    GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
+    create_image(1, myData);
 }
 
 void go_to_correct_answer(GtkWidget *whatever, data *myData) {
@@ -379,10 +323,7 @@ void finish_quiz_build(GtkWidget *button, data *myData) {
     go_to_home(button, myData);
 }
 
-const char *get_label(GtkWidget *button) {
-    return gtk_button_get_label((GtkButton *) button);
-}
-
+/*
 void begin_quiz(GtkWidget *widget, data *myData) {
     GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
     gtk_widget_destroy(prev);
@@ -396,12 +337,23 @@ void begin_quiz(GtkWidget *widget, data *myData) {
     set_question(myData);
     go_to_question_page(widget, myData);
 }
+*/
+void begin_quiz(GtkWidget *widget, data *myData) {
+    GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
+
+    int maxQuestions;
+    char *fileName = get_label(widget);
+    myData->curNode = initialise_questions(&maxQuestions, fileName);
+    myData->maxQuestions = maxQuestions;
+    myData->currentQuestion = 0;
+    myData->quizScore = 0;
+    set_question(myData);
+    go_to_question_page(widget, myData);
+    //create_queston(myData);
+}
 
 void quiz_selector(GtkWidget *whatever, data *myData){
-    if (gtk_stack_get_child_by_name((GtkStack *) myData->stack, "quiz_selector")) {
-        gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "quiz_selector");
-        return;
-    }
     int size;
     char **labels = get_all_files(&size);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -424,7 +376,7 @@ void quiz_selector(GtkWidget *whatever, data *myData){
 
 void open_blm_site(GtkWidget *whatever, data *myData) {
     gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/",
-                          GDK_CURRENT_TIME, NULL);
+    GDK_CURRENT_TIME, NULL);
 }
 
 void advance_right_question(GtkButton *button, data *myData, quest *question) {
@@ -458,49 +410,9 @@ void advance_left_question(GtkButton *button, data *myData, quest *question) {
     go_to_question_page((GtkWidget *) button, myData);
 }
 
-void q1_initialise_tickboxes(tickBoxes *t, GtkBuilder *builder) {
-    if (t) {
-        t->tickBox1 = GTK_WIDGET(gtk_builder_get_object(builder, "check1"));
-        t->tickBox2 = GTK_WIDGET(gtk_builder_get_object(builder, "check2"));
-        t->tickBox3 = GTK_WIDGET(gtk_builder_get_object(builder, "check3"));
-        t->tickBox4 = GTK_WIDGET(gtk_builder_get_object(builder, "check4"));
-        t->tickBox5 = GTK_WIDGET(gtk_builder_get_object(builder, "check5"));
-        t->tickBox6 = GTK_WIDGET(gtk_builder_get_object(builder, "check6"));
-        t->tickBox7 = GTK_WIDGET(gtk_builder_get_object(builder, "check7"));
-        t->tickBox8 = GTK_WIDGET(gtk_builder_get_object(builder, "check8"));
-        t->tickBox9 = GTK_WIDGET(gtk_builder_get_object(builder, "check9"));
-    }
-}
-
-void q2_initialise_tickboxes(tickBoxes *t, GtkBuilder *builder) {
-    if (t) {
-        t->tickBox1 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck1"));
-        t->tickBox2 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck2"));
-        t->tickBox3 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck3"));
-        t->tickBox4 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck4"));
-        t->tickBox5 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck5"));
-        t->tickBox6 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck6"));
-        t->tickBox7 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck7"));
-        t->tickBox8 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck8"));
-        t->tickBox9 = GTK_WIDGET(gtk_builder_get_object(builder, "2ndCheck9"));
-    }
-}
-
 void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
     open_blm_site(button, myData);
     on_window_main_destroy();
-}
-
-void free_tickboxes(tickBoxes *tb){
-    free(tb->tickBox1);
-    free(tb->tickBox2);
-    free(tb->tickBox3);
-    free(tb->tickBox4);
-    free(tb->tickBox5);
-    free(tb->tickBox6);
-    free(tb->tickBox7);
-    free(tb->tickBox8);
-    free(tb->tickBox9);
 }
 
 void free_all(data *d){
@@ -517,8 +429,6 @@ void free_all(data *d){
     free(d->picQ1Ans);
     free(d->picQ2);
     free(d->picQ2Ans);
-    free_tickboxes(d->q1Boxes);
-    free_tickboxes(d->q2Boxes);
     free(d->guesses);
     free(d->imAns1);
     free(d->imAns2);
@@ -544,10 +454,6 @@ int main(int argc, char *argv[]) {
 
     data *myData = malloc(sizeof(data));
 
-    tickBoxes *boxes = malloc(sizeof(*boxes));
-    tickBoxes *q2boxes = malloc(sizeof(*q2boxes));
-    q1_initialise_tickboxes(boxes, builder);
-    q2_initialise_tickboxes(q2boxes, builder);
     window = GTK_WIDGET(gtk_builder_get_object(builder, "window_main"));
     gtk_builder_connect_signals(builder, myData);
     myData->stack = GTK_WIDGET(gtk_builder_get_object(builder, "stack1"));
@@ -572,8 +478,6 @@ int main(int argc, char *argv[]) {
     myData->picQ1Ans = GTK_WIDGET(gtk_builder_get_object(builder, "PicQ1Ans"));
     myData->picQ2 = GTK_WIDGET(gtk_builder_get_object(builder, "PicQ2"));
     myData->picQ2Ans = GTK_WIDGET(gtk_builder_get_object(builder, "PicQ2Ans"));
-    myData->q1Boxes = boxes;
-    myData->q2Boxes = q2boxes;
     myData->imScore1 = GTK_WIDGET(gtk_builder_get_object(builder, "score1"));
     myData->imScore2 = GTK_WIDGET(gtk_builder_get_object(builder, "score2"));
     myData->finishAddingQuizButton = GTK_WIDGET(gtk_builder_get_object(builder, "finish_adding_quiz_button"));
@@ -590,6 +494,17 @@ int main(int argc, char *argv[]) {
     myData->imAns2 = temp2;
     myData->guesses = calloc(9, sizeof(int));
     myData->finalScoreLabel = GTK_WIDGET(gtk_builder_get_object(builder, "final_score"));
+    myData->images = malloc(2 * sizeof(image));
+    myData->images[0].queFile = "src/stb_image/Q1.jpg";
+    myData->images[0].answer = temp1;
+    myData->images[0].question = "Which of these items have a black inventor?";
+    myData->images[0].ansFile = "src/stb_image/Q1Ans.jpg";
+    myData->images[0].maxAns = 5;
+    myData->images[1].queFile = "src/stb_image/Q2.jpg";
+    myData->images[1].answer = temp2;
+    myData->images[1].question = "Which of these items have a black inventor?";
+    myData->images[1].ansFile = "src/stb_image/Q2Ans.jpg";
+    myData->images[1].maxAns = 9;
     g_object_unref(builder);
     gtk_widget_show(window);
     gtk_main();
