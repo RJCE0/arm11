@@ -1,0 +1,35 @@
+The tests outlined in this file were done manually on the GUI. More details about this are stated in our final report.
+These tests are for general GUI functionality as well as testing edge cases and unique scenarios.
+
+**Tests for adding a new quiz**
+- [passed] Creating an empty quiz is rejected
+- [passed] Creating a very large quiz is rejected
+- [passed] Adding question with empty question not allowed
+- [passed] Adding question with only one answer not allowed
+- [passed] Adding quiz with one question allowed
+- [failed] Adding quiz with duplicate name not allowed
+
+**Tests for doing a quiz**
+- [passed] A quiz with all wrong answers functions correctly
+- [passed] A quiz with all correct answers functions correctly
+- [passed] Getting a wrong answer yields the correct current score
+- [passed] Getting a right answer yields the correct current score
+- [passed] Correct current score at the end of the quiz
+- [passed] Several random quizzes taken
+- [passed] Scores functioning correctly for random quizzes
+- [passed] Doing several consecutive quizzes doesn't affect score
+- [passed] Quitting a quiz at any time and retrying the quiz doesn't affect the program functionality in any immediately noticeable way
+- [passed] Quitting during the quiz has no noticeable malfunctions
+
+**Tests for creating quiz tags**
+Tests for this are not simply pass and fail. Based on the code that was written, this functionality
+is working well. Given a sentence, the algorithm will return an array of strings that are loosely
+considered to be "topics" of the sentence, by removing "stopwords" from the sentence. The list of
+"stopwords" are sourced from "https://github.com/Alir3z4/stop-words".
+
+- [passed] Algorithm successfully removes stopwords from a normal sentence
+- [passed] Algorithm doesn't crash upon being giving an empty sentence
+- [passed] Algorithm unaffected by non-ascii characters within the sentence
+
+**Learn More Page**
+- [passed] Opens URL with various default browsers

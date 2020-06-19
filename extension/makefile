@@ -1,5 +1,5 @@
 # change application name here (executable output name)
-TARGET=template_app
+TARGET=blm_quiz
 
 # compiler
 CC=gcc

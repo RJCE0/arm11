@@ -76,10 +76,10 @@ void create_question(data *myData){
     gtk_label_set_line_wrap ((GtkLabel *) header, TRUE);
     gtk_widget_show(header);
 	gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 50);
-	/*GtkWidget *tags = gtk_label_new (get_tags(question->que));
+	GtkWidget *tags = gtk_label_new (get_tags(question->que));
     gtk_label_set_line_wrap ((GtkLabel *) tags, TRUE);
     gtk_widget_show(tags);
-	gtk_box_pack_start(GTK_BOX(box), tags, FALSE, TRUE, 50);*/
+	gtk_box_pack_start(GTK_BOX(box), tags, FALSE, TRUE, 50);
 	GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_homogeneous ((GtkGrid *) grid, TRUE);
     gtk_grid_set_column_homogeneous ((GtkGrid *) grid, TRUE);
@@ -138,8 +138,8 @@ void wrong_add_qu(data *myData){
     GtkWidget *header = gtk_label_new ("Incorrect question format added");
     gtk_widget_show(header);
     gtk_box_pack_start(GTK_BOX(box), header, TRUE, TRUE, 0);
-    GtkWidget *button = gtk_button_new_with_label("Return to Menu");
-    g_signal_connect(button, "clicked",(GCallback) &go_to_home, myData);
+    GtkWidget *button = gtk_button_new_with_label("Return to add question page");
+    g_signal_connect(button, "clicked",(GCallback) &add_question_first, myData);
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(box), button, TRUE, TRUE, 0);
     gtk_widget_show(box);
@@ -164,16 +164,16 @@ void create_add_question(data *myData){
     GtkWidget *q = gtk_label_new("Question:");
     gtk_widget_show(q);
     gtk_grid_attach(GTK_GRID(grid), q, 0, 0, 1, 1);
-    GtkWidget *op1 = gtk_label_new("Correct Ans A");
+    GtkWidget *op1 = gtk_label_new("Correct Answer A:");
     gtk_widget_show(op1);
     gtk_grid_attach(GTK_GRID(grid), op1, 0, 1, 1, 1);
-    GtkWidget *op2 = gtk_label_new("Ans B");
+    GtkWidget *op2 = gtk_label_new("Answer B:");
     gtk_widget_show(op2);
     gtk_grid_attach(GTK_GRID(grid), op2, 0, 2, 1, 1);
-    GtkWidget *op3 = gtk_label_new("Ans C");
+    GtkWidget *op3 = gtk_label_new("Answer C:");
     gtk_widget_show(op3);
     gtk_grid_attach(GTK_GRID(grid), op3, 0, 3, 1, 1);
-    GtkWidget *op4 = gtk_label_new("Ans D");
+    GtkWidget *op4 = gtk_label_new("Answer D:");
     gtk_widget_show(op4);
     gtk_grid_attach(GTK_GRID(grid), op4, 0, 4, 1, 1);
     GtkWidget *addQ = gtk_button_new_with_label("Add Question");
