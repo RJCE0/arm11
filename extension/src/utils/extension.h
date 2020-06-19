@@ -1,8 +1,8 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "multiplechoice.c"
-#include "generatetags.c"
+#include "multiple_choice.c"
+#include "generate_tags.c"
 #include <stdio.h>
 #include <time.h>
 
@@ -14,8 +14,8 @@
 typedef struct singleLinked quizNode;
 
 struct singleLinked {
-  quizNode *next;
-  char **quizQuestion;
+    quizNode *next;
+    char **quizQuestion;
 };
 
 typedef struct {
@@ -28,7 +28,7 @@ typedef struct {
     char *ansFile;
     int *answer;
     char *question;
-	int maxAns;
+    int maxAns;
 } image;
 
 typedef struct {
@@ -43,11 +43,12 @@ typedef struct {
     fileState *addQuest;
 } data;
 
-int check_im_score(int *guesses, int *imAnswers) ;
+int check_im_score(int *guesses, int *imAnswers);
 
 const char *get_label(GtkWidget *button);
 
 void on_checkbox_toggle(GtkWidget *togglebutton, data *myData);
+
 // called when window is closed
 void on_window_main_destroy(void);
 
@@ -77,7 +78,7 @@ void go_to_correct_answer(GtkWidget *whatever, data *myData);
 
 void go_to_wrong_answer(GtkWidget *widget, data *myData);
 
-GCallback check_answer(int i) ;
+GCallback check_answer(int i);
 
 int *randomise_questions(int size);
 
@@ -97,7 +98,7 @@ void quiz_selector(GtkWidget *whatever, data *myData);
 
 void open_blm_site(GtkWidget *whatever, data *myData);
 
-void advance_right_question(GtkWidget *button, data *myData, quest *question) ;
+void advance_right_question(GtkWidget *button, data *myData, quest *question);
 
 void advance_left_question(GtkWidget *button, data *myData, quest *question);
 

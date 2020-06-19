@@ -13,7 +13,7 @@ typedef struct {
     int totalTags;
 } questionBreakdown;
 
-void free_question_breakdown(questionBreakdown *breakdown){
+void free_question_breakdown(questionBreakdown *breakdown) {
     for (int i = 0; i < breakdown->totalWords; i++) {
         if (breakdown->wordList[i]) {
             free(breakdown->wordList[i]);
@@ -26,8 +26,9 @@ void split_on_spaces(questionBreakdown *breakdown) {
     int count = 0;
     char *word = strtok(breakdown->sentence, " ");
     while (word) {
-        breakdown->wordList = (char **) realloc (breakdown->wordList, (count + 1) * sizeof(char *));
-        breakdown->wordList[count] = malloc (20 * sizeof(char));
+        breakdown->wordList = (char **) realloc(breakdown->wordList,
+                                                (count + 1) * sizeof(char *));
+        breakdown->wordList[count] = malloc(20 * sizeof(char));
         strcpy(breakdown->wordList[count], word);
         count++;
         word = strtok(NULL, " ");
@@ -47,8 +48,8 @@ void remove_non_alphanumeric(questionBreakdown *breakdown) {
         }
         for (int j = 0; breakdown->wordList[i][j]; ++j) {
             if (IS_ALPHA(breakdown->wordList[i][j])
-            || IS_NUMERICAL(breakdown->wordList[i][j])
-            || IS_DASH(breakdown->wordList[i][j])) {
+                || IS_NUMERICAL(breakdown->wordList[i][j])
+                || IS_DASH(breakdown->wordList[i][j])) {
                 breakdown->wordList[i][characterCount] = breakdown->wordList[i][j];
                 characterCount++;
             }
@@ -124,7 +125,8 @@ char *generate_tags_string(questionBreakdown *breakdown) {
 }
 
 char *get_tags(char *sentence) {
-    questionBreakdown *breakdown = (questionBreakdown *) malloc(sizeof(*breakdown));
+    questionBreakdown *breakdown = (questionBreakdown *) malloc(
+            sizeof(*breakdown));
     breakdown->sentence = sentence;
     breakdown->wordList = malloc(sizeof(char *));
     // printf("--%s--", sentence);

@@ -1,6 +1,6 @@
-#include "extension.h"
-#include "pages.c"
-#include "write_to_file.c"
+#include "utils/extension.h"
+#include "utils/pages.c"
+#include "utils/write_to_file.c"
 
 int check_im_score(int *guesses, int *imAnswers) {
     int score = 0;
@@ -24,17 +24,17 @@ const char *get_label(GtkWidget *button) {
     return gtk_button_get_label((GtkButton *) button);
 }
 
-void on_checkbox_toggle(GtkWidget *togglebutton, data *myData){
+void on_checkbox_toggle(GtkWidget *togglebutton, data *myData) {
     int num = atoi(get_label(togglebutton));
     if (gtk_toggle_button_get_active((GtkToggleButton *) togglebutton)) {
         myData->guesses[num - 1] = 1;
         g_print("Option %d is Checked\n", num);
-    }
-    else {
+    } else {
         myData->guesses[num - 1] = 0;
         g_print("Option %d is Unchecked\n", num);
     }
 }
+
 // called when window is closed
 void on_window_main_destroy(void) {
     gtk_main_quit();
@@ -76,7 +76,7 @@ void go_to_final_screen(GtkWidget *widget, data *myData) {
     char *str = malloc(511 * sizeof(char));
     if (!str) {
         fprintf(stderr,
-        "A memory allocation error has occured while printing out final string. Exiting...\n");
+                "A memory allocation error has occured while printing out final string. Exiting...\n");
         exit(EXIT_FAILURE);
     }
     strcpy(str, "Well done on finishing the quiz! Your final score was: ");
@@ -161,17 +161,20 @@ int *randomise_questions(int size) {
     return array;
 }
 
-void begin_add_quiz(GtkWidget *button, data *myData){
+void begin_add_quiz(GtkWidget *button, data *myData) {
     create_file_name(myData);
 }
 
-void add_question_first(GtkWidget *widget, data *myData){
+void add_question_first(GtkWidget *widget, data *myData) {
     GtkWidget *box = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
     GList *list = gtk_container_get_children(GTK_CONTAINER(box));
     while (list) {
-        if (strcmp(gtk_widget_get_name(GTK_WIDGET(list->data)), "textBox") == 0) {
-            printf("fileName assigned:%s\n", gtk_entry_get_text(GTK_ENTRY(list->data)));
-            strcpy(myData->addQuest->fileName,gtk_entry_get_text(GTK_ENTRY(list->data)));
+        if (strcmp(gtk_widget_get_name(GTK_WIDGET(list->data)), "textBox") ==
+            0) {
+            printf("fileName assigned:%s\n",
+                   gtk_entry_get_text(GTK_ENTRY(list->data)));
+            strcpy(myData->addQuest->fileName,
+                   gtk_entry_get_text(GTK_ENTRY(list->data)));
         }
         list = list->next;
     }
@@ -179,7 +182,7 @@ void add_question_first(GtkWidget *widget, data *myData){
     create_add_question(myData);
 }
 
-void add_question_amended(GtkWidget *widget, data *myData){
+void add_question_amended(GtkWidget *widget, data *myData) {
     GtkWidget *grid = gtk_widget_get_ancestor(widget, GTK_TYPE_GRID);
     GList *list = gtk_container_get_children(GTK_CONTAINER(grid));
     char **result = malloc(5 * sizeof(char *));
@@ -188,14 +191,16 @@ void add_question_amended(GtkWidget *widget, data *myData){
     }
     int count = 4;
     while (list) {
-        if (strcmp(gtk_widget_get_name(GTK_WIDGET(list->data)), "textBox") == 0) {
+        if (strcmp(gtk_widget_get_name(GTK_WIDGET(list->data)), "textBox") ==
+            0) {
             strcpy(result[count--], gtk_entry_get_text(GTK_ENTRY(list->data)));
         }
         list = list->next;
     }
     bool valid = true;
     if (!myData->addQuest->start) {
-        myData->addQuest->start = insert_quiz_node(myData->addQuest->start, result, &valid);
+        myData->addQuest->start = insert_quiz_node(myData->addQuest->start,
+                                                   result, &valid);
     } else {
         insert_quiz_node(myData->addQuest->start, result, &valid);
     }
@@ -212,7 +217,7 @@ void add_question_amended(GtkWidget *widget, data *myData){
     }
 }
 
-void finish_quiz(GtkWidget *widget, data *myData){
+void finish_quiz(GtkWidget *widget, data *myData) {
     GtkWidget *box = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
     gtk_widget_destroy(box);
     write_file(myData->addQuest->start, myData->addQuest->fileName);
@@ -232,18 +237,18 @@ void begin_quiz(GtkWidget *widget, data *myData) {
     create_question(myData);
 }
 
-void quiz_selector(GtkWidget *whatever, data *myData){
+void quiz_selector(GtkWidget *whatever, data *myData) {
     int size;
     char **labels = get_all_files(&size);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    GtkWidget *header = gtk_label_new ("Pick a Quiz");
+    GtkWidget *header = gtk_label_new("Pick a Quiz");
     gtk_widget_show(header);
     gtk_box_pack_start((GtkBox *) box, header, FALSE, TRUE, 20);
     for (int i = 0; i < size; i++) {
-        GtkWidget *button = gtk_button_new_with_label (labels[i]);
+        GtkWidget *button = gtk_button_new_with_label(labels[i]);
         gtk_box_pack_start((GtkBox *) box, button, TRUE, TRUE, 0);
         gtk_widget_show(button);
-        g_signal_connect(button, "clicked", (GCallback) &begin_quiz, myData);
+        g_signal_connect(button, "clicked", (GCallback) & begin_quiz, myData);
         free(labels[i]);
     }
     free(labels);
@@ -255,7 +260,7 @@ void quiz_selector(GtkWidget *whatever, data *myData){
 
 void open_blm_site(GtkWidget *whatever, data *myData) {
     gtk_show_uri_on_window(NULL, "https://blacklivesmatter.com/",
-    GDK_CURRENT_TIME, NULL);
+                           GDK_CURRENT_TIME, NULL);
 }
 
 void advance_right_question(GtkWidget *button, data *myData, quest *question) {
@@ -291,7 +296,7 @@ void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
     on_window_main_destroy();
 }
 
-void free_all(data *d){
+void free_all(data *d) {
     //free(d->stack);
     free(d->guesses);
     //free(d->finalScoreLabel);
@@ -315,17 +320,18 @@ int main(int argc, char *argv[]) {
     int temp1[] = {0, 1, 1, 0, 0, 1, 1, 0, 1};
     int temp2[] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
     myData->guesses = calloc(9, sizeof(int));
-    myData->finalScoreLabel = GTK_WIDGET(gtk_builder_get_object(builder, "final_score"));
+    myData->finalScoreLabel = GTK_WIDGET(
+            gtk_builder_get_object(builder, "final_score"));
     myData->images = malloc(2 * sizeof(image));
-    myData->images[0].queFile = "src/stb_image/Q1.jpg";
+    myData->images[0].queFile = "src/images/Q1.jpg";
     myData->images[0].answer = temp1;
     myData->images[0].question = "Which of these items have a black inventor?";
-    myData->images[0].ansFile = "src/stb_image/Q1Ans.jpg";
+    myData->images[0].ansFile = "src/images/Q1Ans.jpg";
     myData->images[0].maxAns = 5;
-    myData->images[1].queFile = "src/stb_image/Q2.jpg";
+    myData->images[1].queFile = "src/images/Q2.jpg";
     myData->images[1].answer = temp2;
     myData->images[1].question = "Which of these items have a black inventor?";
-    myData->images[1].ansFile = "src/stb_image/Q2Ans.jpg";
+    myData->images[1].ansFile = "src/images/Q2Ans.jpg";
     myData->images[1].maxAns = 9;
     myData->addQuest = malloc(sizeof(fileState));
     myData->addQuest->start = NULL;
