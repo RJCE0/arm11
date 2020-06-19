@@ -1,30 +1,46 @@
-\documentclass[11pt]{article}
-
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
 \usepackage{fullpage}
 
+\title{ARM11 Project Report}
+\author{Group 37 (Tyrell Duku, Jaimi Patel, Mazen Hussein & Reece Jackson) }
+\date{June 2nd, 2020}
+
 \begin{document}
-
-\title{ARM Checkpoint... }
-\author{TODO}
-
 \maketitle
+\section{Introduction}
+Our group has seen a very swift improvement in our teamwork, version control skills, task distribution and collaboration in this project. We have gained significant knowledge on how to use GitLab and make good use of available features including the priceless branching mechanism (including good lessons in merge conflicts!), as well as planning regular meetings with the group.
 
-\section{Group Organisation}
+\section{Project Setup}
+Before commencing the first task, the group decided it was best we all understood how to use GitLab and had grasped the basics of C, which included us sharing resources among ourselves. After this, we needed to plan how we were going to split our task. Bearing in mind the vast number of ways we could've split the entire project, we thought it was best we work together on each part of the project together as this we would be most efficient.
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+\section{Splitting up Part 1}
+After some discussion, we initially decided to allocate the decoding and execution of one of the four different instruction types to each group member and decide on a checkpoint deadline for each stage in the 'fetch-decode-execute cycle'. Before this, Tyrell and Mazen decided to set up a skeleton including some basic functions and a enums that would put the whole group on the same page. Tyrell was responsible for the \textit{Branch} instruction type, Jaimi was responsible for the \textit{Data Processing} instruction type, Mazen was responsible for the \textit{Single Data Transfer} (SDT) instruction type and Reece for the \textit{Multiply} instruction type. Reece would also go on to work on the Makefile and Jaimi would lead the implementation of the Three-Pass-Cycle (which was a huge hurdle).
 
-\section{Implementation Strategies}
+\section{Our progression with the task}
+By distributing the workload in the described way, we were all able to exercise similar areas of our C knowledge while allowing us to also understand as much of each other's code as possible. We were able to become familiar with a variety of programming tools in C in a practical way -- while paying particular attention towards understanding Makefiles and tools such as Valgrind and GDB as this helped us overcome obstacles quickly.
+As our individual group members have varying task difficulties as well as experience with C, those who were able to complete their designated blocks of code before others were able to assist those who found their tasks more challenging in order to stay on track for the internal deadline we set. Moreover, in addition to our weekly meetings with Thomas Lancaster, we have taken it upon ourselves to set up bi-weekly meetings in our group over \textit{Discord} -- in these we hold each other accountable for our progress (or lack thereof) within the project and discuss highlights and points of improvement.
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+\section{How well is the group working?}
+The group has been rather productive in this first task due to our open and frequent communication of ideas and plans with each other (for Part I alone we have over 100 commits in our team's repository!). We made sure that everyone was always on the same page, especially when making changes to frequently used areas of the code and in places where an overlap of our respective tasks occurred. Because of this we were able to finish Part I ahead of schedule and could therefore begin Part II earlier as well as make improvements to the code such as alternate implementations of key functions, and optional areas of the task. 
+The way in which we have allocated the workload has been largely successful for us as individuals -- in distributing different parts within the same project, nobody felt overwhelmed as each person could rely on the other three for help if needed and allowed us to complete Part I efficiently and quickly. 
 
+\section{Improvements}
+A key improvement we believe our group could make is the use of a coherent code style and arrangement of our code beforehand, as our code was difficult to read in places due to the inconsistency of aspects like variable and function names. Also, initially the structure of our project was untidy and led to a lot of frustration while navigating files inside our text editors. In this process, we learned about the importance of keeping the source directory organised while trying to navigate it initially (and being frustrated in the process). 
+
+
+\section{Structure of the Emulator}
+We decided to approach the structure of the project in a somewhat "modular" way with the usage of many structs, enums and functions. This allowed us to continue with our work independent the functionality of other areas of the code, and changes could be made without profound effects on the program flow.
+
+After several improvements to our file structure, we finally settled on having four additional header files: \textit{structs.h}, which contained the structs used to represent the ARM machine and registers, CPSR flags, \textit{instructionTypes.h}, used to contain structs for each type of instruction.
+\textit{emulate.h} holds function declarations and descriptions for all functions used in \textit{emulate.c} and \textit{constants.h} includes useful enums.
+
+As our experience in collaborative programming increased, we could transfer our skills to the next part of the project. In fact, Part 2 was started by part of our group just before the finishing touches were put on Part 1 such that a reasonable skeleton and design was ready for the group as a whole to immediately begin discussion and transition to the next part once finished.
+
+
+\section{Implementation Tasks}
+As we begin the next task in the project, we are having difficulties with identifying arguments and correctly extracting information from the assembly file, due to the varying amounts of information we need to process depending on the mnemonic; for example, a Multiply instruction may have either three or four registers depending on the mnemonic. As a result, we have made adjustments to our instruction struct for Part II through the use of a union.
+We also found taking action based on the mnemonic difficult; initially we decided to take the naive approach of a large switch statement, but later replaced it with an array of function pointers and a lookup table. Although it did not necessarily improve time complexity, it did significantly reduce the amount of code to write.
+However, so far in Part II we have only reused the opcode enum we created in Part I -- we have recognised the need to reuse code where possible and will aim to do so.
 \end{document}
