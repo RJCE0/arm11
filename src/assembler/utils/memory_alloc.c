@@ -7,7 +7,8 @@ state *initalise_state(firstFile *firstRead) {
     curr->lastInstr = firstRead->lines;
     curr->labelCount = firstRead->labelCount;
     curr->pc = 0;
-    curr->decoded = (uint32_t *) malloc((curr->lastInstr + 1) * sizeof(uint32_t));
+    curr->decoded = (uint32_t *) malloc(
+            (curr->lastInstr + 1) * sizeof(uint32_t));
     return curr;
 }
 
@@ -45,7 +46,8 @@ firstFile *initalise_first_file(void) {
 }
 
 labelInfo *realloc_labels(labelInfo *labels, int labelCount) {
-    labels = (labelInfo *) realloc(labels, (labelCount + 1) * sizeof(labelInfo));
+    labels = (labelInfo *) realloc(labels,
+                                   (labelCount + 1) * sizeof(labelInfo));
     labels[labelCount].s = (char *) malloc(10 * sizeof(char));
     return labels;
 }
