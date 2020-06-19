@@ -70,8 +70,7 @@ void go_to_final_screen(GtkWidget *widget, data *myData) {
     free(maxQuest);
     gtk_label_set_text((GtkLabel *) myData->finalScoreLabel, str);
     free(str);
-    gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
-                                     "final_screen");
+    gtk_stack_set_visible_child_name((GtkStack *)myData->stack, "final_screen");
 }
 
 char *int_to_string(int i) {
@@ -79,7 +78,6 @@ char *int_to_string(int i) {
     sprintf(score, "%d", i);
     return score;
 }
-
 
 void go_to_picQ1Ans(GtkWidget *widget, data *myData) {
     GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
@@ -103,7 +101,6 @@ void go_to_picQ1(GtkWidget *whatever, data *myData) {
     }
     create_image(0, myData);
 }
-
 
 void go_to_picQ2(GtkWidget *widget, data *myData) {
     GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
@@ -175,7 +172,6 @@ void add_question_first(GtkWidget *widget, data *myData) {
                     free(allQuizNames);
                     return;
                 }
-
             }
             strcpy(myData->addQuest->fileName,
                    gtk_entry_get_text(GTK_ENTRY(list->data)));
@@ -301,9 +297,7 @@ void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
 }
 
 void free_all(data *d) {
-    //free(d->stack);
     free(d->guesses);
-    //free(d->finalScoreLabel);
     free(d->images);
     free(d->addQuest);
 }
@@ -340,11 +334,12 @@ int main(int argc, char *argv[]) {
     myData->addQuest = malloc(sizeof(fileState));
     myData->addQuest->start = NULL;
     myData->addQuest->fileName = malloc(100 * sizeof(char));
+
     g_object_unref(builder);
     gtk_widget_show(window);
-    gtk_main();
-    free_all(myData);
-    printf("finished\n");
 
+    gtk_main();
+
+    free_all(myData);
     return 0;
 }

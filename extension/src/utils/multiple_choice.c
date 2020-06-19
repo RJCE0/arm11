@@ -21,7 +21,6 @@ struct linked {
     quest *question;
 };
 
-
 bool check_question(const char *str) {
     char *ptr = "Q:";
     while (*ptr) {
@@ -99,24 +98,24 @@ node *get_right(node *curr) {
 }
 
 void free_nodes(node *curr) {
-    node *vamos = curr;
+    node *currNode = curr;
     node *last;
-    while (vamos->next) {
-        last = vamos;
-        vamos = last->next;
-        vamos->prev = last->prev;
+    while (currNode->next) {
+        last = currNode;
+        currNode = last->next;
+        currNode->prev = last->prev;
         free_quest(last->question);
         free(last);
     }
-    while (vamos->prev) {
-        last = vamos;
-        vamos = last->prev;
-        vamos->next = last->next;
+    while (currNode->prev) {
+        last = currNode;
+        currNode = last->prev;
+        currNode->next = last->next;
         free_quest(last->question);
         free(last);
     }
-    free_quest(vamos->question);
-    free(vamos);
+    free_quest(currNode->question);
+    free(currNode);
 }
 
 node *read_file(char *fileName, int *questionNum) {
@@ -162,6 +161,5 @@ node *initialise_questions(int *maxQuestions, char *fileName) {
     *maxQuestions = questionNum / 2 + questionNum % 2;
     return curr;
 }
-
 
 #endif

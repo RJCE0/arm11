@@ -43,7 +43,7 @@ typedef struct {
     fileState *addQuest;
 } data;
 
-int check_im_score(int *guesses, int *imAnswers);
+int check_image_score(int *guesses, int *imAnswers);
 
 const char *get_label(GtkWidget *button);
 

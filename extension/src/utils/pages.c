@@ -1,11 +1,11 @@
 #include "extension.h"
 
-void create_im_answer(int imageNo, int score, data *myData) {
+void create_im_answer(int imageNum, int score, data *myData) {
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    GtkWidget *header = gtk_label_new(myData->images[imageNo].question);
+    GtkWidget *header = gtk_label_new(myData->images[imageNum].question);
     gtk_widget_show(header);
     gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 10);
-    GtkWidget *image = gtk_image_new_from_file(myData->images[imageNo].ansFile);
+    GtkWidget *image = gtk_image_new_from_file(myData->images[imageNum].ansFile);
     gtk_widget_show(image);
     gtk_box_pack_start(GTK_BOX(box), image, FALSE, TRUE, 20);
     char *scoreMessage = malloc(20 * sizeof(char));
@@ -14,7 +14,7 @@ void create_im_answer(int imageNo, int score, data *myData) {
     strcat(scoreMessage, qScore);
     free(qScore);
     strcat(scoreMessage, " out of ");
-    char *maxScore = int_to_string(myData->images[imageNo].maxAns);
+    char *maxScore = int_to_string(myData->images[imageNum].maxAns);
     strcat(scoreMessage, maxScore);
     free(maxScore);
     GtkWidget *message = gtk_label_new(scoreMessage);
@@ -23,7 +23,7 @@ void create_im_answer(int imageNo, int score, data *myData) {
     gtk_box_pack_start(GTK_BOX(box), message, FALSE, TRUE, 10);
     GtkWidget *cont = gtk_button_new_with_label("Continue");
     GCallback nextFunc = (GCallback) & go_to_picQ2;
-    if (imageNo == 1) {
+    if (imageNum == 1) {
         nextFunc = (GCallback) & go_to_final_screen;
     }
     g_signal_connect(cont, "clicked", nextFunc, myData);
@@ -34,12 +34,12 @@ void create_im_answer(int imageNo, int score, data *myData) {
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "image_ans");
 }
 
-void create_image(int imageNo, data *myData) {
+void create_image(int imageNum, data *myData) {
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    GtkWidget *header = gtk_label_new(myData->images[imageNo].question);
+    GtkWidget *header = gtk_label_new(myData->images[imageNum].question);
     gtk_widget_show(header);
     gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 10);
-    GtkWidget *image = gtk_image_new_from_file(myData->images[imageNo].queFile);
+    GtkWidget *image = gtk_image_new_from_file(myData->images[imageNum].queFile);
     gtk_widget_show(image);
     gtk_box_pack_start(GTK_BOX(box), image, FALSE, TRUE, 20);
     for (int i = 0; i < 3; i++) {
@@ -58,7 +58,7 @@ void create_image(int imageNo, data *myData) {
     }
     GtkWidget *submit = gtk_button_new_with_label("Submit");
     GCallback nextFunc = (GCallback) & go_to_picQ1Ans;
-    if (imageNo == 1) {
+    if (imageNum == 1) {
         nextFunc = (GCallback) & go_to_picQ2Ans;
     }
     g_signal_connect(submit, "clicked", nextFunc, myData);
@@ -77,6 +77,7 @@ void create_question(data *myData) {
     gtk_label_set_line_wrap((GtkLabel *) header, TRUE);
     gtk_widget_show(header);
     gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 50);
+    // The automated tags functionality had bugs at the end :(
     // GtkWidget *tags = gtk_label_new (get_tags(question->que));
     // gtk_label_set_line_wrap ((GtkLabel *) tags, TRUE);
     // gtk_widget_show(tags);
