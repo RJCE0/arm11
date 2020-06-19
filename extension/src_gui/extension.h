@@ -29,21 +29,11 @@ typedef struct {
 
 typedef struct {
     GtkWidget *stack;
-    GtkWidget *questionLabel;
-    GtkWidget *scoreLabelFromWrong;
-    GtkWidget *scoreLabelFromRight;
-    GtkWidget *tagsLabel;
-    GtkWidget *answerA;
-    GtkWidget *answerB;
-    GtkWidget *answerC;
-    GtkWidget *answerD;
     node *curNode;
     int quizScore;
     int maxQuestions;
     int currentQuestion;
     int *guesses;
-    int *imAns1;
-    int *imAns2;
     GtkWidget *finalScoreLabel;
     GtkWidget *finishAddingQuizButton;
     GtkWidget *newQuestion;
@@ -121,5 +111,7 @@ void advance_left_question(GtkWidget *button, data *myData, quest *question);
 void on_final_screen_quit_clicked(GtkWidget *button, data *myData);
 
 void free_all(data *d);
+
+void add_question_amended(GtkWidget *widget, data *myData);
 
 #endif
