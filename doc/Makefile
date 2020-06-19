@@ -14,3 +14,7 @@ clean:
 	rm -f *.aux
 	rm -f *.log
 	rm -f *.pdf
+	rm -f *.dvi
+	rm -f *.aux
+	rm -f *.log
+
