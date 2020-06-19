@@ -1,21 +1,156 @@
-\documentclass[11pt]{article}
-
+\documentclass{article}
+\usepackage[utf8]{inputenc}
 \usepackage{fullpage}
+\usepackage{graphicx}
+\graphicspath{{./images/}}
+
+\documentclass{article}
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes.multipart,chains,arrows}
+
+\title{ARM11 Final Report}
+\author{Jaimi Patel, Mazen Hussein, Reece Jackson & Tyrell Duku }
+\date{Due June 19th 2020}
+
+
 
 \begin{document}
-
-\title{Our Extension...}
-\author{TODO}
 
 \maketitle
 
 \section{Introduction}
+Throughout the project, the team has significantly improved their proficiency in version control, using external libraries and the C language as a whole. Through careful planning and use of GitLab we were able to successfully complete our final project, although not without challenges and shortcomings along the way.
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+\section{Structure and Implementation of The Assembler}
+During the development of our assembler, we had various discussions and made several changes to the structure to allow for more flexibility in our design while maintaining readability and allowing for future extensibility of the project. We partitioned the assemble program into several files to reflect a more real solution to the problem. Our final file structure consists of: \begin{itemize}
+    \item A \textit{utils} folder, which in itself contains: \begin{itemize}
+        \item a constants.c file, holding some key macros and constants used;
+        \item a dictionaries.c file, holding lookup tables for various instruction types;
+        \item a helpers.c file, holding some common helper functions we all used;
+        \item a memory-alloc.c file, holding functions related to the allocation of memory to represent the internal state;
+    \end{itemize}
+    \item an assemble.c file, holding the main functions used.
+\end{itemize}
+
+For the first pass of the two-pass method, we maintained a struct to store the various attributes of the files including the number of labels, the labels themselves and the line count as these were easily attainable during this process and the data is necessary for several instruction types later on.
+
+The second pass would loop through the file and for each instruction, it splits and saves its mnemonic, and arguments to a struct. Using a lookup table, the program saves to a struct a couple of enums that correspond to the general type, as well as the exact instruction, which will allow for more general functions and will reduce code duplication. Some of the bits of the instruction can be determined from this information alone (and this will prevent us having to waste resources reading this information again) and so we save it a union (as only one instruction is being used at a time). After this parsing stage, there is a function for each of the respective instruction types which implement the required logic, and helper functions in a separate file are used to determine whether the arguments are immediate or registers, and to get these respective numbers. 
+
+The separate bits of the instruction are calculated and shifted as required in each of the instruction type functions, and a single iteration of the pass is concluded with the instruction being saved to an array, and written to a file at the end.
+
+With regards to re-usability of code from part I, we did struggle to find snippets of code to reuse, although in our extension, we were able to reuse some code from previous parts.
+
+\section{Splitting Assembler Workload}
+In the same way we designated the work in Part I, we split up the instruction types in the same way as described in our checkpoint report. Everyone was already familiar with their instructions and what they demanded, allowing us to progress more quickly through this part. Aside from this, Mazen set up a basic skeleton initially, and Jaimi worked on making structs and enums to keep our code clean, while Tyrell made several changes to the general flow of the code and Reece made changes to the structs to reflect the nature of branch instructions.
+
+\section{Difficulties in Assembler}
+One challenge that somewhat halted our progress in the assembler was the process of tokenising the assembly code into its constituents. We had trouble using the strtok function in order to split the lines based on spaces as well as commas. Even once we split the arguments and mnemonic, there was difficulty in detecting and removing particular characters, such as '[' depending on the situation.
+
+While testing our assembler using Valgrind, we found that the assembler initially didn't make efficient use of memory and had various leaks, which we were able to amend through later refactoring. Throughout the implementation of the assembler we used debugging tools in order to find sources of (potential) errors and correct them accordingly. 
+
+\section{Extension: Introduction}
+In light of the recent Black Lives Matter movement and uprising of a collective force for change in regards to the rights of Black people across the world, we decided our extension should be based on this matter. We brainstormed ideas including web scrapers and misinformation filters (both interesting ideas!), but decided to settle on a GUI Quiz designed to analyse and educate on Black history.
+
+\section{Extension: User Interface}
+After researching various libraries and methods of displaying an interface, we settled on using the GTK library, and the Glade program which will allows a user to graphically create a user interface in GTK, and simply import it into their code. This allowed us to create a simplistic and functional user interface with easy use of common GUI techniques, including window resizing. 
+
+Glade turned out to be priceless later down the line, where it ended it up saving a lot of time in designing the interface, although the fact that the group is fairly new to C and external UI designers meant a large learning curve. However, the GTK library for C and Glade both lacked online support so we were left with only a few tutorials and the documentation which at times left us spending hours trying to figure out the exact usage of functions and callbacks. In addition, with the possibility of large files and images being processed, we also had to be careful with our memory usage, and needed reasonable efficiency in our code.  
+
+\section{Extension: Quiz Logic}
+The quiz part of our program was designed entirely separate to our UI, and a well presented and general code in each allowed us to make both communicate with ease. A quiz would be stored in a text file, with the questions going in increasing difficulty as the file progresses. 
+
+The quiz itself will give questions in response to the user's level, with a correct response yielding a tougher next question. To implement this logic, we used a doubly linked list, with a pointer to a slightly easier question, and a slightly harder question in the opposite direction. For example, let QH represent a hard question (and a higher number meaning an even harder question), and similarly QE represent an easy question, then:
+
+\vspace{5mm} %5mm vertical space
+
+\begin{tikzpicture}[list/.style={rectangle split, rectangle split parts=3,
+    draw, rectangle split vertical}, >=stealth, start chain]
+
+  \node[on chain,draw,inner sep=6pt] (X) {};
+  \node[list,on chain] (A) {QE2};
+  \node[list,on chain] (B) {QE1};
+  \node[list,on chain] (C) {cur Q};
+  \node[list,on chain] (D) {QH1};
+  \node[list,on chain] (E) {QH2};
+  \node[on chain,draw,inner sep=6pt] (Y) {};
+  \draw (X.north east) -- (X.south west);
+  \draw (X.north west) -- (X.south east);
+  \draw (Y.north east) -- (Y.south west);
+  \draw (Y.north west) -- (Y.south east);
+  \draw[*->] let \p1 = (X.two), \p2 = (X.center) in (\x1,\y2) -- (A);
+  \draw[*->] let \p1 = (A.two), \p2 = (A.center) in (\x1,\y2) -- (B);
+  \draw[*->] let \p1 = (B.two), \p2 = (B.center) in (\x1,\y2) -- (C);
+  \draw[*->] let \p1 = (C.two), \p2 = (C.center) in (\x1,\y2) -- (D);
+  \draw[*->] let \p1 = (D.two), \p2 = (D.center) in (\x1,\y2) -- (E);
+  \draw[*->] let \p1 = (E.two), \p2 = (E.center) in (\x1,\y2) -- (Y);
+  
+  \draw[*->] let \p1 = (E.center), \p2 = (E.south) in (\x1 + 3,\y2 + 6) -- (D);
+  \draw[*->] let \p1 = (D.center), \p2 = (D.south) in (\x1 + 3,\y2 + 6) -- (C);
+  \draw[*->] let \p1 = (C.center), \p2 = (C.south) in (\x1 + 3,\y2 + 6) -- (B);
+  \draw[*->] let \p1 = (B.center), \p2 = (B.south) in (\x1 + 3,\y2 + 6) -- (A);
+  \draw[*->] let \p1 = (A.center), \p2 = (A.south) in (\x1 + 3,\y2 + 6) -- (X.south east);
+\end{tikzpicture}
+
+\vspace{5mm} %5mm vertical space
+
+Upon completion of the question, the node is simply removed and the pointers reassigned:
+
+\vspace{5mm} %5mm vertical space
+
+\begin{tikzpicture}[list/.style={rectangle split, rectangle split parts=3,
+    draw, rectangle split vertical}, >=stealth, start chain]
+
+  \node[on chain,draw,inner sep=6pt] (X) {};
+  \node[list,on chain] (A) {QE2};
+  \node[list,on chain] (B) {QE1};
+  \node[list,on chain] (D) {cur Q (formerly QH1)};
+  \node[list,on chain] (E) {QH2};
+  \node[on chain,draw,inner sep=6pt] (Y) {};
+  \draw (X.north east) -- (X.south west);
+  \draw (X.north west) -- (X.south east);
+  \draw (Y.north east) -- (Y.south west);
+  \draw (Y.north west) -- (Y.south east);
+  \draw[*->] let \p1 = (A.two), \p2 = (A.center) in (\x1,\y2) -- (B);
+  \draw[*->] let \p1 = (B.two), \p2 = (B.center) in (\x1,\y2) -- (D);
+  \draw[*->] let \p1 = (D.two), \p2 = (D.center) in (\x1,\y2) -- (E);
+  \draw[*->] let \p1 = (E.two), \p2 = (E.center) in (\x1,\y2) -- (Y);
+  
+  \draw[*->] let \p1 = (E.center), \p2 = (E.south) in (\x1 + 3,\y2 + 6) -- (D);
+  \draw[*->] let \p1 = (D.center), \p2 = (D.south) in (\x1 + 3,\y2 + 6) -- (B);
+  \draw[*->] let \p1 = (B.center), \p2 = (B.south) in (\x1 + 3,\y2 + 6) -- (A);
+  \draw[*->] let \p1 = (A.center), \p2 = (A.south) in (\x1 + 3,\y2 + 6) -- (X.south east);
+\end{tikzpicture}
+
+\vspace{5mm} %5mm vertical space
+
+The quiz would terminate after half the total number of questions in the quiz are answered, and would begin at the most central question in the file (i.e. median difficulty).
+
+\section{Testing our extension}
+One of the biggest shortcoming's of our extension was the fact that we didn't have time nor the expertise to create a proper testsuite. In hindsight, we should've commenced testing much earlier and learnt to build our program in such a way that it is compatible with some chosen testing tool. However, GTK itself lacks much support for automated testing and other tools require a level of integration that requires a great deal of research and learning, with such automated tools being very new to all members of the group.
+
+However, we still wanted to produce a product capable of meeting a number of test specifications, hence we decided to carry out a series of manual tests which are stated in /extension/docs/manualtests.txt. The tests that passed and failed are clearly flagged, and although these tests were a more primitive approach, they still achieved the goal of highlighting many bugs and weaknesses in our code.
+
+\section{Group and Individual Reflections}
+The group agrees that this project has run rather smoothly from the beginning, all down to a great amount of communication. A WhatsApp group chat and regular Discord meetings (including live collaborative group sessions) has allowed us to put our minds together and solve problems and divide tasks with reasonable time and efficiency. From the beginning, the goal of the group was to properly understand the libraries and software we were working on before diving into the tasks and this allowed us to maximise usage of the features of the C programming language and adhere to good code standards. We are also happy with how the tasks have been split between us (and changed with the circumstances) as everyone was satisfied and not overwhelmed by their designated tasks.
+
+Nevertheless, we did encounter many hiccups. In the assembler task, the design of the code was a particularly arduous exercise, as the variety of mnemonics, coupled with the varying number and type of arguments was difficult to parse. We ended up using many function pointers, structs and helper functions to solve the problem.
+
+We agree it might've been better to make better use of an organised central text file that has the current task being worked on by each member and TODOs. Although we communicate well, not having a well organised written information on the current state of the project led to some confusion.
+
+
+\subsection{Tyrell's Reflection}
+Over the past five weeks I have largely enjoyed working as part of a group. Although there was some difficulty in the implementation of some of the tasks, as a whole we were able to work through them as a team. I believe I fit into the team well, offering ideas, suggestions and code snippets where I could. However as the group leader, my contributions to the group were sometimes inconsistent in places; if I were working within a different group of people, I would aim to be more vocal with ideas as I occasionally did not mention some of them.
+\subsection{Jaimi's Reflection}
+For me personally, I most enjoyed the extension because it was a topic I feel strongly about. As a person who lacked experience working in GUIs, the project allowed me to boost my confidence programming GUIs (particularly in C). Another strength I felt we all possessed as a group was our ability to use structs quite comfortably. We found great success with them across all tasks to keep our code as tidy as possible. 
+A weakness I’ve overcome over the course of this has been my ability to use version control software in a team friendly way. I’ve often only done projects alone or with one other person, but having 3 other people brought about a new challenge. I’d say as time progressed we become collectively much better at project management. We initially began by breaking down project requirements, design/skeleton build, implementation and finally extensive testing, both with the pre made tests and our own short tests. 
+
+\subsection{Reece's Reflection}
+Now having completed the project we have the ability to look back on each stage and evaluate our own performances.
+
+A team strength I think we all shared was our passing around of information. We were constantly learning new and useful things from each other both through our concise yet informative commenting and through sharing of resources. If any person found a website useful for overcoming a obstacle we’re facing or a video breaking down how to use certain library features, we’d share it in our Discord group. I would say this is something I would carry forward in future group working activities because it keeps everyone at the same pace so nobody gets left behind. This is the main reason why we finished the first two tasks in good time.
+I would also note, there’s grave importance in group selection. I couldn’t have picked better people to work with. They allowed me to both contribute fully and be heard, as well as contributing their own ideas forward to ensure we all had equal effort. I’ve been in groups both where one person takes control or when I’m left to do it all, so I can confidently say this project didn’t fall into either of those categories. 
+Overall it was a task that greatly improved my C skills as well as my skills coding as a group. In hindsight, the only improvement that could have helped us in this task was possibly to have the task beginning after the lessons have finished. I found it a little difficult to balance beginning the task whilst learning C. Would have been preferable if the tasks began once we have fully known C. Also we would have been able to debug and solve errors / provide better solutions much faster.
+\subsection{Mazen's Reflection}
+Working as part of a team on a programming task is a relatively new area for myself and the team. Quickly learning how to use GitLab alongside my team as well as brainstorming ideas was quite successful and taught me the grave importance of organisation, communication and programming standards. Even when we had differences in our ideas towards approaching problems, we used our strengths to our advantage and assigned people varying tasks based on comfort and previous experience.
 
 \end{document}
