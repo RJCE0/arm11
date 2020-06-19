@@ -1223,7 +1223,7 @@ Create a new question by filling in the boxes.</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <signal name="clicked" handler="go_to_home" swapped="no"/>
+                    <signal name="clicked" handler="finish_quiz_build" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -1246,6 +1246,7 @@ Create a new question by filling in the boxes.</property>
                 </child>
                 <child>
                   <object class="GtkEntry" id="name_of_new_quiz_entry">
+                    <property name="name">name_of_new_quiz_entry</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                   </object>
@@ -1523,6 +1524,21 @@ Create a new question by filling in the boxes.</property>
                   <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
                     <child>
                       <placeholder/>
                     </child>

@@ -37,10 +37,6 @@ typedef struct {
     GtkWidget *answerB;
     GtkWidget *answerC;
     GtkWidget *answerD;
-    GtkWidget *picQ1;
-    GtkWidget *picQ1Ans;
-    GtkWidget *picQ2;
-    GtkWidget *picQ2Ans;
     node *curNode;
     int quizScore;
     int maxQuestions;
@@ -49,8 +45,6 @@ typedef struct {
     int *imAns1;
     int *imAns2;
     GtkWidget *finalScoreLabel;
-    GtkWidget *imScore1;
-    GtkWidget *imScore2;
     GtkWidget *finishAddingQuizButton;
     GtkWidget *newQuestion;
     GtkWidget *newAnswerA;
@@ -120,9 +114,9 @@ void quiz_selector(GtkWidget *whatever, data *myData);
 
 void open_blm_site(GtkWidget *whatever, data *myData);
 
-void advance_right_question(GtkButton *button, data *myData, quest *question) ;
+void advance_right_question(GtkWidget *button, data *myData, quest *question) ;
 
-void advance_left_question(GtkButton *button, data *myData, quest *question);
+void advance_left_question(GtkWidget *button, data *myData, quest *question);
 
 void on_final_screen_quit_clicked(GtkWidget *button, data *myData);
 

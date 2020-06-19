@@ -117,34 +117,42 @@ void go_to_picQ2(GtkWidget *widget, data *myData) {
     create_image(1, myData);
 }
 
-void go_to_correct_answer(GtkWidget *whatever, data *myData) {
-    char *str = malloc(511 * sizeof(char));
+void go_to_correct_answer(GtkWidget *widget, data *myData) {
+    /*char *str = malloc(511 * sizeof(char));
     if (!str) {
         fprintf(stderr,
                 "An error has occured while printing the correct answer. Exiting...");
         exit(EXIT_FAILURE);
     }
+
     strcpy(str, "Congratulations on getting the correct answer: ");
     strcat(str, myData->curNode->question->answers[0]);
     gtk_label_set_text((GtkLabel *) myData->scoreLabelFromRight, str);
     free(str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
-                                     "correct_answer_page");
+                                     "correct_answer_page");*/
+    GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
+    create_qu_answer(myData, TRUE);
 }
 
 void go_to_wrong_answer(GtkWidget *widget, data *myData) {
-    char *str = malloc(511 * sizeof(char));
+    /*char *str = malloc(511 * sizeof(char));
     if (!str) {
         fprintf(stderr,
          "An error has occured while printing the answer you got wrong. Exiting...");
         exit(EXIT_FAILURE);
     }
+
     strcpy(str, "Correct answer is: ");
     strcat(str, myData->curNode->question->answers[0]);
     gtk_label_set_text((GtkLabel *) myData->scoreLabelFromWrong, str);
     free(str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
-                                     "wrong_answer_page");
+                                     "wrong_answer_page");*/
+    GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
+    create_qu_answer(myData, FALSE);
 }
 
 GCallback check_answer(int i) {
@@ -288,10 +296,12 @@ void add_question(GtkButton *button, data *myData) {
 void finish_quiz_build(GtkWidget *button, data *myData) {
     FILE *newQuizFile;
     char *nameOfNewQuiz = gtk_entry_get_text((GtkEntry *) myData->nameOfQuizEntry);
+    printf("%s\n", nameOfNewQuiz);
     char *directoryName = "src_gui/quizzes/";
     char *fileExtension = ".txt";
-    char *finalDirectory = malloc (strlen(nameOfNewQuiz) + strlen(directoryName) + strlen(fileExtension));
-    strcat(finalDirectory, directoryName);
+    //char *finalDirectory = malloc (strlen(nameOfNewQuiz) + strlen(directoryName) + strlen(fileExtension));
+    char *finalDirectory = malloc(100 * sizeof(char));
+    strcpy(finalDirectory, directoryName);
     strcat(finalDirectory, nameOfNewQuiz);
     strcat(finalDirectory, fileExtension);
     newQuizFile = fopen(finalDirectory, "w");
@@ -348,9 +358,9 @@ void begin_quiz(GtkWidget *widget, data *myData) {
     myData->maxQuestions = maxQuestions;
     myData->currentQuestion = 0;
     myData->quizScore = 0;
-    set_question(myData);
-    go_to_question_page(widget, myData);
-    //create_queston(myData);
+    //set_question(myData);
+    //go_to_question_page(widget, myData);
+    create_question(myData);
 }
 
 void quiz_selector(GtkWidget *whatever, data *myData){
@@ -379,35 +389,33 @@ void open_blm_site(GtkWidget *whatever, data *myData) {
     GDK_CURRENT_TIME, NULL);
 }
 
-void advance_right_question(GtkButton *button, data *myData, quest *question) {
+void advance_right_question(GtkWidget *button, data *myData, quest *question) {
+    GtkWidget *prev = gtk_widget_get_ancestor(button, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
     //Moves to harder next question.
     myData->quizScore += 1;
     myData->currentQuestion += 1;
-    printf("Max:%d\n", myData->maxQuestions);
-    printf("Current:%d\n", myData->currentQuestion);
     if (myData->currentQuestion == myData->maxQuestions) {
         free_nodes(myData->curNode);
         go_to_picQ1((GtkWidget *) button, myData);
         return;
     }
     myData->curNode = get_right(myData->curNode);
-    set_question(myData);
-    go_to_question_page((GtkWidget *) button, myData);
+    create_question(myData);
 }
 
-void advance_left_question(GtkButton *button, data *myData, quest *question) {
+void advance_left_question(GtkWidget *button, data *myData, quest *question) {
+    GtkWidget *prev = gtk_widget_get_ancestor(button, GTK_TYPE_BOX);
+    gtk_widget_destroy(prev);
     //Move to easier next question.
     myData->currentQuestion += 1;
-    printf("Max:%d\n", myData->maxQuestions);
-    printf("Current:%d\n", myData->currentQuestion);
     if (myData->currentQuestion == myData->maxQuestions) {
         free_nodes(myData->curNode);
         go_to_picQ1((GtkWidget *) button, myData);
         return;
     }
     myData->curNode = get_left(myData->curNode);
-    set_question(myData);
-    go_to_question_page((GtkWidget *) button, myData);
+    create_question(myData);
 }
 
 void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
@@ -425,16 +433,8 @@ void free_all(data *d){
     free(d->answerB);
     free(d->answerC);
     free(d->answerD);
-    free(d->picQ1);
-    free(d->picQ1Ans);
-    free(d->picQ2);
-    free(d->picQ2Ans);
     free(d->guesses);
-    free(d->imAns1);
-    free(d->imAns2);
     free(d->finalScoreLabel);
-    free(d->imScore1);
-    free(d->imScore2);
     free(d->finishAddingQuizButton);
     free(d->newQuestion);
     free(d->newAnswerA);
@@ -474,12 +474,6 @@ int main(int argc, char *argv[]) {
     myData->tagsLabel = GTK_WIDGET(
             gtk_builder_get_object(builder, "tags_label"));
     myData->quizScore = 0;
-    myData->picQ1 = GTK_WIDGET(gtk_builder_get_object(builder, "PicQ1"));
-    myData->picQ1Ans = GTK_WIDGET(gtk_builder_get_object(builder, "PicQ1Ans"));
-    myData->picQ2 = GTK_WIDGET(gtk_builder_get_object(builder, "PicQ2"));
-    myData->picQ2Ans = GTK_WIDGET(gtk_builder_get_object(builder, "PicQ2Ans"));
-    myData->imScore1 = GTK_WIDGET(gtk_builder_get_object(builder, "score1"));
-    myData->imScore2 = GTK_WIDGET(gtk_builder_get_object(builder, "score2"));
     myData->finishAddingQuizButton = GTK_WIDGET(gtk_builder_get_object(builder, "finish_adding_quiz_button"));
     myData->newQuestion = GTK_WIDGET(gtk_builder_get_object(builder, "new_question_entry"));
     myData->newAnswerA = GTK_WIDGET(gtk_builder_get_object(builder, "new_answer_a_entry"));
@@ -487,7 +481,7 @@ int main(int argc, char *argv[]) {
     myData->newAnswerC = GTK_WIDGET(gtk_builder_get_object(builder, "new_answer_c_entry"));
     myData->newAnswerD = GTK_WIDGET(gtk_builder_get_object(builder, "new_answer_d_entry"));
     myData->errorAddingQuestionLabel = GTK_WIDGET(gtk_builder_get_object(builder, "error_add_question_label"));
-    myData->nameOfQuizEntry = GTK_WIDGET(gtk_builder_get_object(builder, "name_of_new_quiz"));
+    myData->nameOfQuizEntry = GTK_WIDGET(gtk_builder_get_object(builder, "name_of_new_quiz_entry"));
     int temp1[] = {0, 1, 1, 0, 0, 1, 1, 0, 1};
     myData->imAns1 = temp1;
     int temp2[] = {1, 1, 1, 1, 1, 1, 1, 1, 1};

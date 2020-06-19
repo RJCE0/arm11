@@ -61,30 +61,62 @@ void create_image(int imageNo, data *myData){
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "image_que");
 }
 
-void create_queston(data *myData){
+void create_question(data *myData){
 	quest *question = myData->curNode->question;
 	int *random = randomise_questions(question->answerNum);
 	GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget *header = gtk_label_new (question->que);
     gtk_widget_show(header);
-	gtk_box_pack_start((GtkBox *) box, header, TRUE, TRUE, 50);
+	gtk_box_pack_start((GtkBox *) box, header, FALSE, TRUE, 50);
 	GtkWidget *tags = gtk_label_new (get_tags(question->que));
     gtk_widget_show(tags);
-	gtk_box_pack_start((GtkBox *) box, tags, TRUE, TRUE, 50);
+	gtk_box_pack_start((GtkBox *) box, tags, FALSE, TRUE, 50);
 	GtkWidget *grid = gtk_grid_new();
-	gtk_grid_insert_row ((GtkGrid *)grid, 0);
-	gtk_grid_insert_row ((GtkGrid *)grid, 0);
-	gtk_grid_insert_column ((GtkGrid *)grid, 0);
-	gtk_grid_insert_column ((GtkGrid *)grid, 0);
+    gtk_grid_set_row_homogeneous ((GtkGrid *) grid, TRUE);
+    gtk_grid_set_column_homogeneous ((GtkGrid *) grid, TRUE);
 	for (int i = 0; i < question->answerNum; i++) {
-		GtkWidget *button = gtk_button_new_with_label(question->answers[random[0]]);
+        int x = 0;
+        if (i >= 2) {
+            x = 1;
+        }
+		GtkWidget *button = gtk_button_new_with_label(question->answers[random[i]]);
 		g_signal_connect(button, "clicked", check_answer(random[i]), myData);
 		gtk_widget_show(button);
-		//gtk_container_add ((GtkContainer *) grid, button);
-		gtk_grid_attach((GtkGrid *) grid, button, 0, i, 1, 1);
+		gtk_grid_attach((GtkGrid *) grid, button, x, i % 2, 1, 1);
 	}
 	gtk_widget_show(grid);
+	gtk_box_pack_start((GtkBox *) box, grid, TRUE, TRUE, 0);
 	gtk_widget_show(box);
 	gtk_stack_add_named((GtkStack *) myData->stack, box, "questions_test");
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "questions_test");
+}
+
+void create_qu_answer(data *myData, bool correct){
+    char *title;
+    char* mess = malloc(100 *sizeof(char));
+    GCallback next;
+    if (correct) {
+        title = "Correct Answer!";
+        strcpy(mess,"Congratulations on getting the right answer: ");
+        next = (GCallback) &advance_right_question;
+    } else{
+        title = "Wrong Answer!";
+        strcpy(mess, "The correct answer is: ");
+        next = (GCallback) &advance_left_question;
+    }
+    strcat(mess, myData->curNode->question->answers[0]);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *header = gtk_label_new (title);
+    gtk_widget_show(header);
+    gtk_box_pack_start((GtkBox *) box, header, TRUE, TRUE, 0);
+    GtkWidget *message = gtk_label_new (mess);
+    gtk_widget_show(message);
+    gtk_box_pack_start((GtkBox *) box, message, TRUE, TRUE, 0);
+    GtkWidget *button = gtk_button_new_with_label("Continue");
+    g_signal_connect(button, "clicked",  next, myData);
+    gtk_widget_show(button);
+    gtk_box_pack_start((GtkBox *) box, button, TRUE, TRUE, 0);
+    gtk_widget_show(box);
+	gtk_stack_add_named((GtkStack *) myData->stack, box, "answers_test");
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "answers_test");
 }
