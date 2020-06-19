@@ -4,10 +4,10 @@ void create_im_answer(int imageNo, int score, data *myData){
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *header = gtk_label_new (myData->images[imageNo].question);
     gtk_widget_show(header);
-    gtk_box_pack_start((GtkBox *) box, header, FALSE, TRUE, 10);
+    gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 10);
     GtkWidget *image = gtk_image_new_from_file (myData->images[imageNo].ansFile);
     gtk_widget_show(image);
-    gtk_box_pack_start((GtkBox *) box, image, FALSE, TRUE, 20);
+    gtk_box_pack_start(GTK_BOX(box), image, FALSE, TRUE, 20);
 	char *scoreMessage = malloc(20 * sizeof(char));
 	strcpy(scoreMessage, "You got ");
 	strcat(scoreMessage, int_to_string(score));
@@ -16,7 +16,7 @@ void create_im_answer(int imageNo, int score, data *myData){
 	GtkWidget *message = gtk_label_new (scoreMessage);
     free(scoreMessage);
     gtk_widget_show(message);
-    gtk_box_pack_start((GtkBox *) box, message, FALSE, TRUE, 10);
+    gtk_box_pack_start(GTK_BOX(box), message, FALSE, TRUE, 10);
     GtkWidget *cont = gtk_button_new_with_label("Continue");
     GCallback nextFunc = (GCallback) &go_to_picQ2;
     if (imageNo == 1) {
@@ -34,10 +34,10 @@ void create_image(int imageNo, data *myData){
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *header = gtk_label_new (myData->images[imageNo].question);
     gtk_widget_show(header);
-    gtk_box_pack_start((GtkBox *) box, header, FALSE, TRUE, 10);
+    gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 10);
     GtkWidget *image = gtk_image_new_from_file (myData->images[imageNo].queFile);
     gtk_widget_show(image);
-    gtk_box_pack_start((GtkBox *) box, image, FALSE, TRUE, 20);
+    gtk_box_pack_start(GTK_BOX(box), image, FALSE, TRUE, 20);
     for (int i = 0; i < 3; i++) {
         GtkWidget *buttonBox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
         for (int j = 0; j < 3; j++) {
@@ -46,7 +46,7 @@ void create_image(int imageNo, data *myData){
             gtk_widget_show(check);
             gtk_container_add ((GtkContainer *) buttonBox, check);
         }
-        gtk_box_pack_start((GtkBox *) box, buttonBox, FALSE, TRUE, 0);
+        gtk_box_pack_start(GTK_BOX(box), buttonBox, FALSE, TRUE, 0);
         gtk_widget_show(buttonBox);
     }
     GtkWidget *submit = gtk_button_new_with_label("Submit");
@@ -55,7 +55,7 @@ void create_image(int imageNo, data *myData){
         nextFunc = (GCallback) &go_to_picQ2Ans;
     }
     g_signal_connect(submit, "clicked", nextFunc, myData);
-    gtk_box_pack_start((GtkBox *) box, submit, FALSE, TRUE, 10);
+    gtk_box_pack_start(GTK_BOX(box), submit, FALSE, TRUE, 10);
     gtk_widget_show(submit);
     gtk_widget_show(box);
     gtk_stack_add_named((GtkStack *) myData->stack, box, "image_que");
@@ -69,11 +69,11 @@ void create_question(data *myData){
 	GtkWidget *header = gtk_label_new (question->que);
     gtk_label_set_line_wrap ((GtkLabel *) header, TRUE);
     gtk_widget_show(header);
-	gtk_box_pack_start((GtkBox *) box, header, FALSE, TRUE, 50);
-	GtkWidget *tags = gtk_label_new (get_tags(question->que));
+	gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 50);
+	/*GtkWidget *tags = gtk_label_new (get_tags(question->que));
     gtk_label_set_line_wrap ((GtkLabel *) tags, TRUE);
     gtk_widget_show(tags);
-	gtk_box_pack_start((GtkBox *) box, tags, FALSE, TRUE, 50);
+	gtk_box_pack_start(GTK_BOX(box), tags, FALSE, TRUE, 50);*/
 	GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_homogeneous ((GtkGrid *) grid, TRUE);
     gtk_grid_set_column_homogeneous ((GtkGrid *) grid, TRUE);
@@ -89,7 +89,7 @@ void create_question(data *myData){
 	}
     free(random);
 	gtk_widget_show(grid);
-	gtk_box_pack_start((GtkBox *) box, grid, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(box), grid, TRUE, TRUE, 0);
 	gtk_widget_show(box);
 	gtk_stack_add_named((GtkStack *) myData->stack, box, "questions_test");
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "questions_test");
@@ -112,16 +112,16 @@ void create_qu_answer(data *myData, bool correct){
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *header = gtk_label_new (title);
     gtk_widget_show(header);
-    gtk_box_pack_start((GtkBox *) box, header, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(box), header, TRUE, TRUE, 0);
     GtkWidget *message = gtk_label_new (mess);
     free(mess);
     gtk_label_set_line_wrap ((GtkLabel *) message, TRUE);
     gtk_widget_show(message);
-    gtk_box_pack_start((GtkBox *) box, message, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(box), message, TRUE, TRUE, 0);
     GtkWidget *button = gtk_button_new_with_label("Continue");
     g_signal_connect(button, "clicked", next, myData);
     gtk_widget_show(button);
-    gtk_box_pack_start((GtkBox *) box, button, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(box), button, TRUE, TRUE, 0);
     gtk_widget_show(box);
 	gtk_stack_add_named((GtkStack *) myData->stack, box, "answers_test");
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "answers_test");
@@ -161,11 +161,30 @@ void create_add_question(data *myData){
     gtk_widget_show(addQ);
     gtk_grid_attach(GTK_GRID(grid), addQ, 0, 5, 1, 1);
     GtkWidget *finishQ = gtk_button_new_with_label("Finish Quiz");
+    g_signal_connect(finishQ, "clicked", (GCallback) &finish_quiz, myData);
     gtk_widget_show(finishQ);
     gtk_grid_attach(GTK_GRID(grid), finishQ, 1, 5, 1, 1);
     gtk_widget_show(grid);
-    gtk_box_pack_start((GtkBox *) box, grid, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(box), grid, TRUE, TRUE, 0);
     gtk_widget_show(box);
 	gtk_stack_add_named((GtkStack *) myData->stack, box, "add_que");
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "add_que");
+}
+
+void create_file_name(data *myData){
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *header = gtk_label_new ("Enter Quiz Name:");
+    gtk_widget_show(header);
+    gtk_box_pack_start(GTK_BOX(box), header, TRUE, TRUE, 0);
+    GtkWidget *textBox = gtk_entry_new();
+    gtk_widget_set_name (textBox, "textBox");
+    gtk_widget_show(textBox);
+    gtk_box_pack_start(GTK_BOX(box), textBox, TRUE, TRUE, 0);
+    GtkWidget *cont = gtk_button_new_with_label("Continue");
+    g_signal_connect(cont, "clicked", (GCallback) &add_question_first, myData);
+    gtk_widget_show(cont);
+    gtk_box_pack_start(GTK_BOX(box), cont, TRUE, TRUE, 0);
+    gtk_widget_show(box);
+	gtk_stack_add_named((GtkStack *) myData->stack, box, "add_que_file");
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "add_que_file");
 }

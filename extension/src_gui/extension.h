@@ -11,6 +11,18 @@
 
 #define MAX_CHECKBOX_ANSWERS 14
 
+typedef struct singleLinked quizNode;
+
+struct singleLinked {
+  quizNode *next;
+  char **quizQuestion;
+};
+
+typedef struct {
+    const char *fileName;
+    quizNode *start;
+} fileState;
+
 typedef struct {
     char *queFile;
     char *ansFile;
@@ -46,6 +58,7 @@ typedef struct {
     int numAddedQuestions;
     questionToAdd **addedQuestions;
     image *images;
+    fileState *addQuest;
 } data;
 
 int check_im_score(int *guesses, int *imAnswers) ;
@@ -113,5 +126,9 @@ void on_final_screen_quit_clicked(GtkWidget *button, data *myData);
 void free_all(data *d);
 
 void add_question_amended(GtkWidget *widget, data *myData);
+
+void add_question_first(GtkWidget *widget, data *myData);
+
+void finish_quiz(GtkWidget *widget, data *myData);
 
 #endif
