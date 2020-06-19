@@ -197,9 +197,27 @@ void create_file_name(data *myData){
 
 void create_home(data *myData){
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    GtkWidget *begin = gtk_check_button_new_with_label("Begin Quiz");
-    GtkWidget *add = gtk_check_button_new_with_label("Add New Quiz");
-    GtkWidget *learn = gtk_check_button_new_with_label("Learn More (will open browser link)");
-    GtkWidget *about = gtk_check_button_new_with_label("About Us");
-    GtkWidget *quit = gtk_check_button_new_with_label("Quit");
+    GtkWidget *begin = gtk_button_new_with_label("Begin Quiz");
+    g_signal_connect(begin, "clicked", (GCallback) &quiz_selector, myData);
+    gtk_widget_show(begin);
+    gtk_box_pack_start(GTK_BOX(box), begin, TRUE, TRUE, 0);
+    GtkWidget *add = gtk_button_new_with_label("Add New Quiz");
+    g_signal_connect(add, "clicked", (GCallback) &begin_add_quiz, myData);
+    gtk_widget_show(add);
+    gtk_box_pack_start(GTK_BOX(box), add, TRUE, TRUE, 0);
+    GtkWidget *learn = gtk_button_new_with_label("Learn More (will open browser link)");
+    g_signal_connect(learn, "clicked", (GCallback) &open_blm_site, myData);
+    gtk_widget_show(learn);
+    gtk_box_pack_start(GTK_BOX(box), learn, TRUE, TRUE, 0);
+    GtkWidget *about = gtk_button_new_with_label("About Us");
+    g_signal_connect(about, "clicked", (GCallback) &go_to_about_us, myData);
+    gtk_widget_show(about);
+    gtk_box_pack_start(GTK_BOX(box), about, TRUE, TRUE, 0);
+    GtkWidget *quit = gtk_button_new_with_label("Quit");
+    g_signal_connect(quit, "clicked", (GCallback) &on_window_main_destroy, myData);
+    gtk_widget_show(quit);
+    gtk_box_pack_start(GTK_BOX(box), quit, TRUE, TRUE, 0);
+    gtk_widget_show(box);
+	gtk_stack_add_named((GtkStack *) myData->stack, box, "home");
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "home");
 }
