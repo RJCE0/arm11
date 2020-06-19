@@ -1,3 +1,0 @@
-Q:this is an example question
-A:Some answer
-A:Another answer

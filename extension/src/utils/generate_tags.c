@@ -74,7 +74,6 @@ void remove_stop_words(questionBreakdown *breakdown) {
         char *str2;
         while (fgets(str, 20, stopWordFile)) {
             str2 = strtok(str, "\n");
-            // printf("%s", str2);
             if (strcmp(str2, breakdown->wordList[i]) == 0) {
                 *breakdown->wordList[i] = '\0';
             }

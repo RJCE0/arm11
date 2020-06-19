@@ -154,7 +154,6 @@ node *initialise_questions(int *maxQuestions, char *fileName) {
     char *directory = (char *) malloc(50 * sizeof(char));
     strcpy(directory, "src/quizzes/");
     strcat(directory, fileName);
-    printf("file:%s\n", directory);
     node *curr = read_file(directory, &questionNum);
     free(directory);
     for (int i = 0; i < questionNum / 2; i++) {
@@ -177,7 +176,6 @@ char **get_all_files(int *size) {
                                               (1 + fileCount) * sizeof(char *));
                 fileNames[fileCount] = (char *) malloc(100 * sizeof(char));
                 strcpy(fileNames[fileCount], dir->d_name);
-                printf("%s\n", dir->d_name);
                 fileCount += 1;
             }
         }

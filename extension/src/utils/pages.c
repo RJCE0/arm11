@@ -77,10 +77,10 @@ void create_question(data *myData) {
     gtk_label_set_line_wrap((GtkLabel *) header, TRUE);
     gtk_widget_show(header);
     gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 50);
-    /*GtkWidget *tags = gtk_label_new (get_tags(question->que));
+    GtkWidget *tags = gtk_label_new (get_tags(question->que));
     gtk_label_set_line_wrap ((GtkLabel *) tags, TRUE);
     gtk_widget_show(tags);
-    gtk_box_pack_start(GTK_BOX(box), tags, FALSE, TRUE, 50);*/
+    gtk_box_pack_start(GTK_BOX(box), tags, FALSE, TRUE, 50);
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_homogeneous((GtkGrid *) grid, TRUE);
     gtk_grid_set_column_homogeneous((GtkGrid *) grid, TRUE);

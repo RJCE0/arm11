@@ -59,7 +59,6 @@ quizNode *insert_quiz_node(quizNode *start, char **quizQuestion, bool *valid) {
 }
 
 char *convert_file_name(char *fileName) {
-    printf("og filename:%s\n", fileName);
     char *directoryName = "src/quizzes/";
     char *fileExtension = ".txt";
     char *finalDirectory = malloc(100 * sizeof(char));
