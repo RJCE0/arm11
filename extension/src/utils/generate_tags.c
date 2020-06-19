@@ -93,19 +93,6 @@ void lowercase_all(questionBreakdown *breakdown) {
     }
 }
 
-/*
-void print_tags(questionBreakdown *breakdown) {
-    int count = 1;
-    for (int i = 0; i < breakdown->totalWords; ++i) {
-        if (*breakdown->wordList[i]) {
-            printf("\n%d: %s", count, breakdown->wordList[i]);
-            count++;
-        }
-    }
-    printf("\n");
-}
-*/
-
 char *generate_tags_string(questionBreakdown *breakdown) {
     int count = 1;
     char *strStart = "Automatically generated tags: ";
@@ -119,7 +106,6 @@ char *generate_tags_string(questionBreakdown *breakdown) {
         }
     }
     free_question_breakdown(breakdown);
-    //print_tags(breakdown);
     return tags;
 }
 
@@ -128,42 +114,11 @@ char *get_tags(char *sentence) {
             sizeof(*breakdown));
     breakdown->sentence = sentence;
     breakdown->wordList = malloc(sizeof(char *));
-    // printf("--%s--", sentence);
     split_on_spaces(breakdown);
     lowercase_all(breakdown);
     remove_non_alphanumeric(breakdown);
-    // print_tags(breakdown);
     remove_stop_words(breakdown);
     return generate_tags_string(breakdown);
 }
-
-
-//
-// int main(void) {
-//     questionBreakdown *breakdown = malloc(sizeof(breakdown));
-//     breakdown->sentence = malloc(1000 * sizeof(char));
-//     breakdown->wordList = malloc(sizeof(char *));
-//     breakdown->wordList[0] = malloc(20 * sizeof(char));
-//     strcpy(breakdown->sentence, "Dr. Martin Luther King, Jr.'s work during the Civil Rights Movement of the 1950s and 1960s");
-//     split_on_spaces(breakdown);
-//     lowercase_all(breakdown);
-//     remove_non_alphanumeric(breakdown);
-//     remove_stop_words(breakdown);
-//     print_tags(breakdown);
-//     return 0;
-// }
-// int main(void) {
-//     questionBreakdown *breakdown = malloc(sizeof(breakdown));
-//     breakdown->sentence = malloc(1000 * sizeof(char));
-//     breakdown->wordList = malloc(sizeof(char *));
-//     breakdown->wordList[0] = malloc(20 * sizeof(char));
-//     strcpy(breakdown->sentence, "Dr. Martin Luther King, Jr.'s work during the Civil Rights Movement of the 1950s and 1960s");
-//     split_on_spaces(breakdown);
-//     lowercase_all(breakdown);
-//     remove_non_alphanumeric(breakdown);
-//     remove_stop_words(breakdown);
-//     printf("%s", generate_tags_string(breakdown));
-//     return 0;
-// }
 
 #endif

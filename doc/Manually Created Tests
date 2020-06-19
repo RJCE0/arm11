@@ -3,11 +3,12 @@ These tests are for general GUI functionality as well as testing edge cases and 
 
 **Tests for adding a new quiz**
 - [passed] Creating an empty quiz is rejected
-- [passed] Creating a very large quiz is rejected
+- [failed] Creating a very large quiz is rejected
 - [passed] Adding question with empty question not allowed
 - [passed] Adding question with only one answer not allowed
 - [passed] Adding quiz with one question allowed
 - [failed] Adding quiz with duplicate name not allowed
+- [passed] Adding quiz with no name not allowed
 
 **Tests for doing a quiz**
 - [passed] A quiz with all wrong answers functions correctly

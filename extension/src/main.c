@@ -1,13 +1,13 @@
 #include "utils/extension.h"
 #include "utils/pages.c"
-#include "utils/write_to_file.c"
+#include "utils/file_functions.c"
 
-int check_im_score(int *guesses, int *imAnswers) {
+int check_image_score(int *guesses, int *imageAnswers) {
     int score = 0;
     for (int i = 0; i < 9; i++) {
-        printf("guess:%d answer:%d\n", guesses[i], imAnswers[i]);
+        printf("guess:%d answer:%d\n", guesses[i], imageAnswers[i]);
         if (guesses[i]) {
-            if (guesses[i] == imAnswers[i]) {
+            if (guesses[i] == imageAnswers[i]) {
                 score += 1;
             } else {
                 score -= 1;
@@ -20,13 +20,10 @@ int check_im_score(int *guesses, int *imAnswers) {
     return score;
 }
 
-const char *get_label(GtkWidget *button) {
-    return gtk_button_get_label((GtkButton *) button);
-}
 
-void on_checkbox_toggle(GtkWidget *togglebutton, data *myData) {
-    int num = atoi(get_label(togglebutton));
-    if (gtk_toggle_button_get_active((GtkToggleButton *) togglebutton)) {
+void on_checkbox_toggle(GtkWidget *toggleButton, data *myData) {
+    int num = atoi(gtk_button_get_label((GtkButton *) toggleButton));
+    if (gtk_toggle_button_get_active((GtkToggleButton *) toggleButton)) {
         myData->guesses[num - 1] = 1;
         g_print("Option %d is Checked\n", num);
     } else {
@@ -40,34 +37,18 @@ void on_window_main_destroy(void) {
     gtk_main_quit();
 }
 
-void go_to_home(GtkWidget *whatever, data *myData) {
+void go_to_home_page(GtkWidget *widget, data *myData) {
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "home_page");
 }
 
-void go_to_question_page(GtkWidget *whatever, data *myData) {
-    gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
-                                     "question_page");
-}
-
-void go_to_about_us(GtkWidget *whatver, data *myData) {
+void go_to_about_us_page(GtkWidget *widget, data *myData) {
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
                                      "about_us_page");
 }
 
-void go_to_add_quiz_page(GtkWidget *whatver, data *myData) {
-    gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
-                                     "add_quiz_page");
-}
-
-void go_to_successful_added_quiz_page(GtkWidget *whatver, data *myData) {
+void go_to_successful_added_quiz_page(GtkWidget *widget, data *myData) {
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
                                      "new_quiz_successful_page");
-}
-
-char *int_to_string(int i) {
-    char *score = calloc(5, sizeof(char));
-    sprintf(score, "%d", i);
-    return score;
 }
 
 void go_to_final_screen(GtkWidget *widget, data *myData) {
@@ -93,10 +74,17 @@ void go_to_final_screen(GtkWidget *widget, data *myData) {
                                      "final_screen");
 }
 
+char *int_to_string(int i) {
+    char *score = calloc(5, sizeof(char));
+    sprintf(score, "%d", i);
+    return score;
+}
+
+
 void go_to_picQ1Ans(GtkWidget *widget, data *myData) {
     GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
     gtk_widget_destroy(prev);
-    int score1 = check_im_score(myData->guesses, myData->images[0].answer);
+    int score1 = check_image_score(myData->guesses, myData->images[0].answer);
     myData->quizScore += score1;
     create_im_answer(0, score1, myData);
 }
@@ -104,7 +92,7 @@ void go_to_picQ1Ans(GtkWidget *widget, data *myData) {
 void go_to_picQ2Ans(GtkWidget *widget, data *myData) {
     GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
     gtk_widget_destroy(prev);
-    int score2 = check_im_score(myData->guesses, myData->images[1].answer);
+    int score2 = check_image_score(myData->guesses, myData->images[1].answer);
     myData->quizScore += score2;
     create_im_answer(1, score2, myData);
 }
@@ -171,8 +159,24 @@ void add_question_first(GtkWidget *widget, data *myData) {
     while (list) {
         if (strcmp(gtk_widget_get_name(GTK_WIDGET(list->data)), "textBox") ==
             0) {
-            printf("fileName assigned:%s\n",
-                   gtk_entry_get_text(GTK_ENTRY(list->data)));
+            // checks supplied name is not empty
+            if (strcmp (gtk_entry_get_text(GTK_ENTRY(list->data)), "") == 0) {
+                return;
+            }
+            // checks filename doesn't match existing quiz
+            int numOfQuizzes = 0;
+            char **allQuizNames = get_all_files(&numOfQuizzes);
+            for (int i = 0; i < numOfQuizzes; ++i) {
+                allQuizNames[i][strlen(allQuizNames[i]) - 4] = '\0';
+                if (strcmp (gtk_entry_get_text(GTK_ENTRY(list->data)), allQuizNames[i]) == 0) {
+                    for (int j = 0; j < numOfQuizzes; ++j) {
+                        free(allQuizNames[j]);
+                    }
+                    free(allQuizNames);
+                    return;
+                }
+
+            }
             strcpy(myData->addQuest->fileName,
                    gtk_entry_get_text(GTK_ENTRY(list->data)));
         }
@@ -221,7 +225,7 @@ void finish_quiz(GtkWidget *widget, data *myData) {
     GtkWidget *box = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
     gtk_widget_destroy(box);
     write_file(myData->addQuest->start, myData->addQuest->fileName);
-    go_to_home(widget, myData);
+    go_to_home_page(widget, myData);
 }
 
 void begin_quiz(GtkWidget *widget, data *myData) {
@@ -229,7 +233,7 @@ void begin_quiz(GtkWidget *widget, data *myData) {
     gtk_widget_destroy(prev);
 
     int maxQuestions;
-    char *fileName = get_label(widget);
+    char *fileName = gtk_button_get_label((GtkButton *) widget);
     myData->curNode = initialise_questions(&maxQuestions, fileName);
     myData->maxQuestions = maxQuestions;
     myData->currentQuestion = 0;

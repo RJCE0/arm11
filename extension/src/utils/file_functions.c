@@ -1,5 +1,7 @@
 #include "extension.h"
 
+#define MAX_QUESTION_SIZE 5
+
 quizNode *create_quiz_node(char **quizQuestion) {
     quizNode *result = (quizNode *) malloc(sizeof(quizNode));
     result->next = NULL;
@@ -8,15 +10,17 @@ quizNode *create_quiz_node(char **quizQuestion) {
 }
 
 void free_node(quizNode *curr) {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < MAX_QUESTION_SIZE; i++) {
         free(curr->quizQuestion[i]);
     }
     free(curr->quizQuestion);
     free(curr);
 }
 
+
 bool check_answers(char **quizQuestion) {
-    for (int i = 0; i < 3; i++) {
+    // returns false if question or any of first two answers are blank
+    for (int i = 0; i < MAX_QUESTION_SIZE - 2; i++) {
         if (strcmp(quizQuestion[i], "") == 0) {
             return false;
         }
@@ -89,4 +93,26 @@ void write_file(quizNode *start, const char *fileName) {
         free_node(prev);
     }
     fclose(f);
+}
+
+char **get_all_files(int *size) {
+    char **fileNames = (char **) malloc(sizeof(char *));
+    DIR *d;
+    int fileCount = 0;
+    struct dirent *dir;
+    d = opendir("src/quizzes");
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+            if (dir->d_type == DT_REG) {
+                fileNames = (char **) realloc(fileNames,
+                                              (1 + fileCount) * sizeof(char *));
+                fileNames[fileCount] = (char *) malloc(100 * sizeof(char));
+                strcpy(fileNames[fileCount], dir->d_name);
+                fileCount += 1;
+            }
+        }
+        closedir(d);
+    }
+    *size = fileCount;
+    return fileNames;
 }

@@ -25,7 +25,7 @@ OBJS=    main.o
 all: $(OBJS)
 	$(LD) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-main.o: src/main.c src/utils/multiple_choice.c src/utils/generate_tags.c src/utils/extension.h src/utils/pages.c src/utils/write_to_file.c
+main.o: src/main.c src/utils/multiple_choice.c src/utils/generate_tags.c src/utils/extension.h src/utils/pages.c src/utils/file_functions.c
 	$(CC) -c $(CCFLAGS) src/main.c $(GTKLIB) -o main.o
 
 clean:

@@ -163,52 +163,5 @@ node *initialise_questions(int *maxQuestions, char *fileName) {
     return curr;
 }
 
-char **get_all_files(int *size) {
-    char **fileNames = (char **) malloc(sizeof(char *));
-    DIR *d;
-    int fileCount = 0;
-    struct dirent *dir;
-    d = opendir("src/quizzes");
-    if (d) {
-        while ((dir = readdir(d)) != NULL) {
-            if (dir->d_type == DT_REG) {
-                fileNames = (char **) realloc(fileNames,
-                                              (1 + fileCount) * sizeof(char *));
-                fileNames[fileCount] = (char *) malloc(100 * sizeof(char));
-                strcpy(fileNames[fileCount], dir->d_name);
-                fileCount += 1;
-            }
-        }
-        closedir(d);
-    }
-    *size = fileCount;
-    return fileNames;
-}
 
-/*
-int main (int argc, char **argv) {
-    get_all_files();
-}
-*/
-/*
-int main(int argc, char **argv) {
-  int questionNum = 0;
-  node *curr = read_file(argv[1], &questionNum);
-  for (int i = 0; i < questionNum/2; i++) {
-    curr = curr->prev;
-  }
-  printf("Question b4-%s", curr->question->que);
-  printf("Next question after-%s", curr->next->question->que);
-  curr = get_right(curr);
-  printf("Question after-%s", curr->question->que);
-  print_answers(curr->question);
-  if (!curr->next) {
-    printf("next is null\n");
-  }
-  printf("Prev question-%s", curr->prev->question->que);
-  print_answers(curr->prev->question);
-  return 0;
-}
-
-*/
 #endif

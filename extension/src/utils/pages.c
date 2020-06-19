@@ -77,10 +77,10 @@ void create_question(data *myData) {
     gtk_label_set_line_wrap((GtkLabel *) header, TRUE);
     gtk_widget_show(header);
     gtk_box_pack_start(GTK_BOX(box), header, FALSE, TRUE, 50);
-    GtkWidget *tags = gtk_label_new (get_tags(question->que));
-    gtk_label_set_line_wrap ((GtkLabel *) tags, TRUE);
-    gtk_widget_show(tags);
-    gtk_box_pack_start(GTK_BOX(box), tags, FALSE, TRUE, 50);
+    // GtkWidget *tags = gtk_label_new (get_tags(question->que));
+    // gtk_label_set_line_wrap ((GtkLabel *) tags, TRUE);
+    // gtk_widget_show(tags);
+    // gtk_box_pack_start(GTK_BOX(box), tags, FALSE, TRUE, 50);
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_homogeneous((GtkGrid *) grid, TRUE);
     gtk_grid_set_column_homogeneous((GtkGrid *) grid, TRUE);
@@ -143,7 +143,7 @@ void wrong_add_qu(data *myData) {
     gtk_widget_show(header);
     gtk_box_pack_start(GTK_BOX(box), header, TRUE, TRUE, 0);
     GtkWidget *button = gtk_button_new_with_label("Return to Menu");
-    g_signal_connect(button, "clicked", (GCallback) & go_to_home, myData);
+    g_signal_connect(button, "clicked", (GCallback) & go_to_home_page, myData);
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(box), button, TRUE, TRUE, 0);
     gtk_widget_show(box);
@@ -231,7 +231,7 @@ void create_home(data *myData) {
     gtk_widget_show(learn);
     gtk_box_pack_start(GTK_BOX(box), learn, TRUE, TRUE, 0);
     GtkWidget *about = gtk_button_new_with_label("About Us");
-    g_signal_connect(about, "clicked", (GCallback) & go_to_about_us, myData);
+    g_signal_connect(about, "clicked", (GCallback) & go_to_about_us_page, myData);
     gtk_widget_show(about);
     gtk_box_pack_start(GTK_BOX(box), about, TRUE, TRUE, 0);
     GtkWidget *quit = gtk_button_new_with_label("Quit");

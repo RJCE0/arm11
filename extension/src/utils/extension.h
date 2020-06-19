@@ -52,11 +52,11 @@ void on_checkbox_toggle(GtkWidget *togglebutton, data *myData);
 // called when window is closed
 void on_window_main_destroy(void);
 
-void go_to_home(GtkWidget *whatever, data *myData);
+void go_to_home_page(GtkWidget *whatever, data *myData);
 
 void go_to_question_page(GtkWidget *whatever, data *myData);
 
-void go_to_about_us(GtkWidget *whatver, data *myData);
+void go_to_about_us_page(GtkWidget *whatver, data *myData);
 
 void go_to_add_quiz_page(GtkWidget *whatver, data *myData);
 
