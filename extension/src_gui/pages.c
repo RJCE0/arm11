@@ -9,10 +9,14 @@ void create_im_answer(int imageNo, int score, data *myData){
     gtk_widget_show(image);
     gtk_box_pack_start(GTK_BOX(box), image, FALSE, TRUE, 20);
 	char *scoreMessage = malloc(20 * sizeof(char));
+    char *qScore = int_to_string(score);
 	strcpy(scoreMessage, "You got ");
-	strcat(scoreMessage, int_to_string(score));
+	strcat(scoreMessage, qScore);
+    free(qScore);
 	strcat(scoreMessage, " out of ");
-	strcat(scoreMessage, int_to_string(myData->images[imageNo].maxAns));
+    char *maxScore = int_to_string(myData->images[imageNo].maxAns);
+	strcat(scoreMessage, maxScore);
+    free(maxScore);
 	GtkWidget *message = gtk_label_new (scoreMessage);
     free(scoreMessage);
     gtk_widget_show(message);
@@ -41,7 +45,9 @@ void create_image(int imageNo, data *myData){
     for (int i = 0; i < 3; i++) {
         GtkWidget *buttonBox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
         for (int j = 0; j < 3; j++) {
-            GtkWidget *check = gtk_check_button_new_with_label(int_to_string(3*i + j + 1));
+            char *checkbox = int_to_string(3*i + j + 1);
+            GtkWidget *check = gtk_check_button_new_with_label(checkbox);
+            free(checkbox);
             g_signal_connect(check, "clicked", (GCallback) &on_checkbox_toggle, myData);
             gtk_widget_show(check);
             gtk_container_add ((GtkContainer *) buttonBox, check);
@@ -187,4 +193,13 @@ void create_file_name(data *myData){
     gtk_widget_show(box);
 	gtk_stack_add_named((GtkStack *) myData->stack, box, "add_que_file");
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "add_que_file");
+}
+
+void create_home(data *myData){
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *begin = gtk_check_button_new_with_label("Begin Quiz");
+    GtkWidget *add = gtk_check_button_new_with_label("Add New Quiz");
+    GtkWidget *learn = gtk_check_button_new_with_label("Learn More (will open browser link)");
+    GtkWidget *about = gtk_check_button_new_with_label("About Us");
+    GtkWidget *quit = gtk_check_button_new_with_label("Quit");
 }

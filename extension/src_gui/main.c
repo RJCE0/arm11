@@ -80,9 +80,13 @@ void go_to_final_screen(GtkWidget *widget, data *myData) {
         exit(EXIT_FAILURE);
     }
     strcpy(str, "Well done on finishing the quiz! Your final score was: ");
-    strcat(str, int_to_string(myData->quizScore));
+    char *quizScore = int_to_string(myData->quizScore);
+    strcat(str, quizScore);
+    free(quizScore);
     strcat(str, " / ");
-    strcat(str, int_to_string(myData->maxQuestions + MAX_CHECKBOX_ANSWERS));
+    char *maxQuest = int_to_string(myData->maxQuestions + MAX_CHECKBOX_ANSWERS);
+    strcat(str, maxQuest);
+    free(maxQuest);
     gtk_label_set_text((GtkLabel *) myData->finalScoreLabel, str);
     free(str);
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack,
@@ -95,8 +99,6 @@ void go_to_picQ1Ans(GtkWidget *widget, data *myData) {
     int score1 = check_im_score(myData->guesses, myData->images[0].answer);
     myData->quizScore += score1;
     create_im_answer(0, score1, myData);
-    /*gtk_label_set_text((GtkLabel *) myData->imScore1, int_to_string(score1));
-    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "PicQ1Ans");*/
 }
 
 void go_to_picQ2Ans(GtkWidget *widget, data *myData) {
@@ -108,6 +110,9 @@ void go_to_picQ2Ans(GtkWidget *widget, data *myData) {
 }
 
 void go_to_picQ1(GtkWidget *whatever, data *myData) {
+    for (int i = 0; i < 9; i++) {
+        myData->guesses[i] = 0;
+    }
     create_image(0, myData);
 }
 
@@ -115,6 +120,9 @@ void go_to_picQ1(GtkWidget *whatever, data *myData) {
 void go_to_picQ2(GtkWidget *widget, data *myData) {
     GtkWidget *prev = gtk_widget_get_ancestor(widget, GTK_TYPE_BOX);
     gtk_widget_destroy(prev);
+    for (int i = 0; i < 9; i++) {
+        myData->guesses[i] = 0;
+    }
     create_image(1, myData);
 }
 
@@ -153,41 +161,8 @@ int *randomise_questions(int size) {
     return array;
 }
 
-
-void allocate_new_question(data *myData) {
-    myData->addedQuestions = (questionToAdd **) realloc (myData->addedQuestions,
-                    (myData->numAddedQuestions + 1) * sizeof(questionToAdd *));
-    myData->addedQuestions[myData->numAddedQuestions] = malloc (sizeof(questionToAdd));
-    myData->addedQuestions[myData->numAddedQuestions]->newQuestionStr = malloc (500 * sizeof(char));
-    myData->addedQuestions[myData->numAddedQuestions]->newAnswerAStr = malloc (500 * sizeof(char));
-    myData->addedQuestions[myData->numAddedQuestions]->newAnswerBStr = malloc (500 * sizeof(char));
-    myData->addedQuestions[myData->numAddedQuestions]->newAnswerCStr = malloc (500 * sizeof(char));
-    myData->addedQuestions[myData->numAddedQuestions]->newAnswerDStr = malloc (500 * sizeof(char));
-}
-
-/*
-void begin_add_quiz(GtkWidget *button, data *myData) {
-    gtk_widget_set_sensitive(myData->finishAddingQuizButton, false);
-    myData->numAddedQuestions = 0;
-    myData->addedQuestions = malloc (sizeof(questionToAdd *));
-    go_to_add_quiz_page(button, myData);
-    allocate_new_question(myData);
-}
-*/
-
 void begin_add_quiz(GtkWidget *button, data *myData){
     create_file_name(myData);
-}
-
-
-
-void free_new_question(questionToAdd *question) {
-    free(question->newQuestionStr);
-    free(question->newAnswerAStr);
-    free(question->newAnswerBStr);
-    free(question->newAnswerCStr);
-    free(question->newAnswerDStr);
-    free(question);
 }
 
 void add_question_first(GtkWidget *widget, data *myData){
@@ -196,7 +171,7 @@ void add_question_first(GtkWidget *widget, data *myData){
     while (list) {
         if (strcmp(gtk_widget_get_name(GTK_WIDGET(list->data)), "textBox") == 0) {
             printf("fileName assigned:%s\n", gtk_entry_get_text(GTK_ENTRY(list->data)));
-            myData->addQuest->fileName = gtk_entry_get_text(GTK_ENTRY(list->data));
+            strcpy(myData->addQuest->fileName,gtk_entry_get_text(GTK_ENTRY(list->data)));
         }
         list = list->next;
     }
@@ -242,81 +217,6 @@ void finish_quiz(GtkWidget *widget, data *myData){
     gtk_widget_destroy(box);
     write_file(myData->addQuest->start, myData->addQuest->fileName);
     go_to_home(widget, myData);
-}
-
-void add_question(GtkButton *button, data *myData) {
-
-    allocate_new_question(myData);
-
-    strcpy(myData->addedQuestions[myData->numAddedQuestions]->newQuestionStr,
-                    gtk_entry_get_text((GtkEntry *) myData->newQuestion));
-    strcpy(myData->addedQuestions[myData->numAddedQuestions]->newAnswerAStr,
-                    gtk_entry_get_text((GtkEntry *) myData->newAnswerA));
-    strcpy(myData->addedQuestions[myData->numAddedQuestions]->newAnswerBStr,
-                    gtk_entry_get_text((GtkEntry *) myData->newAnswerB));
-    if (strcmp (myData->addedQuestions[myData->numAddedQuestions]->newQuestionStr, "") == 0 ||
-        strcmp (myData->addedQuestions[myData->numAddedQuestions]->newAnswerAStr, "") == 0 ||
-        strcmp (myData->addedQuestions[myData->numAddedQuestions]->newAnswerBStr, "") == 0) {
-            gtk_label_set_text((GtkLabel *) myData->errorAddingQuestionLabel,
-            "Invalid quiz question entry! Please try again.");
-            return;
-    }
-    if (gtk_entry_get_text((GtkEntry *) myData->newAnswerC)) {
-        strcpy(myData->addedQuestions[myData->numAddedQuestions]->newAnswerCStr,
-                        gtk_entry_get_text((GtkEntry *) myData->newAnswerC));
-        if (gtk_entry_get_text((GtkEntry *) myData->newAnswerD)) {
-            strcpy(myData->addedQuestions[myData->numAddedQuestions]->newAnswerDStr,
-                        gtk_entry_get_text((GtkEntry *) myData->newAnswerD));
-        }
-    }
-    gtk_entry_set_text((GtkEntry *) myData->newQuestion, "");
-    gtk_entry_set_text((GtkEntry *) myData->newAnswerA, "");
-    gtk_entry_set_text((GtkEntry *) myData->newAnswerB, "");
-    gtk_entry_set_text((GtkEntry *) myData->newAnswerC, "");
-    gtk_entry_set_text((GtkEntry *) myData->newAnswerD, "");
-    gtk_label_set_text((GtkLabel *) myData->errorAddingQuestionLabel, "Added!");
-    myData->numAddedQuestions++;
-    gtk_widget_set_sensitive(myData->finishAddingQuizButton, true);
-}
-
-void finish_quiz_build(GtkWidget *button, data *myData) {
-    FILE *newQuizFile;
-    char *nameOfNewQuiz = gtk_entry_get_text((GtkEntry *) myData->nameOfQuizEntry);
-    printf("%s\n", nameOfNewQuiz);
-    char *directoryName = "src_gui/quizzes/";
-    char *fileExtension = ".txt";
-    //char *finalDirectory = malloc (strlen(nameOfNewQuiz) + strlen(directoryName) + strlen(fileExtension));
-    char *finalDirectory = malloc(100 * sizeof(char));
-    strcpy(finalDirectory, directoryName);
-    strcat(finalDirectory, nameOfNewQuiz);
-    strcat(finalDirectory, fileExtension);
-    newQuizFile = fopen(finalDirectory, "w");
-    for (int i = 0; i < myData->numAddedQuestions; ++i) {
-        fputs("Q:", newQuizFile);
-        fputs(myData->addedQuestions[i]->newQuestionStr, newQuizFile);
-        fputs("\n", newQuizFile);
-        fputs("A:", newQuizFile);
-        fputs(myData->addedQuestions[i]->newAnswerAStr, newQuizFile);
-        fputs("\n", newQuizFile);
-        fputs("A:", newQuizFile);
-        fputs(myData->addedQuestions[i]->newAnswerBStr, newQuizFile);
-        fputs("\n", newQuizFile);
-        if (myData->addedQuestions[i]->newAnswerCStr != NULL) {
-            fputs("A:", newQuizFile);
-            fputs(myData->addedQuestions[i]->newAnswerCStr, newQuizFile);
-            fputs("\n", newQuizFile);
-        }
-        if (myData->addedQuestions[i]->newAnswerDStr != NULL) {
-            fputs("A:", newQuizFile);
-            fputs(myData->addedQuestions[i]->newAnswerDStr, newQuizFile);
-            fputs("\n", newQuizFile);
-        }
-        free(myData->addedQuestions[i]);
-    }
-    go_to_successful_added_quiz_page(button, myData);
-    free(myData->addedQuestions);
-    free(finalDirectory);
-    go_to_home(button, myData);
 }
 
 void begin_quiz(GtkWidget *widget, data *myData) {
@@ -392,17 +292,11 @@ void on_final_screen_quit_clicked(GtkWidget *button, data *myData) {
 }
 
 void free_all(data *d){
-    free(d->stack);
+    //free(d->stack);
     free(d->guesses);
-    free(d->finalScoreLabel);
-    free(d->finishAddingQuizButton);
-    free(d->newQuestion);
-    free(d->newAnswerA);
-    free(d->newAnswerB);
-    free(d->newAnswerC);
-    free(d->newAnswerD);
-    free(d->errorAddingQuestionLabel);
-    free(d->nameOfQuizEntry);
+    //free(d->finalScoreLabel);
+    free(d->images);
+    free(d->addQuest);
 }
 
 int main(int argc, char *argv[]) {
@@ -418,14 +312,6 @@ int main(int argc, char *argv[]) {
     gtk_builder_connect_signals(builder, myData);
     myData->stack = GTK_WIDGET(gtk_builder_get_object(builder, "stack1"));
     myData->quizScore = 0;
-    myData->finishAddingQuizButton = GTK_WIDGET(gtk_builder_get_object(builder, "finish_adding_quiz_button"));
-    myData->newQuestion = GTK_WIDGET(gtk_builder_get_object(builder, "new_question_entry"));
-    myData->newAnswerA = GTK_WIDGET(gtk_builder_get_object(builder, "new_answer_a_entry"));
-    myData->newAnswerB = GTK_WIDGET(gtk_builder_get_object(builder, "new_answer_b_entry"));
-    myData->newAnswerC = GTK_WIDGET(gtk_builder_get_object(builder, "new_answer_c_entry"));
-    myData->newAnswerD = GTK_WIDGET(gtk_builder_get_object(builder, "new_answer_d_entry"));
-    myData->errorAddingQuestionLabel = GTK_WIDGET(gtk_builder_get_object(builder, "error_add_question_label"));
-    myData->nameOfQuizEntry = GTK_WIDGET(gtk_builder_get_object(builder, "name_of_new_quiz_entry"));
     int temp1[] = {0, 1, 1, 0, 0, 1, 1, 0, 1};
     int temp2[] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
     myData->guesses = calloc(9, sizeof(int));
@@ -443,9 +329,11 @@ int main(int argc, char *argv[]) {
     myData->images[1].maxAns = 9;
     myData->addQuest = malloc(sizeof(fileState));
     myData->addQuest->start = NULL;
+    myData->addQuest->fileName = malloc(100 * sizeof(char));
     g_object_unref(builder);
     gtk_widget_show(window);
     gtk_main();
+    free_all(myData);
     printf("finished\n");
 
     return 0;

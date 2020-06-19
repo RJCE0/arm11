@@ -53,13 +53,14 @@ void insert_quiz_node(quizNode *start, char **quizQuestion, bool *valid){
 	start->next = newNode;
 }
 
-char *convert_file_name(const char *fileName){
+char *convert_file_name(char *fileName){
 	printf("og filename:%s\n", fileName);
     char *directoryName = "src_gui/quizzes/";
     char *fileExtension = ".txt";
     char *finalDirectory = malloc(100 * sizeof(char));
 	strcpy(finalDirectory, directoryName);
     strcat(finalDirectory, fileName);
+	free(fileName);
     strcat(finalDirectory, fileExtension);
 	return finalDirectory;
 }

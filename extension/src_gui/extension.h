@@ -19,7 +19,7 @@ struct singleLinked {
 };
 
 typedef struct {
-    const char *fileName;
+    char *fileName;
     quizNode *start;
 } fileState;
 
@@ -32,14 +32,6 @@ typedef struct {
 } image;
 
 typedef struct {
-    char *newQuestionStr;
-    char *newAnswerAStr;
-    char *newAnswerBStr;
-    char *newAnswerCStr;
-    char *newAnswerDStr;
-} questionToAdd;
-
-typedef struct {
     GtkWidget *stack;
     node *curNode;
     int quizScore;
@@ -47,16 +39,6 @@ typedef struct {
     int currentQuestion;
     int *guesses;
     GtkWidget *finalScoreLabel;
-    GtkWidget *finishAddingQuizButton;
-    GtkWidget *newQuestion;
-    GtkWidget *newAnswerA;
-    GtkWidget *newAnswerB;
-    GtkWidget *newAnswerC;
-    GtkWidget *newAnswerD;
-    GtkWidget *errorAddingQuestionLabel;
-    GtkWidget *nameOfQuizEntry;
-    int numAddedQuestions;
-    questionToAdd **addedQuestions;
     image *images;
     fileState *addQuest;
 } data;
@@ -104,8 +86,6 @@ void set_question(data *myData);
 void allocate_new_question(data *myData);
 
 void begin_add_quiz(GtkWidget *button, data *myData);
-
-void free_new_question(questionToAdd *question);
 
 void add_question(GtkButton *button, data *myData);
 
