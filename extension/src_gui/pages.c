@@ -133,6 +133,20 @@ void create_qu_answer(data *myData, bool correct){
     gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "answers_test");
 }
 
+void wrong_add_qu(data *myData){
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *header = gtk_label_new ("Incorrect question format added");
+    gtk_widget_show(header);
+    gtk_box_pack_start(GTK_BOX(box), header, TRUE, TRUE, 0);
+    GtkWidget *button = gtk_button_new_with_label("Return to Menu");
+    g_signal_connect(button, "clicked",(GCallback) &go_to_home, myData);
+    gtk_widget_show(button);
+    gtk_box_pack_start(GTK_BOX(box), button, TRUE, TRUE, 0);
+    gtk_widget_show(box);
+	gtk_stack_add_named((GtkStack *) myData->stack, box, "wrong_add");
+    gtk_stack_set_visible_child_name((GtkStack *) myData->stack, "wrong_add");
+}
+
 void create_add_question(data *myData){
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *header = gtk_label_new ("Add new questions below");

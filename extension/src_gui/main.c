@@ -195,7 +195,7 @@ void add_question_amended(GtkWidget *widget, data *myData){
     }
     bool valid = true;
     if (!myData->addQuest->start) {
-        myData->addQuest->start = create_quiz_node(convert_questions(result));
+        myData->addQuest->start = insert_quiz_node(myData->addQuest->start, result, &valid);
     } else {
         insert_quiz_node(myData->addQuest->start, result, &valid);
     }
@@ -207,8 +207,8 @@ void add_question_amended(GtkWidget *widget, data *myData){
         create_add_question(myData);
         return;
     } else {
-        //create_error_screen();
-        printf("error\n");
+        gtk_widget_destroy(gtk_widget_get_ancestor(grid, GTK_TYPE_BOX));
+        wrong_add_qu(myData);
     }
 }
 

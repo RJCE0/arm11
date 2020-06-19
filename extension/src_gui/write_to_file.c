@@ -41,16 +41,21 @@ char **convert_questions(char **quizQuestion){
 	return quizQuestion;
 }
 
-void insert_quiz_node(quizNode *start, char **quizQuestion, bool *valid){
+quizNode *insert_quiz_node(quizNode *start, char **quizQuestion, bool *valid){
 	if (!check_answers(quizQuestion)) {
 		*valid = false;
-		return;
+		return NULL;
 	}
 	quizNode *newNode = create_quiz_node(convert_questions(quizQuestion));
+	if (!start) {
+		start = newNode;
+		return start;
+	}
 	while (start->next) {
 		start = start->next;
 	}
 	start->next = newNode;
+	return newNode;
 }
 
 char *convert_file_name(char *fileName){
