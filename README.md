@@ -1,4 +1,4 @@
-#ARM11 Coursework Project
+#ARM11 Coursework Project#
 
 This repository contains our implementation of the ARM11 Coursework as part of our Computing Pratical I module at Imperial College London. I worked in a team of four alongside Mazen Hussein, Reece Jackson and Jaimi Patel. The project was implemented entirely in C, with a Ruby testsuite.
 
